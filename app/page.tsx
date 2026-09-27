@@ -52,9 +52,21 @@ export default async function HomePage() {
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-brand-100">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-200">
-              ป
-            </div>
+<div className="flex items-center gap-3">
+  <img
+    src="/logo.png"
+    alt="ตราเทศบาล"
+    className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 object-cover"
+  />
+  <div>
+    <h1 className="font-bold text-brand-900 leading-tight">
+      ระบบประปาหมู่บ้าน
+    </h1>
+    <p className="text-xs text-brand-600">
+      ทต.ท่าวังทอง · อ.เมืองพะเยา
+    </p>
+  </div>
+</div>
             <div>
               <h1 className="font-bold text-brand-900 leading-tight">
                 ระบบประปาหมู่บ้าน

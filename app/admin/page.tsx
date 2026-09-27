@@ -24,9 +24,11 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 to-white">
       <form action={formAction} className="card p-8 w-full max-w-md">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-200 mb-4">
-          ป
-        </div>
+<img
+  src="/logo.png"
+  alt="ตราเทศบาลตำบลท่าวังทอง"
+  className="w-12 h-12 rounded-xl shadow-lg shadow-brand-200 object-cover mb-4"
+/>
         <h1 className="text-xl font-bold text-brand-900">เข้าสู่ระบบเจ้าหน้าที่</h1>
         <p className="text-sm text-brand-600 mb-6">
           กรอกเลข 10 หลักเพื่อเข้าใช้งาน
