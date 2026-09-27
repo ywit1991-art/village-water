@@ -25,26 +25,25 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 to-white">
       <form action={formAction} className="card p-8 w-full max-w-md">
         {/* Header: โลโก้ + ข้อความ */}
-        <div className="flex items-center gap-4 mb-6">
-          <img
-            src="/logo.png"
-            alt="ตราเทศบาลตำบลท่าวังทอง"
-            className="w-16 h-16 md:w-20 md:h-20 rounded-2xl shadow-xl shadow-brand-200 bg-white p-1"
-          />
+        <div className="flex items-center gap-5 mb-6">
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 rounded-full bg-brand-400/40 blur-xl scale-110" />
+            <img
+              src="/logo.png"
+              alt="ตราเทศบาลตำบลท่าวังทอง"
+              className="relative w-20 h-20 md:w-24 md:h-24 rounded-full object-cover shadow-2xl shadow-brand-500/50 ring-2 ring-brand-200"
+            />
+          </div>
           <div className="flex-1">
             <h1 className="text-lg md:text-xl font-bold text-brand-900 leading-tight">
               เข้าสู่ระบบเจ้าหน้าที่
             </h1>
-            <p className="text-xs md:text-sm text-brand-600 mt-0.5">
-              กรอกเลข 10 หลักเพื่อเข้าใช้งาน
-            </p>
           </div>
         </div>
 
         {/* Form */}
         <div className="space-y-4">
           <div>
-            <label className="label">เลข 10 หลัก</label>
             <input
               name="code"
               type="text"
@@ -52,8 +51,9 @@ export default function AdminLogin() {
               maxLength={10}
               required
               pattern="[0-9]{10}"
-              placeholder="0XXXXXXXXX"
+              placeholder="XXXXXXXXXX"
               autoFocus
+              aria-label="เลข 10 หลัก"
               className="input font-mono tracking-widest text-center text-lg"
             />
           </div>

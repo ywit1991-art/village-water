@@ -56,10 +56,6 @@ export async function loginAction(
   redirect('/admin/dashboard')
 }
 
-export async function logoutAction() {
-  await clearSession()
-  redirect('/admin')
-}
 
 // ========================================
 // สร้าง water_system ใหม่
@@ -114,4 +110,8 @@ export async function deleteWaterSystemAction(id: number) {
   const sb = adminSb()
   await sb.from('water_systems').delete().eq('id', id)
   revalidatePath('/admin/dashboard')
+}
+export async function logoutAction() {
+  await clearSession()
+  redirect('/admin')
 }

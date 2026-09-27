@@ -7,7 +7,7 @@ import { logoutAction } from '../actions'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
 import { STATUS_STYLES, STATUS_EMOJI, STATUS_COLORS } from '@/lib/constants'
 import CreateSystemModal from './create-system-modal'
-
+import IdleGuard from './idle-guard'
 interface SystemRow {
   system: WaterSystem
   village: Village
@@ -67,6 +67,8 @@ export default async function DashboardPage() {
 
   return (
     <>
+    <IdleGuard timeout={60_000} warnBefore={15_000} />
+
 <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
   <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
     {/* ซ้าย: โลโก้ + ข้อมูลเจ้าหน้าที่ */}
