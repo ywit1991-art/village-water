@@ -73,18 +73,24 @@ export default async function HomePage() {
 
           {/* ขวา: ปุ่มนำทาง */}
           <div className="flex items-center gap-2">
-            <Link
-              href="/map"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
-            >
-              🗺️ แผนที่
-            </Link>
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
-            >
-              👤 สำหรับเจ้าหน้าที่
-            </Link>
+<Link
+  href="/map"
+  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+>
+  🗺️ แผนที่
+</Link>
+<Link
+  href="/overview"
+  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+>
+  📊 ภาพรวม
+</Link>
+<Link
+  href="/admin"
+  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+>
+  👤 สำหรับเจ้าหน้าที่
+</Link>
           </div>
         </div>
 
