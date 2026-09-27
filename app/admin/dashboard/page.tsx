@@ -78,7 +78,7 @@ export default async function DashboardPage() {
       />
       <div>
         <h1 className="font-bold leading-tight text-sm md:text-base">
-          แดชบอร์ดเจ้าหน้าที่
+          สำหรับเจ้าหน้าที่เทศบาลตำบลท่าวังทอง
         </h1>
         <p className="text-[11px] text-brand-100">
           {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}

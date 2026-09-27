@@ -53,7 +53,7 @@ export default async function MapPage() {
         แผนที่ระบบประปาหมู่บ้าน
       </h1>
       <p className="text-[11px] text-brand-100 hidden md:block">
-        ทต.ท่าวังทอง · อ.เมืองพะเยา
+        เทศบาลตำบลท่าวังทอง อ.เมืองพะเยา จ.พะเยา
       </p>
     </div>
     <img
