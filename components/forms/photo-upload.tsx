@@ -28,25 +28,43 @@ export default function PhotoUpload({
     setUploading(true)
     const oldUrl = value
 
-    const { url, error } = await uploadPhoto(file, villageId, index)
-    setUploading(false)
+    // ⚡ แสดง preview ทันที (local) — ไม่ต้องรอ upload
+    const localPreview = URL.createObjectURL(file)
+    onChange(localPreview)
 
-    if (error || !url) {
-      toast.error('อัปโหลดไม่สำเร็จ: ' + (error ?? 'unknown'))
-      return
+    try {
+      const { url, error } = await uploadPhoto(file, villageId, index)
+
+      if (error || !url) {
+        toast.error('อัปโหลดไม่สำเร็จ: ' + (error ?? 'unknown'))
+        onChange(oldUrl ?? null)
+        URL.revokeObjectURL(localPreview)
+        return
+      }
+
+      // ✅ แทน local preview ด้วย URL จริงจาก Supabase
+      onChange(url)
+      URL.revokeObjectURL(localPreview)
+
+      // ลบรูปเก่าที่เคยมี
+      if (oldUrl && oldUrl.startsWith('http')) {
+        await deletePhoto(oldUrl)
+      }
+
+      toast.success('อัปโหลดสำเร็จ')
+    } catch (err) {
+      console.error('[PhotoUpload]', err)
+      toast.error('เกิดข้อผิดพลาด')
+      onChange(oldUrl ?? null)
+      URL.revokeObjectURL(localPreview)
+    } finally {
+      setUploading(false)
     }
-
-    // ลบรูปเก่า (ถ้ามี)
-    if (oldUrl) await deletePhoto(oldUrl)
-
-    onChange(url)
-    toast.success('อัปโหลดสำเร็จ')
   }
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (file) handleFile(file)
-    // reset input
     if (inputRef.current) inputRef.current.value = ''
   }
 
@@ -54,10 +72,15 @@ export default function PhotoUpload({
     if (!value) return
     if (!confirm('ลบรูปนี้?')) return
 
-    await deletePhoto(value)
+    if (value.startsWith('http')) {
+      await deletePhoto(value)
+    }
     onChange(null)
     toast.success('ลบรูปแล้ว')
   }
+
+  // ⚡ ถ้ามี preview (local) → แสดงแม้ uploading อยู่
+  const showImage = !!value
 
   return (
     <div className="space-y-2">
@@ -66,7 +89,8 @@ export default function PhotoUpload({
         {label}
       </label>
 
-      {!value && !uploading && (
+      {/* ยังไม่มีรูป + ไม่ได้ uploading */}
+      {!showImage && !uploading && (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -80,14 +104,16 @@ export default function PhotoUpload({
         </button>
       )}
 
-      {uploading && (
+      {/* กำลัง uploading + ยังไม่มี preview */}
+      {uploading && !showImage && (
         <div className="w-full h-36 rounded-lg border-2 border-brand-200 bg-brand-50/40 flex flex-col items-center justify-center gap-2 text-brand-600">
           <Loader2 size={24} className="animate-spin" />
           <span className="text-xs">กำลังอัปโหลด...</span>
         </div>
       )}
 
-      {value && !uploading && (
+      {/* มีรูป (preview หรือ URL จริง) */}
+      {showImage && (
         <div className="relative group">
           <img
             src={value}
@@ -95,14 +121,28 @@ export default function PhotoUpload({
             className="w-full h-36 object-cover rounded-lg border border-brand-100 cursor-pointer"
             onClick={() => setPreview(true)}
           />
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="absolute top-2 right-2 w-7 h-7 rounded-md bg-white/90 backdrop-blur shadow text-red-500 hover:bg-red-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-            title="ลบรูป"
-          >
-            <Trash2 size={14} />
-          </button>
+
+          {/* Loading overlay ระหว่าง upload */}
+          {uploading && (
+            <div className="absolute inset-0 rounded-lg bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-white">
+                <Loader2 size={24} className="animate-spin" />
+                <span className="text-xs">กำลังอัปโหลด...</span>
+              </div>
+            </div>
+          )}
+
+          {/* ปุ่มลบ — โชว์ตอน hover */}
+          {!uploading && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="absolute top-2 right-2 w-7 h-7 rounded-md bg-white/90 backdrop-blur shadow text-red-500 hover:bg-red-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+              title="ลบรูป"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       )}
 
