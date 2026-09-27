@@ -14,14 +14,17 @@ const VillagesMapInner = dynamic(() => import('./villages-map-inner'), {
   ),
 })
 
-interface Point {
+export interface MapPoint {
   id: number
+  systemId?: number
   name: string
+  villageLabel?: string
   lat: number
   lng: number
   status: string
+  userCount?: number
 }
 
-export default function VillagesMapClient({ points }: { points: Point[] }) {
+export default function VillagesMapClient({ points }: { points: MapPoint[] }) {
   return <VillagesMapInner points={points} />
 }

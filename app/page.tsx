@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { MapPin, Users, Home, ClipboardList } from 'lucide-react'
-import type { Village, Survey } from '@/lib/types'
+import type { Village, Survey, WaterSystem } from '@/lib/types'
 import { STATUS_STYLES, STATUS_EMOJI } from '@/lib/constants'
 import VillagesMapClient from '@/components/maps/VillagesMapClient'
 
@@ -10,14 +10,20 @@ export const revalidate = 60
 export default async function HomePage() {
   const sb = await createClient()
 
-  const [{ data: villages }, { data: surveys }] = await Promise.all([
-    sb.from('villages').select('*').order('village_no'),
-    sb
-      .from('surveys')
-      .select('*')
-      .in('status', ['submitted', 'approved'])
-      .order('created_at', { ascending: false }),
-  ])
+  const [{ data: villages }, { data: surveys }, { data: systems }] =
+    await Promise.all([
+      sb.from('villages').select('*').order('village_no'),
+      sb
+        .from('surveys')
+        .select('*')
+        .in('status', ['submitted', 'approved'])
+        .order('created_at', { ascending: false }),
+      sb
+        .from('water_systems')
+        .select('*')
+        .order('village_id')
+        .order('system_no'),
+    ])
 
   const latest = new Map<number, Survey>()
   ;(surveys as Survey[] | null)?.forEach(s => {
@@ -25,79 +31,79 @@ export default async function HomePage() {
   })
 
   const list = (villages as Village[] | null) ?? []
+  const sysList = (systems as WaterSystem[] | null) ?? []
+
   const totalUsers = [...latest.values()].reduce(
     (a, s) => a + (s.user_count ?? 0),
     0,
   )
-  const totalHouses = [...latest.values()].reduce(
+  const totalHouses = sysList.reduce(
     (a, s) => a + (s.household_count ?? 0),
     0,
   )
 
-  const mapPoints = list
-    .filter(v => latest.get(v.id)?.lat && latest.get(v.id)?.lng)
-    .map(v => {
-      const s = latest.get(v.id)!
+  // ⚡ ใช้พิกัดจาก water_systems (เหมือนหน้า /villages/[id])
+  const mapPoints = sysList
+    .filter(s => s.lat && s.lng)
+    .map(s => {
+      const v = list.find(x => x.id === s.village_id)
       return {
-        id: v.id,
-        name: `หมู่ ${v.village_no} ${v.village_name}`,
+        id: s.village_id,
+        systemId: s.id,
+        name: s.system_name,
+        villageLabel: v ? `หมู่ ${v.village_no} ${v.village_name}` : '',
         lat: s.lat!,
         lng: s.lng!,
         status: s.overall_condition ?? 'ไม่มีข้อมูล',
+        userCount: s.user_count ?? 0,
       }
     })
 
   return (
     <>
       {/* ============================================
-          HERO — รวม header ไว้ด้านใน
+          HERO
           ============================================ */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white">
-        {/* จุดแสงพื้นหลัง */}
         <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl" />
 
-        {/* ============ TOP BAR (ใน Hero) ============ */}
+        {/* Top bar */}
         <div className="relative max-w-7xl mx-auto px-4 pt-5 pb-2 flex items-center justify-between gap-4">
-          {/* ซ้าย: ชื่อระบบ */}
-          <div className="flex items-center gap-2">
-            <div>
-              <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
-              </h1>
-              <p className="text-[11px] text-brand-100">
-                เทศบาลตำบลท่าวังทอง อ.เมืองพะเยา จ.พะเยา
-              </p>
-            </div>
+          <div>
+            <h1 className="font-bold leading-tight text-sm md:text-base">
+              ระบบประปาหมู่บ้าน
+            </h1>
+            <p className="text-[11px] text-brand-100">
+              ทต.ท่าวังทอง · อ.เมืองพะเยา
+            </p>
           </div>
 
-          {/* ขวา: ปุ่มนำทาง */}
           <div className="flex items-center gap-2">
-<Link
-  href="/map"
-  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
->
-  🗺️ แผนที่
-</Link>
-<Link
-  href="/overview"
-  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
->
-  📊 ภาพรวม
-</Link>
-<Link
-  href="/admin"
-  className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
->
-  👤 สำหรับเจ้าหน้าที่
-</Link>
+            <Link
+              href="/overview"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+            >
+              📊 ภาพรวม
+            </Link>
+            <Link
+              href="/map"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+            >
+              🗺️ แผนที่
+            </Link>
+            <Link
+              href="/admin"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+            >
+              👤 สำหรับเจ้าหน้าที่
+            </Link>
           </div>
         </div>
 
-        {/* ============ CONTENT (ข้อความ + โลโก้) ============ */}
+        {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 pb-16 md:pb-20">
           <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
-            {/* ซ้าย: ข้อความ */}
             <div>
               <span className="badge bg-white/20 backdrop-blur text-white text-xs">
                 🗂️ ข้อมูลระบบประปา 14 หมู่บ้าน
@@ -113,10 +119,8 @@ export default async function HomePage() {
               </p>
             </div>
 
-            {/* ขวา: โลโก้วงกลม */}
             <div className="flex justify-center md:justify-end">
               <div className="relative">
-                {/* วงแหวนเรืองแสงรอบโลโก้ */}
                 <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl scale-110" />
                 <img
                   src="/logo.png"
@@ -129,7 +133,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ STATS ============ */}
+      {/* ============================================
+          STATS
+          ============================================ */}
       <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Stat
@@ -139,8 +145,8 @@ export default async function HomePage() {
           />
           <Stat
             icon={<Users className="text-brand-600" />}
-            value={totalUsers}
-            label="ผู้ใช้น้ำ (ราย)"
+            value={sysList.length}
+            label="ระบบประปา"
           />
           <Stat
             icon={<Home className="text-brand-600" />}
@@ -155,7 +161,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ MAP ============ */}
+      {/* ============================================
+          MAP
+          ============================================ */}
       <section className="max-w-7xl mx-auto px-4 mt-12">
         <h3 className="text-2xl font-bold text-brand-900 mb-4">
           แผนที่ระบบประปาทั้ง 14 หมู่บ้าน
@@ -163,15 +171,22 @@ export default async function HomePage() {
         <VillagesMapClient points={mapPoints} />
       </section>
 
-      {/* ============ VILLAGES ============ */}
+      {/* ============================================
+          VILLAGES
+          ============================================ */}
       <section className="max-w-7xl mx-auto px-4 mt-12 pb-20">
-        <h3 className="text-2xl font-bold text-brand-900 mb-6">
-          รายชื่อหมู่บ้าน
-        </h3>
+        <h3 className="text-2xl font-bold text-brand-900 mb-6">รายชื่อหมู่บ้าน</h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {list.map(v => {
             const s = latest.get(v.id)
             const st = s?.overall_condition ?? 'ไม่มีข้อมูล'
+            const vSys = sysList.filter(x => x.village_id === v.id)
+            const vHouses = vSys.reduce(
+              (a, x) => a + (x.household_count ?? 0),
+              0,
+            )
+            const vRate = vSys[0]?.water_rate
+
             return (
               <Link
                 key={v.id}
@@ -196,14 +211,16 @@ export default async function HomePage() {
                   </span>
                 </div>
                 <p className="text-sm text-brand-700 min-h-[2.5rem] line-clamp-2">
-                  {s?.water_system_name ?? (
+                  {vSys.length > 0 ? (
+                    `${vSys.length} ระบบประปา`
+                  ) : (
                     <span className="text-slate-400">ยังไม่มีข้อมูล</span>
                   )}
                 </p>
                 <div className="grid grid-cols-3 gap-2 text-center pt-3 mt-3 border-t border-brand-50">
-                  <Mini label="ผู้ใช้น้ำ" value={s?.user_count} />
-                  <Mini label="ครัวเรือน" value={s?.household_count} />
-                  <Mini label="บาท/หน่วย" value={s?.water_rate} />
+                  <Mini label="ระบบ" value={vSys.length} />
+                  <Mini label="ครัวเรือน" value={vHouses} />
+                  <Mini label="บาท/หน่วย" value={vRate} />
                 </div>
               </Link>
             )
@@ -211,7 +228,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
+      {/* ============================================
+          FOOTER
+          ============================================ */}
       <footer className="bg-brand-900 text-brand-100 py-10 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-3">
           <img
@@ -232,7 +251,7 @@ export default async function HomePage() {
 }
 
 /* ============================================ */
-/* Sub-components                                */
+/* Sub components                                */
 /* ============================================ */
 
 function Stat({

@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { LogOut, PlusCircle, Pencil, Eye, MapPin, Users } from 'lucide-react'
+import { LogOut, PlusCircle, Pencil, Eye, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth/session'
 import { logoutAction } from '../actions'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
-import { STATUS_STYLES, STATUS_EMOJI, STATUS_COLORS } from '@/lib/constants'
+import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import CreateSystemModal from './create-system-modal'
-import IdleGuard from './idle-guard'
+
 interface SystemRow {
   system: WaterSystem
   village: Village
@@ -19,6 +19,7 @@ export default async function DashboardPage() {
   if (!session) redirect('/admin')
 
   const sb = await createClient()
+
   const [{ data: villages }, { data: systems }, { data: surveys }] =
     await Promise.all([
       sb.from('villages').select('*').order('village_no'),
@@ -36,15 +37,23 @@ export default async function DashboardPage() {
   const villageMap = new Map<number, Village>()
   ;(villages as Village[] | null)?.forEach(v => villageMap.set(v.id, v))
 
-  // สำหรับแต่ละ water_system → หา survey ล่าสุด
+  // ==========================================
+  // เลือก survey ล่าสุดของแต่ละระบบ
+  // ⚡ กรองเอาเฉพาะ submitted/approved ก่อน
+  //    (ไม่เอา draft เปล่ามาแสดง)
+  // ==========================================
   const surveyMap = new Map<number, Survey>()
-  ;(surveys as Survey[] | null)?.forEach(s => {
-    if (s.water_system_id && !surveyMap.has(s.water_system_id)) {
-      surveyMap.set(s.water_system_id, s)
-    }
-  })
+  ;(surveys as Survey[] | null)
+    ?.filter(s => s.status === 'submitted' || s.status === 'approved')
+    .forEach(s => {
+      if (s.water_system_id && !surveyMap.has(s.water_system_id)) {
+        surveyMap.set(s.water_system_id, s)
+      }
+    })
 
+  // ==========================================
   // จัดกลุ่มตามหมู่บ้าน
+  // ==========================================
   const grouped = new Map<number, SystemRow[]>()
   ;(systems as WaterSystem[] | null)?.forEach(sys => {
     const v = villageMap.get(sys.village_id)
@@ -61,54 +70,54 @@ export default async function DashboardPage() {
   const allVillages = (villages as Village[] | null) ?? []
 
   // Stats
-  const totalSurveys = surveys?.length ?? 0
-  const submittedCount = surveys?.filter(s => s.status === 'submitted').length ?? 0
-  const draftCount = surveys?.filter(s => s.status === 'draft').length ?? 0
+  const totalSurveys = (surveys as Survey[] | null)?.length ?? 0
+  const submittedCount =
+    (surveys as Survey[] | null)?.filter(s => s.status === 'submitted')
+      .length ?? 0
+  const draftCount =
+    (surveys as Survey[] | null)?.filter(s => s.status === 'draft').length ?? 0
 
   return (
     <>
-    <IdleGuard timeout={60_000} warnBefore={15_000} />
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="ตราเทศบาล"
+              className="w-10 h-10 rounded-xl ring-2 ring-white/30"
+            />
+            <div>
+              <h1 className="font-bold leading-tight text-sm md:text-base">
+                แดชบอร์ดเจ้าหน้าที่
+              </h1>
+              <p className="text-[11px] text-brand-100">
+                {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+            >
+              <Eye size={16} />
+              <span className="hidden md:inline">ดูสาธารณะ</span>
+            </Link>
+            <form action={logoutAction}>
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+                type="submit"
+              >
+                <LogOut size={16} />
+                <span className="hidden md:inline">ออก</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
 
-<header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
-  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    {/* ซ้าย: โลโก้ + ข้อมูลเจ้าหน้าที่ */}
-    <div className="flex items-center gap-3">
-      <img
-        src="/logo.png"
-        alt="ตราเทศบาลตำบลท่าวังทอง"
-        className="w-11 h-11 rounded-xl bg-white p-0.5 shadow-lg"
-      />
-      <div>
-        <h1 className="font-bold leading-tight text-sm md:text-base">
-          สำหรับเจ้าหน้าที่เทศบาลตำบลท่าวังทอง
-        </h1>
-        <p className="text-[11px] text-brand-100">
-          {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
-        </p>
-      </div>
-    </div>
-
-    {/* ขวา: ปุ่ม */}
-    <div className="flex items-center gap-2">
-      <Link
-        href="/"
-        className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
-      >
-        <Eye size={16} /> <span className="hidden md:inline">ดูสาธารณะ</span>
-      </Link>
-      <form action={logoutAction}>
-        <button
-          className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
-          type="submit"
-        >
-          <LogOut size={16} /> <span className="hidden md:inline">ออก</span>
-        </button>
-      </form>
-    </div>
-  </div>
-</header>
-
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 w-full">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="card p-4">
@@ -133,7 +142,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-brand-500">มีผู้ใช้ในระบบ</p>
+            <p className="text-xs text-brand-500">ผู้ใช้ในระบบ</p>
             <p className="text-2xl font-bold text-brand-900">1</p>
           </div>
         </div>
@@ -148,7 +157,9 @@ export default async function DashboardPage() {
                 {/* Header ของหมู่บ้าน */}
                 <div className="px-4 py-3 bg-brand-50/60 border-b border-brand-100 flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-brand-500">หมู่ที่ {v.village_no}</p>
+                    <p className="text-xs text-brand-500">
+                      หมู่ที่ {v.village_no}
+                    </p>
                     <h2 className="font-bold text-brand-900">
                       {v.village_name}
                     </h2>
@@ -178,7 +189,10 @@ export default async function DashboardPage() {
                     </thead>
                     <tbody>
                       {rows.map(({ system: sys, survey: s }) => {
-                        const st = s?.overall_condition ?? sys.overall_condition ?? 'ไม่มีข้อมูล'
+                        const st =
+                          s?.overall_condition ??
+                          sys.overall_condition ??
+                          'ไม่มีข้อมูล'
                         const conditionStyle = STATUS_COLORS[st]
 
                         return (
