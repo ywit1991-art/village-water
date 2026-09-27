@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MapPin, Users, Home, ArrowLeft, Phone, Calendar } from 'lucide-react'
+import { MapPin, Home, ArrowLeft, Phone, Calendar } from 'lucide-react'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
 import VillageSystemsMap from '@/components/villages/village-systems-map'
@@ -54,7 +54,6 @@ export default async function VillagePage({ params }: Props) {
   const latestSurvey = surveyList[0] ?? null
 
   // สถิติรวม
-  const totalUsers = sysList.reduce((a, s) => a + (s.user_count ?? 0), 0)
   const totalHouseholds = sysList.reduce(
     (a, s) => a + (s.household_count ?? 0),
     0,
@@ -106,7 +105,7 @@ export default async function VillagePage({ params }: Props) {
         <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
 
         {/* Top bar */}
-        <div className="relative max-w-5xl mx-auto px-4 pt-5 flex items-center justify-between gap-4">
+        <div className="relative max-w-7xl mx-auto px-4 pt-5 flex items-center justify-between gap-4">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
@@ -122,7 +121,7 @@ export default async function VillagePage({ params }: Props) {
         </div>
 
         {/* Content */}
-        <div className="relative max-w-5xl mx-auto px-4 pt-8 pb-16">
+        <div className="relative max-w-7xl mx-auto px-4 pt-8 pb-16">
           <div className="flex items-start gap-4 md:gap-6">
             <img
               src="/logo.png"
@@ -147,10 +146,9 @@ export default async function VillagePage({ params }: Props) {
       {/* ============================================
           STATS
           ============================================ */}
-      <section className="max-w-5xl mx-auto px-4 -mt-10 relative z-10 w-full">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-10 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard icon={<MapPin size={20} />} value={sysList.length} label="ระบบประปา" />
-          <StatCard icon={<Users size={20} />} value={totalUsers} label="ผู้ใช้น้ำ (ราย)" />
           <StatCard icon={<Home size={20} />} value={totalHouseholds} label="ครัวเรือน" />
           <StatCard
             icon={<Calendar size={20} />}
@@ -164,7 +162,7 @@ export default async function VillagePage({ params }: Props) {
           STATUS SUMMARY
           ============================================ */}
       {sysList.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+        <section className="max-w-7xl mx-auto px-4 mt-8 w-full">
           <div className="card p-4">
             <h2 className="text-sm font-bold text-brand-900 mb-3">
               สรุปสถานะระบบประปา
@@ -199,7 +197,7 @@ export default async function VillagePage({ params }: Props) {
           MAP
           ============================================ */}
       {sysList.filter(s => s.lat && s.lng).length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+        <section className="max-w-7xl mx-auto px-4 mt-8 w-full">
           <h2 className="text-lg font-bold text-brand-900 mb-3">
             ตำแหน่งระบบประปาในหมู่บ้าน
           </h2>
@@ -210,7 +208,7 @@ export default async function VillagePage({ params }: Props) {
       {/* ============================================
           SYSTEM LIST
           ============================================ */}
-      <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+      <section className="max-w-7xl mx-auto px-4 mt-8 w-full">
         <h2 className="text-lg font-bold text-brand-900 mb-3">
           รายละเอียดระบบประปา ({sysList.length} ระบบ)
         </h2>
@@ -238,7 +236,7 @@ export default async function VillagePage({ params }: Props) {
           PHOTOS
           ============================================ */}
       {photos.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+        <section className="max-w-7xl mx-auto px-4 mt-8 w-full">
           <h2 className="text-lg font-bold text-brand-900 mb-3">
             ภาพถ่ายประกอบ ({photos.length} ภาพ)
           </h2>
@@ -271,7 +269,7 @@ export default async function VillagePage({ params }: Props) {
           CONTACT
           ============================================ */}
       {sysList.some(s => latestBySystem.get(s.id)?.operator_phone) && (
-        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+        <section className="max-w-7xl mx-auto px-4 mt-8 w-full">
           <h2 className="text-lg font-bold text-brand-900 mb-3">
             ช่องทางติดต่อ
           </h2>
@@ -309,7 +307,7 @@ export default async function VillagePage({ params }: Props) {
           FOOTER
           ============================================ */}
       <footer className="bg-brand-900 text-brand-100 py-8 mt-12">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-2">
           <img
             src="/logo.png"
             alt="ตราเทศบาล"
@@ -338,7 +336,7 @@ function StatCard({
   label: string
 }) {
   return (
-    <div className="card p-4">
+    <div className="card p-4 w-full h-full">
       <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-2">
         {icon}
       </div>
