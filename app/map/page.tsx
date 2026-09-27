@@ -26,32 +26,43 @@ export default async function MapPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="h-16 bg-white border-b border-brand-100 flex items-center justify-between px-4 shrink-0 z-20 relative">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-200">
-            ป
-          </div>
-          <div>
-            <h1 className="font-bold text-brand-900 leading-tight text-sm md:text-base">
-              แผนที่ระบบประปาหมู่บ้าน
-            </h1>
-            <p className="text-[11px] text-brand-600 hidden md:block">
-              ทต.ท่าวังทอง · อ.เมืองพะเยา
-            </p>
-          </div>
-        </Link>
-        <nav className="flex items-center gap-1 md:gap-2">
-          <Link href="/" className="btn-ghost text-sm">
-            หน้าหลัก
-          </Link>
-          <span className="btn-primary text-sm pointer-events-none">
-            แผนที่
-          </span>
-          <Link href="/admin" className="btn-ghost text-sm">
-            เจ้าหน้าที่
-          </Link>
-        </nav>
-      </header>
+<header className="h-16 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg flex items-center justify-between px-4 shrink-0 z-20 relative">
+  {/* ซ้าย: เมนู */}
+  <nav className="flex items-center gap-1">
+    <Link
+      href="/"
+      className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition"
+    >
+      หน้าหลัก
+    </Link>
+    <span className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-white/20">
+      แผนที่
+    </span>
+    <Link
+      href="/admin"
+      className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition"
+    >
+      เจ้าหน้าที่
+    </Link>
+  </nav>
+
+  {/* ขวา: โลโก้ + ข้อความ */}
+  <div className="flex items-center gap-3">
+    <div className="text-right">
+      <h1 className="font-bold leading-tight text-sm md:text-base">
+        แผนที่ระบบประปาหมู่บ้าน
+      </h1>
+      <p className="text-[11px] text-brand-100 hidden md:block">
+        ทต.ท่าวังทอง · อ.เมืองพะเยา
+      </p>
+    </div>
+    <img
+      src="/logo.png"
+      alt="ตราเทศบาลตำบลท่าวังทอง"
+      className="w-11 h-11 rounded-xl bg-white p-0.5 shadow-lg"
+    />
+  </div>
+</header>
 
       <main className="flex-1 relative">
         <WaterSystemsMap

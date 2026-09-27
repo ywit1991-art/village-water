@@ -22,22 +22,6 @@ interface Props {
   children: React.ReactNode
 }
 
-function ScrollFix() {
-  const map = useMap()
-  useEffect(() => {
-    map.scrollWheelZoom.disable()
-    const enable = () => map.scrollWheelZoom.enable()
-    const disable = () => map.scrollWheelZoom.disable()
-    map.on('click', enable)
-    map.on('mouseout', disable)
-    return () => {
-      map.off('click', enable)
-      map.off('mouseout', disable)
-    }
-  }, [map])
-  return null
-}
-
 export default function LeafletBase({
   center = [19.1667, 99.9],
   zoom = 13,
@@ -49,13 +33,12 @@ export default function LeafletBase({
       center={center}
       zoom={zoom}
       className={className}
-      scrollWheelZoom={false}
+      scrollWheelZoom={true}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
-      <ScrollFix />
       {children}
     </MapContainer>
   )

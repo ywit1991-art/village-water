@@ -67,33 +67,44 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-white border-b border-brand-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold shadow-lg shadow-brand-200">
-              ป
-            </div>
-            <div>
-              <h1 className="font-bold text-brand-900 leading-tight">
-                แดชบอร์ดเจ้าหน้าที่
-              </h1>
-              <p className="text-xs text-brand-600">
-                {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/" className="btn-ghost text-sm">
-              <Eye size={16} /> ดูสาธารณะ
-            </Link>
-            <form action={logoutAction}>
-              <button className="btn-ghost text-sm" type="submit">
-                <LogOut size={16} /> ออก
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+<header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    {/* ซ้าย: โลโก้ + ข้อมูลเจ้าหน้าที่ */}
+    <div className="flex items-center gap-3">
+      <img
+        src="/logo.png"
+        alt="ตราเทศบาลตำบลท่าวังทอง"
+        className="w-11 h-11 rounded-xl bg-white p-0.5 shadow-lg"
+      />
+      <div>
+        <h1 className="font-bold leading-tight text-sm md:text-base">
+          แดชบอร์ดเจ้าหน้าที่
+        </h1>
+        <p className="text-[11px] text-brand-100">
+          {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
+        </p>
+      </div>
+    </div>
+
+    {/* ขวา: ปุ่ม */}
+    <div className="flex items-center gap-2">
+      <Link
+        href="/"
+        className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+      >
+        <Eye size={16} /> <span className="hidden md:inline">ดูสาธารณะ</span>
+      </Link>
+      <form action={logoutAction}>
+        <button
+          className="px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+          type="submit"
+        >
+          <LogOut size={16} /> <span className="hidden md:inline">ออก</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Stats */}

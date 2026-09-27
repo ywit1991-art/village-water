@@ -24,16 +24,24 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 to-white">
       <form action={formAction} className="card p-8 w-full max-w-md">
-<img
-  src="/logo.png"
-  alt="ตราเทศบาลตำบลท่าวังทอง"
-  className="w-12 h-12 rounded-xl shadow-lg shadow-brand-200 object-cover mb-4"
-/>
-        <h1 className="text-xl font-bold text-brand-900">เข้าสู่ระบบเจ้าหน้าที่</h1>
-        <p className="text-sm text-brand-600 mb-6">
-          กรอกเลข 10 หลักเพื่อเข้าใช้งาน
-        </p>
+        {/* Header: โลโก้ + ข้อความ */}
+        <div className="flex items-center gap-4 mb-6">
+          <img
+            src="/logo.png"
+            alt="ตราเทศบาลตำบลท่าวังทอง"
+            className="w-16 h-16 md:w-20 md:h-20 rounded-2xl shadow-xl shadow-brand-200 bg-white p-1"
+          />
+          <div className="flex-1">
+            <h1 className="text-lg md:text-xl font-bold text-brand-900 leading-tight">
+              เข้าสู่ระบบเจ้าหน้าที่
+            </h1>
+            <p className="text-xs md:text-sm text-brand-600 mt-0.5">
+              กรอกเลข 10 หลักเพื่อเข้าใช้งาน
+            </p>
+          </div>
+        </div>
 
+        {/* Form */}
         <div className="space-y-4">
           <div>
             <label className="label">เลข 10 หลัก</label>
@@ -60,8 +68,11 @@ export default function AdminLogin() {
           <SubmitButton />
         </div>
 
+        {/* Footer */}
         <p className="text-xs text-center text-brand-500 mt-6">
-          <a href="/" className="hover:underline">← กลับหน้าหลัก</a>
+          <a href="/" className="hover:underline">
+            ← กลับหน้าหลัก
+          </a>
         </p>
       </form>
     </div>

@@ -49,63 +49,81 @@ export default async function HomePage() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-brand-100">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-<div className="flex items-center gap-3">
-  <img
-    src="/logo.png"
-    alt="ตราเทศบาล"
-    className="w-10 h-10 rounded-xl shadow-lg shadow-brand-200 object-cover"
-  />
-  <div>
-    <h1 className="font-bold text-brand-900 leading-tight">
-      ระบบประปาหมู่บ้าน
-    </h1>
-    <p className="text-xs text-brand-600">
-      ทต.ท่าวังทอง · อ.เมืองพะเยา
-    </p>
-  </div>
-</div>
+      {/* ============================================
+          HERO — รวม header ไว้ด้านใน
+          ============================================ */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white">
+        {/* จุดแสงพื้นหลัง */}
+        <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl" />
+
+        {/* ============ TOP BAR (ใน Hero) ============ */}
+        <div className="relative max-w-7xl mx-auto px-4 pt-5 pb-2 flex items-center justify-between gap-4">
+          {/* ซ้าย: ชื่อระบบ */}
+          <div className="flex items-center gap-2">
             <div>
-              <h1 className="font-bold text-brand-900 leading-tight">
+              <h1 className="font-bold leading-tight text-sm md:text-base">
                 ระบบประปาหมู่บ้าน
               </h1>
-              <p className="text-xs text-brand-600">
+              <p className="text-[11px] text-brand-100">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
               </p>
             </div>
           </div>
-<div className="flex items-center gap-2">
-  <Link href="/map" className="btn-ghost">
-    🗺️ แผนที่
-  </Link>
-  <Link href="/admin" className="btn-ghost">
-    สำหรับเจ้าหน้าที่
-  </Link>
-</div>
-        </div>
-      </header>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white">
-        <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl" />
-        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
-          <span className="badge bg-white/20 text-white">
-            🗂️ ข้อมูลระบบประปา 14 หมู่บ้าน
-          </span>
-          <h2 className="mt-3 text-3xl md:text-5xl font-extrabold leading-tight">
-            ข้อมูลระบบประปาหมู่บ้าน
-            <br />
-            เพื่อการบริหารจัดการน้ำที่ยั่งยืน
-          </h2>
-          <p className="mt-3 md:text-lg text-brand-100 max-w-3xl leading-relaxed">
-            ศูนย์รวมข้อมูลสถานะระบบประปา ผู้ใช้น้ำ คุณภาพน้ำ และการบริหารจัดการ
-            เพื่อการพัฒนาระบบน้ำประปาของชุมชนอย่างโปร่งใส
-          </p>
+          {/* ขวา: ปุ่มนำทาง */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/map"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+            >
+              🗺️ แผนที่
+            </Link>
+            <Link
+              href="/admin"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+            >
+              👤 สำหรับเจ้าหน้าที่
+            </Link>
+          </div>
+        </div>
+
+        {/* ============ CONTENT (ข้อความ + โลโก้) ============ */}
+        <div className="relative max-w-7xl mx-auto px-4 pb-16 md:pb-20">
+          <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
+            {/* ซ้าย: ข้อความ */}
+            <div>
+              <span className="badge bg-white/20 backdrop-blur text-white text-xs">
+                🗂️ ข้อมูลระบบประปา 14 หมู่บ้าน
+              </span>
+              <h2 className="mt-3 text-3xl md:text-5xl font-extrabold leading-tight">
+                ข้อมูลระบบประปาหมู่บ้าน
+                <br />
+                เพื่อการบริหารจัดการน้ำที่ยั่งยืน
+              </h2>
+              <p className="mt-3 md:text-lg text-brand-100 max-w-2xl leading-relaxed">
+                ศูนย์รวมข้อมูลสถานะระบบประปา ผู้ใช้น้ำ คุณภาพน้ำ และการบริหารจัดการ
+                เพื่อการพัฒนาระบบน้ำประปาของชุมชนอย่างโปร่งใส
+              </p>
+            </div>
+
+            {/* ขวา: โลโก้วงกลม */}
+            <div className="flex justify-center md:justify-end">
+              <div className="relative">
+                {/* วงแหวนเรืองแสงรอบโลโก้ */}
+                <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl scale-110" />
+                <img
+                  src="/logo.png"
+                  alt="ตราเทศบาลตำบลท่าวังทอง"
+                  className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 rounded-full shadow-2xl shadow-brand-900/40 object-cover ring-4 ring-white/30"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* ============ STATS ============ */}
       <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Stat
@@ -131,6 +149,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============ MAP ============ */}
       <section className="max-w-7xl mx-auto px-4 mt-12">
         <h3 className="text-2xl font-bold text-brand-900 mb-4">
           แผนที่ระบบประปาทั้ง 14 หมู่บ้าน
@@ -138,6 +157,7 @@ export default async function HomePage() {
         <VillagesMapClient points={mapPoints} />
       </section>
 
+      {/* ============ VILLAGES ============ */}
       <section className="max-w-7xl mx-auto px-4 mt-12 pb-20">
         <h3 className="text-2xl font-bold text-brand-900 mb-6">
           รายชื่อหมู่บ้าน
@@ -162,7 +182,9 @@ export default async function HomePage() {
                     </h4>
                   </div>
                   <span
-                    className={`badge border ${STATUS_STYLES[st] ?? STATUS_STYLES['ไม่มีข้อมูล']}`}
+                    className={`badge border ${
+                      STATUS_STYLES[st] ?? STATUS_STYLES['ไม่มีข้อมูล']
+                    }`}
                   >
                     {STATUS_EMOJI[st] ?? ''} {st}
                   </span>
@@ -183,12 +205,18 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============ FOOTER ============ */}
       <footer className="bg-brand-900 text-brand-100 py-10 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="font-medium">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="ตราเทศบาลตำบลท่าวังทอง"
+            className="w-16 h-16 rounded-full ring-2 ring-white/20"
+          />
+          <p className="font-medium text-center">
             เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
           </p>
-          <p className="text-sm text-brand-300 mt-2">
+          <p className="text-sm text-brand-300 text-center">
             ระบบจัดเก็บและเผยแพร่ข้อมูลระบบประปาหมู่บ้าน
           </p>
         </div>
@@ -196,6 +224,10 @@ export default async function HomePage() {
     </>
   )
 }
+
+/* ============================================ */
+/* Sub-components                                */
+/* ============================================ */
 
 function Stat({
   icon,
