@@ -1,41 +1,40 @@
 'use client'
 
 import { useActionState, useState, useEffect } from 'react'
-import { createWaterSystemAction } from '../actions'
-import { X, Plus } from 'lucide-react'
+import { updateWaterSystemAction } from '../actions'
+import { X, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import type { WaterSystem } from '@/lib/types'
 
 interface Props {
-  villageId: number
-  villageName: string
+  system: WaterSystem
 }
 
-export default function CreateSystemModal({ villageId, villageName }: Props) {
+export default function EditSystemModal({ system }: Props) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
-  const [state, formAction] = useActionState(createWaterSystemAction, null)
+  const [state, formAction] = useActionState(updateWaterSystemAction, null)
 
   useEffect(() => {
-    if (state?.id) {
-      toast.success('สร้างระบบใหม่แล้ว')
+    if (state?.ok) {
+      toast.success('อัปเดตแล้ว')
       setOpen(false)
-      router.push(`/admin/surveys/new?village=${villageId}&system=${state.id}`)
       router.refresh()
     }
     if (state?.error) {
       toast.error(state.error)
     }
-  }, [state, router, villageId])
+  }, [state, router])
 
   return (
     <>
       <button
-        type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium text-sm"
+        className="text-brand-600 hover:text-brand-800 text-xs font-medium"
+        title="แก้ไขชื่อ/พิกัด"
       >
-        <Plus size={14} /> เพิ่มระบบ
+        แก้ไขระบบ
       </button>
 
       {open && (
@@ -49,11 +48,10 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-bold text-brand-900">เพิ่มระบบประปาใหม่</h3>
-                <p className="text-xs text-brand-500 mt-0.5">{villageName}</p>
+                <h3 className="font-bold text-brand-900">แก้ไขระบบประปา</h3>
+                <p className="text-xs text-brand-500 mt-0.5">ระบบที่ {system.system_no}</p>
               </div>
               <button
-                type="button"
                 onClick={() => setOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
               >
@@ -62,38 +60,38 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
             </div>
 
             <form action={formAction} className="space-y-4">
-              <input type="hidden" name="village_id" value={villageId} />
+              <input type="hidden" name="id" value={system.id} />
 
               <div>
                 <label className="label">ชื่อระบบประปา *</label>
                 <input
                   name="system_name"
                   required
+                  defaultValue={system.system_name}
                   className="input"
-                  placeholder="เช่น ระบบบ้านบน, ระบบวัด, ระบบโรงเรียน"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">ละติจูด (ถ้ามี)</label>
+                  <label className="label">ละติจูด</label>
                   <input
                     name="lat"
                     type="number"
                     step="any"
+                    defaultValue={system.lat ?? ''}
                     className="input"
-                    placeholder="19.xxxxx"
                   />
                 </div>
                 <div>
-                  <label className="label">ลองจิจูด (ถ้ามี)</label>
+                  <label className="label">ลองจิจูด</label>
                   <input
                     name="lng"
                     type="number"
                     step="any"
+                    defaultValue={system.lng ?? ''}
                     className="input"
-                    placeholder="99.xxxxx"
                   />
                 </div>
               </div>
@@ -111,7 +109,7 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
                   ยกเลิก
                 </button>
                 <button type="submit" className="btn-primary flex-1">
-                  สร้างและบันทึกข้อมูล
+                  บันทึก
                 </button>
               </div>
             </form>

@@ -76,71 +76,94 @@ export default function SurveyFormPage() {
   // โหลดข้อมูล
   // ==========================================
   useEffect(() => {
-    async function load() {
-      const sb = createClient()
+  async function load() {
+    const sb = createClient()
 
-      if (villageId) {
-        const { data: v } = await sb
-          .from('villages')
-          .select('village_no, village_name')
-          .eq('id', villageId)
-          .single()
-        setVillage(v)
-      }
-
-      if (!isNew && id) {
-        const { data: s, error } = await sb
-          .from('surveys')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle()
-
-        if (error) {
-          console.error('[Survey] load error:', error.message)
-        } else if (s) {
-          // เตรียมข้อมูลก่อน reset — ป้องกัน null
-          const merged = {
-            ...methods.getValues(),
-            ...s,
-            committee_members: s.committee_members ?? [],
-            operator_duties: s.operator_duties ?? [],
-            water_source_type: s.water_source_type ?? [],
-            water_source_condition: s.water_source_condition ?? [],
-            pump_types: s.pump_types ?? [],
-            pumps: s.pumps ?? [],
-            control_box_condition: s.control_box_condition ?? [],
-            production_type: s.production_type ?? [],
-            filter_condition: s.filter_condition ?? [],
-            tank_types: s.tank_types ?? [],
-            tank_condition: s.tank_condition ?? [],
-            tank_surrounding: s.tank_surrounding ?? [],
-            pipe_materials: s.pipe_materials ?? [],
-            pipe_condition: s.pipe_condition ?? [],
-            water_quality_appearance: s.water_quality_appearance ?? [],
-            problems: s.problems ?? [],
-            improvements: s.improvements ?? [],
-            maintenance_items: s.maintenance_items ?? {},
-            photos: s.photos ?? [],
-            signatures:
-              s.signatures && s.signatures.length > 0
-                ? s.signatures
-                : [
-                    { name: '', phone: '', position: '', date: '' },
-                    { name: '', phone: '', position: '', date: '' },
-                    { name: '', phone: '', position: '', date: '' },
-                  ],
-          }
-
-          methods.reset(merged)
-        }
-      }
-
-      setLoading(false)
+    if (villageId) {
+      const { data: v } = await sb
+        .from('villages')
+        .select('village_no, village_name')
+        .eq('id', villageId)
+        .single()
+      setVillage(v)
     }
 
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, villageId, isNew])
+    if (!isNew && id) {
+      // ===== โหมดแก้ไข =====
+      const { data: s, error } = await sb
+        .from('surveys')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('[Survey] load error:', error.message)
+      } else if (s) {
+        const merged = {
+          ...methods.getValues(),
+          ...s,
+          committee_members: s.committee_members ?? [],
+          operator_duties: s.operator_duties ?? [],
+          water_source_type: s.water_source_type ?? [],
+          water_source_condition: s.water_source_condition ?? [],
+          pump_types: s.pump_types ?? [],
+          pumps: s.pumps ?? [],
+          control_box_condition: s.control_box_condition ?? [],
+          production_type: s.production_type ?? [],
+          filter_condition: s.filter_condition ?? [],
+          tank_types: s.tank_types ?? [],
+          tank_condition: s.tank_condition ?? [],
+          tank_surrounding: s.tank_surrounding ?? [],
+          pipe_materials: s.pipe_materials ?? [],
+          pipe_condition: s.pipe_condition ?? [],
+          water_quality_appearance: s.water_quality_appearance ?? [],
+          problems: s.problems ?? [],
+          improvements: s.improvements ?? [],
+          maintenance_items: s.maintenance_items ?? {},
+          photos: s.photos ?? [],
+          signatures:
+            s.signatures && s.signatures.length > 0
+              ? s.signatures
+              : [
+                  { name: '', phone: '', position: '', date: '' },
+                  { name: '', phone: '', position: '', date: '' },
+                  { name: '', phone: '', position: '', date: '' },
+                ],
+        }
+        methods.reset(merged)
+      }
+    } else if (isNew && systemId) {
+      // ===== ⭐ โหมดสร้างใหม่ — pre-fill จาก water_system =====
+      const { data: sys } = await sb
+        .from('water_systems')
+        .select('*')
+        .eq('id', systemId)
+        .single()
+
+      if (sys) {
+        console.log('[Survey] pre-fill จาก water_system:', sys)
+        methods.reset({
+          ...methods.getValues(),
+          village_id: villageId,
+          water_system_id: systemId,
+          // ⭐ pre-fill Section 1
+          water_system_name: sys.system_name ?? '',
+          lat: sys.lat ?? undefined,
+          lng: sys.lng ?? undefined,
+          location: sys.system_name ?? '',
+          // ⭐ pre-fill บางอย่างจาก water_system
+          water_source_type: sys.water_source_type
+            ? [sys.water_source_type]
+            : [],
+        })
+      }
+    }
+
+    setLoading(false)
+  }
+  load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [id, villageId, isNew, systemId])
 
   // ==========================================
   // บันทึก

@@ -1,8 +1,9 @@
 'use server'
-import { revalidatePath } from 'next/cache'
+
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { createSession, clearSession, SESSION_COOKIE } from '@/lib/auth/session'
 
 function adminSb() {
@@ -13,6 +14,9 @@ function adminSb() {
   )
 }
 
+// ========================================
+// Login
+// ========================================
 export async function loginAction(
   _prev: { error?: string } | null,
   formData: FormData,
@@ -56,6 +60,13 @@ export async function loginAction(
   redirect('/admin/dashboard')
 }
 
+// ========================================
+// Logout
+// ========================================
+export async function logoutAction() {
+  await clearSession()
+  redirect('/admin')
+}
 
 // ========================================
 // สร้าง water_system ใหม่
@@ -72,8 +83,9 @@ export async function createWaterSystemAction(
   if (!villageId) return { error: 'ไม่พบหมู่บ้าน' }
   if (!systemName) return { error: 'กรุณากรอกชื่อระบบ' }
 
-  // หา system_no ถัดไปของหมู่บ้านนี้
   const sb = adminSb()
+
+  // หา system_no ถัดไป
   const { data: existing } = await sb
     .from('water_systems')
     .select('system_no')
@@ -100,7 +112,43 @@ export async function createWaterSystemAction(
     return { error: error?.message ?? 'สร้างไม่สำเร็จ' }
   }
 
+  revalidatePath('/admin/dashboard')
   return { id: data.id }
+}
+
+// ========================================
+// อัปเดต water_system
+// ========================================
+export async function updateWaterSystemAction(
+  _prev: { error?: string; ok?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean }> {
+  const id = Number(formData.get('id'))
+  const systemName = (formData.get('system_name') as string)?.trim()
+  const lat = formData.get('lat') ? Number(formData.get('lat')) : null
+  const lng = formData.get('lng') ? Number(formData.get('lng')) : null
+
+  if (!id) return { error: 'ไม่พบ id' }
+  if (!systemName) return { error: 'กรุณากรอกชื่อระบบ' }
+
+  const sb = adminSb()
+  const { error } = await sb
+    .from('water_systems')
+    .update({
+      system_name: systemName,
+      lat,
+      lng,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/dashboard')
+  revalidatePath('/villages')
+  revalidatePath('/')
+
+  return { ok: true }
 }
 
 // ========================================
@@ -110,8 +158,4 @@ export async function deleteWaterSystemAction(id: number) {
   const sb = adminSb()
   await sb.from('water_systems').delete().eq('id', id)
   revalidatePath('/admin/dashboard')
-}
-export async function logoutAction() {
-  await clearSession()
-  redirect('/admin')
 }

@@ -24,7 +24,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-50 to-white">
       <form action={formAction} className="card p-8 w-full max-w-md">
-        {/* Header: โลโก้ + ข้อความ */}
+        {/* Header */}
         <div className="flex items-center gap-5 mb-6">
           <div className="relative shrink-0">
             <div className="absolute inset-0 rounded-full bg-brand-400/40 blur-xl scale-110" />

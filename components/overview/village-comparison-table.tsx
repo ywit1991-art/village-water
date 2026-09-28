@@ -79,7 +79,7 @@ export default function VillageComparisonTable({ rows }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-brand-50 text-brand-700">
             <tr>
-              <th className="p-3 text-left w-16">
+              <th className="p-3 text-left w-20">
                 <button
                   onClick={() => toggleSort('no')}
                   className="inline-flex items-center gap-1 hover:text-brand-900"
@@ -148,7 +148,6 @@ export default function VillageComparisonTable({ rows }: Props) {
                   )}
                 </button>
               </th>
-              <th className="p-3 text-right w-24">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -212,14 +211,6 @@ export default function VillageComparisonTable({ rows }: Props) {
                           ))}
                       </div>
                     )}
-                  </td>
-                  <td className="p-3 text-right">
-                    <a
-                      href={`/villages/${row.village.id}`}
-                      className="text-brand-600 hover:text-brand-800 font-medium text-xs"
-                    >
-                      ดู →
-                    </a>
                   </td>
                 </tr>
               )

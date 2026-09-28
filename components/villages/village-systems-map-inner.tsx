@@ -7,48 +7,57 @@ import LeafletBase from '@/components/maps/LeafletBase'
 import { createWaterMarkerIcon } from '@/lib/map-icons'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import type { WaterSystem, Survey, CommitteeMember } from '@/lib/types'
-import { Phone, Home, UserCheck, AlertCircle, Droplets, Package } from 'lucide-react'
 
 interface Props {
   systems: WaterSystem[]
   surveys: Survey[]
 }
 
-function AutoFitBounds({ systems }: { systems: WaterSystem[] }) {
+function getCoordinates(
+  s: WaterSystem,
+  survey: Survey | null,
+): [number, number] | null {
+  const lat = survey?.lat ?? s.lat
+  const lng = survey?.lng ?? s.lng
+  if (!lat || !lng) return null
+  return [lat, lng]
+}
+
+function AutoFitBounds({ points }: { points: [number, number][] }) {
   const map = useMap()
   useEffect(() => {
-    if (systems.length === 0) return
-    if (systems.length === 1) {
-      const s = systems[0]
-      if (s.lat && s.lng) map.setView([s.lat, s.lng], 16)
+    if (points.length === 0) return
+    if (points.length === 1) {
+      map.setView(points[0], 16)
       return
     }
-    const lats = systems.map(s => s.lat!).filter(Boolean)
-    const lngs = systems.map(s => s.lng!).filter(Boolean)
-    if (lats.length === 0) return
+    const lats = points.map(p => p[0])
+    const lngs = points.map(p => p[1])
     const bounds: [[number, number], [number, number]] = [
       [Math.min(...lats), Math.min(...lngs)],
       [Math.max(...lats), Math.max(...lngs)],
     ]
     map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 })
-  }, [systems, map])
+  }, [points, map])
   return null
 }
 
 export default function VillageSystemsMapInner({ systems, surveys }: Props) {
-  const valid = systems.filter(s => s.lat && s.lng)
   const markersRef = useRef<Record<number, L.Marker | null>>({})
-
-  if (valid.length === 0) {
-    return (
-      <div className="card p-8 text-center text-brand-400 text-base">
-        ยังไม่มีพิกัดของระบบประปา
-      </div>
-    )
+useEffect(() => {
+  function handleClickOutside(e: MouseEvent) {
+    const target = e.target as HTMLElement
+    // ถ้าคลิกที่แผนที่หรือ popup → ไม่ปิด
+    if (target.closest('.leaflet-container') || target.closest('.leaflet-popup')) {
+      return
+    }
+    // ปิด popup ทุกตัว
+    Object.values(markersRef.current).forEach(m => m?.closePopup())
   }
 
-  const center: [number, number] = [valid[0].lat!, valid[0].lng!]
-
+  document.addEventListener('mousedown', handleClickOutside)
+  return () => document.removeEventListener('mousedown', handleClickOutside)
+}, [])
   const latestBySystem = new Map<number, Survey>()
   surveys.forEach(s => {
     if (s.water_system_id && !latestBySystem.has(s.water_system_id)) {
@@ -56,13 +65,32 @@ export default function VillageSystemsMapInner({ systems, surveys }: Props) {
     }
   })
 
+  const markers = systems
+    .map(s => {
+      const survey = latestBySystem.get(s.id) ?? null
+      const coords = getCoordinates(s, survey)
+      if (!coords) return null
+      return { system: s, survey, coords }
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+
+  if (markers.length === 0) {
+    return (
+      <div className="card p-8 text-center text-brand-400 text-base">
+        ยังไม่มีพิกัดของระบบประปา
+      </div>
+    )
+  }
+
+  const center: [number, number] = markers[0].coords
+  const allPoints = markers.map(m => m.coords)
+
   return (
     <div className="h-[500px] md:h-[600px] rounded-2xl overflow-hidden border border-brand-100 shadow-lg">
       <LeafletBase center={center} zoom={14} className="w-full h-full">
-        <AutoFitBounds systems={valid} />
+        <AutoFitBounds points={allPoints} />
 
-        {valid.map(s => {
-          const survey = latestBySystem.get(s.id) ?? null
+        {markers.map(({ system: s, survey, coords }) => {
           const condition =
             survey?.overall_condition ?? s.overall_condition ?? 'ไม่มีข้อมูล'
           const c = STATUS_COLORS[condition]
@@ -70,16 +98,13 @@ export default function VillageSystemsMapInner({ systems, surveys }: Props) {
           const problems = (survey?.problems ?? []).filter(
             (p): p is string => typeof p === 'string' && p.length > 0,
           )
-
           const productionTypes = (survey?.production_type ?? []).filter(
             (t): t is string => typeof t === 'string' && t.length > 0,
           )
-
           const sufficiency = survey?.water_source_sufficiency ?? null
-
-          // ⚡ ใช้ค่าจาก survey ก่อน → fallback water_systems
           const householdCount = survey?.household_count ?? s.household_count ?? 0
           const tankCapacity = survey?.tank_capacity ?? s.tank_capacity ?? null
+          const photos = (survey?.photos ?? []).filter(Boolean) as string[]
 
           return (
             <Marker
@@ -87,7 +112,7 @@ export default function VillageSystemsMapInner({ systems, surveys }: Props) {
               ref={m => {
                 markersRef.current[s.id] = m
               }}
-              position={[s.lat!, s.lng!]}
+              position={coords}
               icon={createWaterMarkerIcon(condition, s.user_count ?? 0)}
               eventHandlers={{
                 mouseover: () => {
@@ -95,238 +120,153 @@ export default function VillageSystemsMapInner({ systems, surveys }: Props) {
                 },
               }}
             >
-              <Popup maxWidth={380} minWidth={340}>
-                <div className="space-y-3" style={{ fontSize: '15px' }}>
-                  {/* Header */}
-                  <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
-                      style={{ background: c.hex, fontSize: '16px' }}
-                    >
-                      {s.system_no}
-                    </div>
-                    <p
-                      className="font-bold text-brand-900 leading-tight flex-1"
-                      style={{ fontSize: '16px' }}
-                    >
-                      {s.system_name}
-                    </p>
-                    <span className="text-2xl shrink-0" title={condition}>
-                      {STATUS_EMOJI[condition] ?? ''}
-                    </span>
-                  </div>
+              <Popup maxWidth={680} minWidth={620}>
+                <div className="font-sans">
+{/* ===== Header — เตี้ยลง ===== */}
+<div className="px-4 py-2 border-b-2 border-slate-200">
+  <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-2 min-w-0">
+      <span
+        className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs shrink-0"
+        style={{ background: c.hex }}
+      >
+        {s.system_no}
+      </span>
+      <div className="min-w-0">
+        <p className="font-bold text-brand-900 text-base leading-tight truncate">
+          {s.system_name}
+        </p>
+        {productionTypes.length > 0 && (
+          <p className="text-xs text-slate-500 leading-tight truncate">
+            ประเภทระบบผลิต: {productionTypes.join(', ')}
+          </p>
+        )}
+      </div>
+    </div>
+    <span className="text-xl shrink-0" title={condition}>
+      {STATUS_EMOJI[condition] ?? ''}
+    </span>
+  </div>
+</div>
 
-                  {/* ประเภทระบบผลิต */}
-                  {productionTypes.length > 0 && (
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-md bg-brand-50 text-brand-600 flex items-center justify-center shrink-0 mt-0.5">
-                        <Droplets size={14} />
+                  {/* ===== 2-Column Body ===== */}
+                  <div className="grid grid-cols-[1fr_1fr] divide-x divide-slate-100">
+                    {/* LEFT COLUMN */}
+                    <div className="px-5 py-3.5 space-y-3">
+                      {/* ข้อมูลหลัก */}
+                      <div className="space-y-2">
+                        <Row label="ครัวเรือน" value={`${householdCount}`} />
+                        <Row
+                          label="ความจุ"
+                          value={
+                            tankCapacity != null ? `${tankCapacity} ลบ.ม.` : '–'
+                          }
+                        />
+                        <Row
+                          label="น้ำดิบ"
+                          value={
+                            sufficiency === 'เพียงพอ'
+                              ? 'เพียงพอ'
+                              : sufficiency?.includes('ไม่เพียงพอ')
+                                ? 'ไม่เพียงพอ'
+                                : '–'
+                          }
+                        />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-brand-500"
-                          style={{ fontSize: '12px' }}
-                        >
-                          ประเภทระบบผลิต
-                        </p>
-                        <p
-                          className="font-medium text-brand-900 leading-snug"
-                          style={{ fontSize: '14px' }}
-                        >
-                          {productionTypes.join(', ')}
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Stats 3 cols */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="text-center p-2.5 rounded-lg bg-brand-50/60">
-                      <div className="w-7 h-7 mx-auto rounded-md bg-white text-brand-600 flex items-center justify-center mb-1.5">
-                        <Home size={14} />
-                      </div>
-                      <p
-                        className="font-bold text-brand-900 leading-tight"
-                        style={{ fontSize: '17px' }}
-                      >
-                        {householdCount}
-                      </p>
-                      <p
-                        className="text-brand-500 mt-0.5"
-                        style={{ fontSize: '11px' }}
-                      >
-                        ครัวเรือน
-                      </p>
-                    </div>
-
-                    <div className="text-center p-2.5 rounded-lg bg-brand-50/60">
-                      <div className="w-7 h-7 mx-auto rounded-md bg-white text-brand-600 flex items-center justify-center mb-1.5">
-                        <Package size={14} />
-                      </div>
-                      <p
-                        className="font-bold text-brand-900 leading-tight"
-                        style={{ fontSize: '17px' }}
-                      >
-                        {tankCapacity ?? '–'}
-                      </p>
-                      <p
-                        className="text-brand-500 mt-0.5"
-                        style={{ fontSize: '11px' }}
-                      >
-                        ความจุ (ลบ.ม.)
-                      </p>
-                    </div>
-
-                    <div className="text-center p-2.5 rounded-lg bg-brand-50/60">
-                      <div className="w-7 h-7 mx-auto rounded-md bg-white flex items-center justify-center mb-1.5 text-lg leading-none">
-                        {sufficiency
-                          ? sufficiency === 'เพียงพอ'
-                            ? '✅'
-                            : sufficiency.includes('ไม่เพียงพอ')
-                              ? '⚠️'
-                              : '❔'
-                          : '❔'}
-                      </div>
-                      <p
-                        className="font-bold text-brand-900 leading-tight"
-                        style={{ fontSize: '14px' }}
-                      >
-                        {sufficiency === 'เพียงพอ'
-                          ? 'พอ'
-                          : sufficiency?.includes('ไม่เพียงพอ')
-                            ? 'ไม่พอ'
-                            : '–'}
-                      </p>
-                      <p
-                        className="text-brand-500 mt-0.5"
-                        style={{ fontSize: '11px' }}
-                      >
-                        น้ำดิบ
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* ช่างประปา */}
-                  {survey?.operator_name && (
-                    <div className="p-2.5 rounded-lg bg-brand-50/60 flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-md bg-white text-brand-600 flex items-center justify-center shrink-0">
-                        <Phone size={14} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-brand-500"
-                          style={{ fontSize: '11px' }}
-                        >
-                          ช่างประปา
-                        </p>
-                        <p
-                          className="font-medium text-brand-900 truncate"
-                          style={{ fontSize: '14px' }}
-                        >
-                          {survey.operator_name}
-                        </p>
-                      </div>
-                      {survey.operator_phone && (
-                        <a
-                          href={`tel:${survey.operator_phone}`}
-                          className="font-mono text-brand-600 hover:underline shrink-0"
-                          style={{ fontSize: '12px' }}
-                        >
-                          {survey.operator_phone}
-                        </a>
+                      {/* ช่างประปา */}
+                      {survey?.operator_name && (
+                        <div className="pt-2.5 border-t border-slate-100">
+                          <p className="text-sm text-slate-500 mb-0.5">
+                            ช่างประปา
+                          </p>
+                          <p className="text-base font-medium text-slate-800 leading-tight">
+                            {survey.operator_name}
+                          </p>
+                          {survey.operator_phone && (
+                            <a
+                              href={`tel:${survey.operator_phone}`}
+                              className="text-sm text-brand-600 hover:underline font-mono"
+                            >
+                              {survey.operator_phone}
+                            </a>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
 
-                  {/* คณะกรรมการ */}
-                  {committee.length > 0 && (
-                    <div>
-                      <p
-                        className="font-semibold text-brand-600 mb-1.5 flex items-center gap-1.5"
-                        style={{ fontSize: '13px' }}
-                      >
-                        <UserCheck size={13} />
-                        คณะกรรมการ ({committee.length} คน)
-                      </p>
-                      <ul className="space-y-1 max-h-24 overflow-y-auto">
-                        {committee.map((m, i) => (
-                          <li
-                            key={i}
-                            className="text-slate-700 flex gap-1.5"
-                            style={{ fontSize: '12px' }}
-                          >
-                            <span className="text-brand-400 shrink-0">
-                              {i + 1}.
-                            </span>
-                            <span className="flex-1 truncate">
-                              <span className="font-medium">{m.name}</span>
-                              {m.position && (
-                                <span className="text-slate-500">
-                                  {' '}
-                                  · {m.position}
+                    {/* RIGHT COLUMN */}
+                    <div className="px-5 py-3.5 space-y-3">
+                      {/* คณะกรรมการ */}
+                      {committee.length > 0 && (
+                        <div>
+                          <p className="text-sm text-slate-500 mb-1">
+                            คณะกรรมการ ({committee.length} คน)
+                          </p>
+                          <ol className="space-y-0.5 text-sm text-slate-700 max-h-24 overflow-y-auto">
+                            {committee.map((m, i) => (
+                              <li key={i} className="flex gap-2">
+                                <span className="text-slate-400 shrink-0">
+                                  {i + 1}.
                                 </span>
-                              )}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                                <span className="flex-1">
+                                  <span className="font-medium">{m.name}</span>
+                                  {m.position && (
+                                    <span className="text-slate-500">
+                                      {' '}
+                                      · {m.position}
+                                    </span>
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
 
-                  {/* ปัญหา */}
-                  {problems.length > 0 && (
-                    <div className="p-2.5 rounded-lg bg-orange-50 border border-orange-100">
-                      <p
-                        className="font-semibold text-orange-700 mb-1 flex items-center gap-1.5"
-                        style={{ fontSize: '13px' }}
-                      >
-                        <AlertCircle size={13} />
-                        ปัญหา ({problems.length})
+                      {/* ปัญหา */}
+                      {problems.length > 0 && (
+                        <div className="pt-2.5 border-t border-slate-100">
+                          <p className="text-sm text-slate-500 mb-1">
+                            ปัญหาที่พบ ({problems.length})
+                          </p>
+                          <ul className="space-y-0.5 text-sm text-slate-700 max-h-20 overflow-y-auto">
+                            {problems.map((p, i) => (
+                              <li key={i} className="flex gap-2">
+                                <span className="text-slate-400 shrink-0">•</span>
+                                <span className="line-clamp-2">{p}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ===== Photos (ท้าย popup) ===== */}
+                  {photos.length > 0 && (
+                    <div className="px-5 py-3 border-t-2 border-slate-200">
+                      <p className="text-sm text-slate-500 mb-1.5">
+                        ภาพถ่าย ({photos.length})
                       </p>
-                      <ul className="space-y-0.5">
-                        {problems.slice(0, 2).map((p, i) => (
-                          <li
-                            key={i}
-                            className="text-slate-700 flex gap-1.5"
-                            style={{ fontSize: '12px' }}
-                          >
-                            <span className="text-orange-500 shrink-0">•</span>
-                            <span className="line-clamp-2">{p}</span>
-                          </li>
-                        ))}
-                        {problems.length > 2 && (
-                          <li
-                            className="text-orange-500 pl-3"
-                            style={{ fontSize: '11px' }}
-                          >
-                            และอีก {problems.length - 2} ข้อ
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* รูป 3 ภาพ */}
-                  {survey?.photos && survey.photos.filter(Boolean).length > 0 && (
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {survey.photos
-                        .filter(Boolean)
-                        .slice(0, 3)
-                        .map((url, i) => (
+                      <div className="grid grid-cols-6 gap-1.5">
+                        {photos.slice(0, 6).map((url, i) => (
                           <a
                             key={i}
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="aspect-square rounded overflow-hidden border border-brand-100"
+                            className="aspect-square rounded overflow-hidden border border-brand-100 hover:border-brand-300 transition"
                           >
                             <img
                               src={url}
-                              alt=""
+                              alt={`ภาพที่ ${i + 1}`}
                               className="w-full h-full object-cover hover:scale-110 transition"
+                              loading="lazy"
                             />
                           </a>
                         ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -335,6 +275,15 @@ export default function VillageSystemsMapInner({ systems, surveys }: Props) {
           )
         })}
       </LeafletBase>
+    </div>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-sm text-slate-500">{label}</span>
+      <span className="text-base font-medium text-slate-800">{value}</span>
     </div>
   )
 }

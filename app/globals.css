@@ -84,3 +84,17 @@
 .leaflet-popup-tip {
   box-shadow: none !important;
 }
+
+/* Leaflet Popup — กว้างพิเศษ */
+.leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 620px !important;
+  max-width: 680px !important;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+}
