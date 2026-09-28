@@ -14,7 +14,7 @@ interface Props {
   height?: string
 }
 
-const HOVER_DELAY_MS = 800 // ⏱️ delay ก่อนเปิด modal (ปรับได้)
+const HOVER_DELAY_MS = 500 // ⏱️ delay ก่อนเปิด modal (ปรับได้)
 
 function AutoFitBounds({ points }: { points: [number, number][] }) {
   const map = useMap()
