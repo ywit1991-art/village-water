@@ -142,20 +142,18 @@ export default function SurveyFormPage() {
 
       if (sys) {
         console.log('[Survey] pre-fill จาก water_system:', sys)
-        methods.reset({
-          ...methods.getValues(),
-          village_id: villageId,
-          water_system_id: systemId,
-          // ⭐ pre-fill Section 1
-          water_system_name: sys.system_name ?? '',
-          lat: sys.lat ?? undefined,
-          lng: sys.lng ?? undefined,
-          location: sys.system_name ?? '',
-          // ⭐ pre-fill บางอย่างจาก water_system
-          water_source_type: sys.water_source_type
-            ? [sys.water_source_type]
-            : [],
-        })
+methods.reset({
+  ...methods.getValues(),
+  village_id: villageId,
+  water_system_id: systemId,
+  water_system_name: sys.system_name ?? '',
+  lat: sys.lat ?? undefined,
+  lng: sys.lng ?? undefined,
+  location: sys.system_name ?? '',
+  water_source_type: sys.water_source_type
+    ? [sys.water_source_type]
+    : [],
+} as any)      // ← เพิ่ม as any
       }
     }
 

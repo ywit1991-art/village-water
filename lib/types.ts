@@ -166,6 +166,12 @@ export interface WaterSystem {
   household_count: number
   water_source_type: string | null
   water_rate: number | null
+  tank_capacity: number | null            // ✅ เพิ่ม
+  tank_count: number | null               // ✅ เพิ่ม
+  water_source_sufficiency: string | null // ✅ เพิ่ม
+  pipe_total_length: number | null        // ✅ เพิ่ม
+  operator_name: string | null            // ✅ เพิ่ม
+  operator_phone: string | null           // ✅ เพิ่ม
   last_survey_id: string | null
   last_survey_date: string | null
   photo_url: string | null
