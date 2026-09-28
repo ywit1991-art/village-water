@@ -166,6 +166,9 @@ export default function OverviewClient({ villages, systems }: Props) {
           problems: (s.survey?.problems ?? []).filter(
             (p): p is string => typeof p === 'string' && p.length > 0,
           ),
+          improvements: (s.survey?.improvements ?? []).filter(
+            (p): p is string => typeof p === 'string' && p.length > 0,
+          ),
           photos: (s.survey?.photos ?? []).filter(
             (u): u is string => typeof u === 'string' && u.length > 0,
           ),

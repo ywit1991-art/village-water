@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { X } from 'lucide-react'
+import { X, AlertCircle, Wrench } from 'lucide-react'
 import LeafletBase from './LeafletBase'
 import { createWaterMarkerIcon } from '@/lib/map-icons'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
@@ -14,7 +14,7 @@ interface Props {
   height?: string
 }
 
-const HOVER_DELAY_MS = 500 // ⏱️ delay ก่อนเปิด modal (ปรับได้)
+const HOVER_DELAY_MS = 800
 
 function AutoFitBounds({ points }: { points: [number, number][] }) {
   const map = useMap()
@@ -42,14 +42,12 @@ export default function VillagesMapInner({
   const [selected, setSelected] = useState<MarkerData | null>(null)
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ล้าง timer เมื่อ unmount
   useEffect(() => {
     return () => {
       if (hoverTimer.current) clearTimeout(hoverTimer.current)
     }
   }, [])
 
-  // ปิด Modal เมื่อกด ESC
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setSelected(null)
@@ -226,6 +224,7 @@ function DetailModal({
           </div>
 
           <div className="px-8 py-6 space-y-6">
+            {/* ช่างประปา */}
             {m.operatorName && (
               <Section title="ช่างประปา">
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
@@ -249,6 +248,7 @@ function DetailModal({
               </Section>
             )}
 
+            {/* คณะกรรมการ */}
             {m.committee.length > 0 && (
               <Section title={`คณะกรรมการ (${m.committee.length} คน)`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -286,10 +286,12 @@ function DetailModal({
               </Section>
             )}
 
+            {/* ปัญหาที่พบ — แสดงทั้งหมด */}
             {m.problems.length > 0 && (
               <Section
                 title={`ปัญหาที่พบ (${m.problems.length})`}
                 accent="orange"
+                icon={<AlertCircle size={16} />}
               >
                 <ul className="space-y-2">
                   {m.problems.map((p, i) => (
@@ -297,14 +299,40 @@ function DetailModal({
                       key={i}
                       className="flex items-start gap-3 text-base text-slate-700 bg-orange-50 rounded-xl px-4 py-2.5 border border-orange-100"
                     >
-                      <span className="text-orange-500 shrink-0 mt-0.5">●</span>
-                      <span>{p}</span>
+                      <span className="w-6 h-6 rounded-md bg-orange-200 text-orange-800 flex items-center justify-center text-xs font-bold shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1">{p}</span>
                     </li>
                   ))}
                 </ul>
               </Section>
             )}
 
+            {/* จุดที่ควรแก้ไข — แสดงทั้งหมด */}
+            {m.improvements.length > 0 && (
+              <Section
+                title={`จุดที่ควรแก้ไข/ปรับปรุง (${m.improvements.length})`}
+                accent="amber"
+                icon={<Wrench size={16} />}
+              >
+                <ul className="space-y-2">
+                  {m.improvements.map((p, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-base text-slate-700 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-100"
+                    >
+                      <span className="w-6 h-6 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-xs font-bold shrink-0">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1">{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
+            {/* ภาพถ่าย */}
             {m.photos.length > 0 && (
               <Section
                 title={`ภาพถ่าย (${m.photos.length})`}
@@ -383,15 +411,24 @@ function Section({
   title,
   children,
   accent = 'brand',
+  icon,
 }: {
   title: string
   children: React.ReactNode
-  accent?: 'brand' | 'orange' | 'emerald'
+  accent?: 'brand' | 'orange' | 'amber' | 'emerald'
+  icon?: React.ReactNode
 }) {
   const colorMap = {
     brand: 'from-brand-400 to-brand-600',
     orange: 'from-orange-400 to-orange-600',
+    amber: 'from-amber-400 to-amber-600',
     emerald: 'from-emerald-400 to-emerald-600',
+  }
+  const textMap = {
+    brand: 'text-brand-800',
+    orange: 'text-orange-800',
+    amber: 'text-amber-800',
+    emerald: 'text-emerald-800',
   }
   return (
     <div>
@@ -399,7 +436,8 @@ function Section({
         <span
           className={`w-1.5 h-5 bg-gradient-to-b ${colorMap[accent]} rounded-full`}
         />
-        <h3 className="text-base font-bold text-brand-800">{title}</h3>
+        {icon && <span className={textMap[accent]}>{icon}</span>}
+        <h3 className={`text-base font-bold ${textMap[accent]}`}>{title}</h3>
       </div>
       {children}
     </div>

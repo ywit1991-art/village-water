@@ -28,13 +28,14 @@ export interface MarkerData {
   userCount: number
   householdCount: number
   tankCapacity: number | null
-  waterRate: number | null          // ✅ ราคาค่าน้ำ
+  waterRate: number | null
   productionTypes: string[]
   sufficiency: string | null
   operatorName: string | null
   operatorPhone: string | null
   committee: CommitteeMember[]
   problems: string[]
+  improvements: string[]
   photos: string[]
 }
 
