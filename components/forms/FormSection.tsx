@@ -28,7 +28,11 @@ interface CheckboxGroupProps {
   columns?: 2 | 3 | 4
 }
 
-export function CheckboxGroup({ name, options, columns = 3 }: CheckboxGroupProps) {
+export function CheckboxGroup({
+  name,
+  options,
+  columns = 3,
+}: CheckboxGroupProps) {
   const { register } = useFormContext()
   const colClass =
     columns === 2
@@ -64,7 +68,9 @@ interface RadioGroupProps {
 }
 
 export function RadioGroup({ name, options, columns = 2 }: RadioGroupProps) {
-  const { register } = useFormContext()
+  const { watch, setValue } = useFormContext()
+  const currentValue = watch(name)
+
   const colClass =
     columns === 3
       ? 'md:grid-cols-3'
@@ -77,15 +83,27 @@ export function RadioGroup({ name, options, columns = 2 }: RadioGroupProps) {
       {options.map(opt => {
         const v = typeof opt === 'string' ? opt : opt.value
         const label = typeof opt === 'string' ? opt : opt.label
+        const isChecked = currentValue === v
+
         return (
           <label
             key={v}
-            className="flex items-start gap-2 px-3 py-1.5 rounded-lg hover:bg-brand-50 cursor-pointer text-sm"
+            className={`flex items-start gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-sm transition ${
+              isChecked
+                ? 'bg-brand-50 ring-1 ring-brand-200'
+                : 'hover:bg-brand-50'
+            }`}
           >
             <input
-              type="radio"
-              value={v}
-              {...register(name)}
+              type="checkbox"
+              checked={isChecked}
+              onChange={() => {
+                // ✅ ติ๊กซ้ำ = ยกเลิก (กด 2 ครั้งเพื่อยกเลิก)
+                setValue(name, isChecked ? null : v, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }}
               className="accent-brand-500 mt-0.5"
             />
             <span>{label}</span>

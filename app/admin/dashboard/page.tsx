@@ -7,7 +7,6 @@ import { logoutAction } from '../actions'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import CreateSystemModal from './create-system-modal'
-import EditSystemModal from './edit-system-modal'
 
 interface SystemRow {
   system: WaterSystem
@@ -29,24 +28,19 @@ export default async function DashboardPage() {
         .select('*')
         .order('village_id')
         .order('system_no'),
-      sb
-        .from('surveys')
-        .select('*')
-        .order('created_at', { ascending: false }),
+      sb.from('surveys').select('*').order('created_at', { ascending: false }),
     ])
 
   const villageMap = new Map<number, Village>()
   ;(villages as Village[] | null)?.forEach(v => villageMap.set(v.id, v))
 
-  // เลือก survey ล่าสุดของแต่ละระบบ (submitted/approved)
-  const surveyMap = new Map<number, Survey>()
-  ;(surveys as Survey[] | null)
-    ?.filter(s => s.status === 'submitted' || s.status === 'approved')
-    .forEach(s => {
-      if (s.water_system_id && !surveyMap.has(s.water_system_id)) {
-        surveyMap.set(s.water_system_id, s)
-      }
-    })
+// เลือก survey ล่าสุดของแต่ละระบบ (ทุกสถานะ)
+const surveyMap = new Map<number, Survey>()
+;(surveys as Survey[] | null)?.forEach(s => {
+  if (s.water_system_id && !surveyMap.has(s.water_system_id)) {
+    surveyMap.set(s.water_system_id, s)
+  }
+})
 
   // จัดกลุ่มตามหมู่บ้าน
   const grouped = new Map<number, SystemRow[]>()
@@ -64,7 +58,6 @@ export default async function DashboardPage() {
 
   const allVillages = (villages as Village[] | null) ?? []
 
-  // Stats
   const totalSurveys = (surveys as Survey[] | null)?.length ?? 0
   const submittedCount =
     (surveys as Survey[] | null)?.filter(s => s.status === 'submitted')
@@ -74,47 +67,46 @@ export default async function DashboardPage() {
 
   return (
     <>
-<header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
-  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    <Link href="/" className="flex items-center gap-3">
-      {/* โลโก้ + เงาเรืองแสง เหมือน overview */}
-      <div className="relative shrink-0">
-        <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
-        <img
-          src="/logo.png"
-          alt="ตราเทศบาลตำบลท่าวังทอง"
-          className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
-        />
-      </div>
-      <div>
-        <h1 className="font-bold leading-tight text-sm md:text-base">
-          {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
-        </h1>
-        <p className="text-[11px] text-brand-100 hidden md:block">
-          เจ้าหน้าที่เทศบาล
-        </p>
-      </div>
-    </Link>
-    <nav className="flex items-center gap-1 md:gap-2">
-      <Link
-        href="/overview"
-        className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
-      >
-        <Eye size={16} />
-        <span className="hidden md:inline">ดูสาธารณะ</span>
-      </Link>
-      <form action={logoutAction}>
-        <button
-          className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
-          type="submit"
-        >
-          <LogOut size={16} />
-          <span className="hidden md:inline">ออก</span>
-        </button>
-      </form>
-    </nav>
-  </div>
-</header>
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
+              <img
+                src="/logo.png"
+                alt="ตราเทศบาลตำบลท่าวังทอง"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
+              />
+            </div>
+            <div>
+              <h1 className="font-bold leading-tight text-sm md:text-base">
+                แดชบอร์ดเจ้าหน้าที่
+              </h1>
+              <p className="text-[11px] text-brand-100 hidden md:block">
+                {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
+              </p>
+            </div>
+          </Link>
+          <nav className="flex items-center gap-1 md:gap-2">
+            <Link
+              href="/overview"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+            >
+              <Eye size={16} />
+              <span className="hidden md:inline">ดูสาธารณะ</span>
+            </Link>
+            <form action={logoutAction}>
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+                type="submit"
+              >
+                <LogOut size={16} />
+                <span className="hidden md:inline">ออก</span>
+              </button>
+            </form>
+          </nav>
+        </div>
+      </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 w-full">
         {/* Stats */}
@@ -252,23 +244,20 @@ export default async function DashboardPage() {
                                 </span>
                               </td>
                               <td className="p-3 text-right whitespace-nowrap">
-                                <div className="inline-flex items-center gap-3">
-                                  <EditSystemModal system={sys} />
-                                  <Link
-                                    href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                    className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium text-xs"
-                                  >
-                                    {s ? (
-                                      <>
-                                        <Pencil size={12} /> แบบสำรวจ
-                                      </>
-                                    ) : (
-                                      <>
-                                        <PlusCircle size={12} /> บันทึก
-                                      </>
-                                    )}
-                                  </Link>
-                                </div>
+                                <Link
+                                  href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
+                                >
+                                  {s ? (
+                                    <>
+                                      <Pencil size={12} /> แก้ไขแบบฟอร์ม
+                                    </>
+                                  ) : (
+                                    <>
+                                      <PlusCircle size={12} /> กรอกแบบฟอร์ม
+                                    </>
+                                  )}
+                                </Link>
                               </td>
                             </tr>
                           )
@@ -280,23 +269,7 @@ export default async function DashboardPage() {
               </div>
             )
           })}
-        </div><footer className="bg-brand-900 text-brand-100 py-4">
-  <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
-    <img
-      src="/logo.png"
-      alt="ตราเทศบาล"
-      className="w-11 h-11 rounded-full ring-2 ring-white/20 shrink-0"
-    />
-    <div className="text-xs md:text-sm leading-snug text-center">
-      <p className="font-medium">
-        เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
-      </p>
-      <p className="text-brand-300">
-        ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
-      </p>
-    </div>
-  </div>
-</footer>
+        </div>
       </main>
     </>
   )
