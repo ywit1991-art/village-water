@@ -97,84 +97,63 @@ export default function OverviewClient({ villages, systems }: Props) {
     statusCount[k] = (statusCount[k] ?? 0) + 1
   })
 
+  // ==========================================
+  // Markers — ⚡ มี improvements ครบ
+  // ==========================================
   const markers: MarkerData[] = useMemo(() => {
-    return filtered
-      .map(s => {
-        const lat = s.survey?.lat ?? s.system.lat
-        const lng = s.survey?.lng ?? s.system.lng
-        if (!lat || !lng) return null
+    const result: MarkerData[] = []
 
+    for (const s of filtered) {
+      const lat = s.survey?.lat ?? s.system.lat
+      const lng = s.survey?.lng ?? s.system.lng
+      if (!lat || !lng) continue
 
+      const productionTypes = (s.survey?.production_type ?? []).filter(
+        (t): t is string => typeof t === 'string' && t.length > 0,
+      )
 
-                return {
-          systemId: s.system.id,
-          villageId: s.system.village_id,
-          villageNo: s.village.village_no,
-          villageName: s.village.village_name,
-          systemName: s.system.system_name,
-          systemNo: s.system.system_no,
-          lat,
-          lng,
-          status:
-            s.survey?.overall_condition ??
-            s.system.overall_condition ??
-            'ไม่มีข้อมูล',
-          userCount: s.system.user_count ?? 0,
-          householdCount:
-            s.survey?.household_count ?? s.system.household_count ?? 0,
-          tankCapacity: s.survey?.tank_capacity ?? s.system.tank_capacity ?? null,
-          waterRate: s.survey?.water_rate ?? s.system.water_rate ?? null,  // ← เพิ่ม
-          productionTypes: (s.survey?.production_type ?? []).filter(
-            (t): t is string => typeof t === 'string' && t.length > 0,
-          ),
-          sufficiency: s.survey?.water_source_sufficiency ?? null,
-          operatorName: s.survey?.operator_name ?? null,
-          operatorPhone: s.survey?.operator_phone ?? null,
-          committee: s.survey?.committee_members ?? [],
-          problems: (s.survey?.problems ?? []).filter(
-            (p): p is string => typeof p === 'string' && p.length > 0,
-          ),
-          photos: (s.survey?.photos ?? []).filter(
-            (u): u is string => typeof u === 'string' && u.length > 0,
-          ),
-        }
+      const problems = (s.survey?.problems ?? []).filter(
+        (p): p is string => typeof p === 'string' && p.length > 0,
+      )
 
-        return {
-          systemId: s.system.id,
-          villageId: s.system.village_id,
-          villageNo: s.village.village_no,
-          villageName: s.village.village_name,
-          systemName: s.system.system_name,
-          systemNo: s.system.system_no,
-          lat,
-          lng,
-          status:
-            s.survey?.overall_condition ??
-            s.system.overall_condition ??
-            'ไม่มีข้อมูล',
-          userCount: s.system.user_count ?? 0,
-          householdCount:
-            s.survey?.household_count ?? s.system.household_count ?? 0,
-          tankCapacity: s.survey?.tank_capacity ?? s.system.tank_capacity ?? null,
-          productionTypes: (s.survey?.production_type ?? []).filter(
-            (t): t is string => typeof t === 'string' && t.length > 0,
-          ),
-          sufficiency: s.survey?.water_source_sufficiency ?? null,
-          operatorName: s.survey?.operator_name ?? null,
-          operatorPhone: s.survey?.operator_phone ?? null,
-          committee: s.survey?.committee_members ?? [],
-          problems: (s.survey?.problems ?? []).filter(
-            (p): p is string => typeof p === 'string' && p.length > 0,
-          ),
-          improvements: (s.survey?.improvements ?? []).filter(
-            (p): p is string => typeof p === 'string' && p.length > 0,
-          ),
-          photos: (s.survey?.photos ?? []).filter(
-            (u): u is string => typeof u === 'string' && u.length > 0,
-          ),
-        }
+      const improvements = (s.survey?.improvements ?? []).filter(
+        (p): p is string => typeof p === 'string' && p.length > 0,
+      )
+
+      const photos = (s.survey?.photos ?? []).filter(
+        (u): u is string => typeof u === 'string' && u.length > 0,
+      )
+
+      result.push({
+        systemId: s.system.id,
+        villageId: s.system.village_id,
+        villageNo: s.village.village_no,
+        villageName: s.village.village_name,
+        systemName: s.system.system_name,
+        systemNo: s.system.system_no,
+        lat,
+        lng,
+        status:
+          s.survey?.overall_condition ??
+          s.system.overall_condition ??
+          'ไม่มีข้อมูล',
+        userCount: s.system.user_count ?? 0,
+        householdCount:
+          s.survey?.household_count ?? s.system.household_count ?? 0,
+        tankCapacity: s.survey?.tank_capacity ?? s.system.tank_capacity ?? null,
+        waterRate: s.survey?.water_rate ?? s.system.water_rate ?? null,
+        productionTypes,
+        sufficiency: s.survey?.water_source_sufficiency ?? null,
+        operatorName: s.survey?.operator_name ?? null,
+        operatorPhone: s.survey?.operator_phone ?? null,
+        committee: s.survey?.committee_members ?? [],
+        problems,
+        improvements,
+        photos,
       })
-      .filter((x): x is MarkerData => x !== null)
+    }
+
+    return result
   }, [filtered])
 
   const hasFilter = villageFilter !== 'all' || statusFilter !== 'all'
@@ -184,39 +163,81 @@ export default function OverviewClient({ villages, systems }: Props) {
     setStatusFilter('all')
   }
 
+  const cards = [
+    {
+      icon: <MapPin size={18} />,
+      value: stats.villages,
+      label: 'หมู่บ้าน',
+      color: 'text-brand-600 bg-brand-50',
+    },
+    {
+      icon: <Droplets size={18} />,
+      value: stats.systems,
+      label: 'ระบบประปา',
+      color: 'text-sky-600 bg-sky-50',
+    },
+    {
+      icon: <Home size={18} />,
+      value: stats.households,
+      label: 'ครัวเรือน',
+      color: 'text-indigo-600 bg-indigo-50',
+    },
+    {
+      icon: <Package size={18} />,
+      value: stats.capacity,
+      label: 'ความจุ (ลบ.ม.)',
+      color: 'text-amber-600 bg-amber-50',
+    },
+    {
+      icon: <ClipboardList size={18} />,
+      value: stats.surveys,
+      label: 'แบบสำรวจ',
+      color: 'text-emerald-600 bg-emerald-50',
+    },
+  ]
+
   return (
     <div className="min-h-screen flex flex-col bg-brand-50/30">
-<header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
-  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    <Link href="/" className="flex items-center gap-3">
-      {/* โลโก้ + เงาเรืองแสง เหมือน admin */}
-      <div className="relative shrink-0">
-        <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
-        <img
-          src="/logo.png"
-          alt="ตราเทศบาลตำบลท่าวังทอง"
-          className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
-        />
-      </div>
-      <div>
-        <h1 className="font-bold leading-tight text-sm md:text-base">
-          ระบบประปาหมู่บ้าน
-        </h1>
-        <p className="text-[11px] text-brand-100 hidden md:block">
-          ทต.ท่าวังทอง · อ.เมืองพะเยา
-        </p>
-      </div>
-    </Link>
-    <nav className="flex items-center gap-1 md:gap-2">
-      {/* ... เมนู ... */}
-    </nav>
-  </div>
-</header>
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
+              <img
+                src="/logo.png"
+                alt="ตราเทศบาลตำบลท่าวังทอง"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
+              />
+            </div>
+            <div>
+              <h1 className="font-bold leading-tight text-sm md:text-base">
+                ระบบประปาหมู่บ้าน
+              </h1>
+              <p className="text-[11px] text-brand-100 hidden md:block">
+                ทต.ท่าวังทอง · อ.เมืองพะเยา
+              </p>
+            </div>
+          </Link>
+          <nav className="flex items-center gap-1 md:gap-2">
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition"
+            >
+              หน้าหลัก
+            </Link>
+            <Link
+              href="/admin"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition"
+            >
+              👤 เจ้าหน้าที่
+            </Link>
+          </nav>
+        </div>
+      </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 w-full space-y-5">
-        {/* ===== COMBINED FILTER + STATS ===== */}
+        {/* FILTER + STATS */}
         <div className="card overflow-hidden">
-          {/* Row 1: Filters */}
           <div className="p-3.5 border-b border-brand-100">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 text-sm text-brand-600">
@@ -275,51 +296,29 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
           </div>
 
-          {/* Row 2: Inline Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-brand-50">
-            <InlineStat
-              icon={<MapPin size={14} />}
-              color="text-brand-600"
-              value={stats.villages}
-              label="หมู่บ้าน"
-            />
-            <InlineStat
-              icon={<Droplets size={14} />}
-              color="text-sky-600"
-              value={stats.systems}
-              label="ระบบประปา"
-            />
-            <InlineStat
-              icon={<Home size={14} />}
-              color="text-indigo-600"
-              value={stats.households}
-              label="ครัวเรือน"
-            />
-            <InlineStat
-              icon={<Package size={14} />}
-              color="text-amber-600"
-              value={stats.capacity}
-              label="ความจุ (ลบ.ม.)"
-            />
-            <InlineStat
-              icon={<ClipboardList size={14} />}
-              color="text-emerald-600"
-              value={stats.surveys}
-              label="แบบสำรวจ"
-            />
+            {cards.map((c, i) => (
+              <div key={i} className="p-3.5 hover:bg-brand-50/40 transition">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={c.color.split(' ')[0]}>{c.icon}</span>
+                  <span className="text-xs text-slate-500">{c.label}</span>
+                </div>
+                <p className="text-2xl font-bold text-brand-900 leading-none tabular-nums">
+                  {c.value.toLocaleString()}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* ===== CHART + MAP ===== */}
+        {/* CHART + MAP */}
         <div className="grid lg:grid-cols-[minmax(320px,1fr)_2fr] gap-5">
           <StatusChart statusCount={statusCount} total={stats.systems} />
 
           <div className="card overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-3 border-b border-brand-50">
               <div>
-                <h3 className="font-bold text-brand-900">
-                  แผนที่ระบบประปา
-                </h3>
+                <h3 className="font-bold text-brand-900">แผนที่ระบบประปา</h3>
                 <p className="text-[11px] text-brand-500">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด
                 </p>
@@ -352,47 +351,23 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
       </main>
 
-<footer className="bg-brand-900 text-brand-100 py-4 mt-auto">
-  <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
-    <img
-      src="/logo.png"
-      alt="ตราเทศบาล"
-      className="w-11 h-11 rounded-full ring-2 ring-white/20 shrink-0"
-    />
-    <div className="text-xs md:text-sm leading-snug text-center">
-      <p className="font-medium">
-        เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
-      </p>
-      <p className="text-brand-300">
-        ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
-      </p>
-    </div>
-  </div>
-</footer>
-    </div>
-  )
-}
-
-function InlineStat({
-  icon,
-  color,
-  value,
-  label,
-}: {
-  icon: React.ReactNode
-  color: string
-  value: number
-  label: string
-}) {
-  return (
-    <div className="p-3.5 hover:bg-brand-50/40 transition">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={color}>{icon}</span>
-        <span className="text-xs text-slate-500">{label}</span>
-      </div>
-      <p className="text-2xl font-bold text-brand-900 leading-none tabular-nums">
-        {value.toLocaleString()}
-      </p>
+      <footer className="bg-brand-900 text-brand-100 py-4 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
+          <img
+            src="/logo.png"
+            alt="ตราเทศบาล"
+            className="w-11 h-11 rounded-full ring-2 ring-white/20 shrink-0"
+          />
+          <div className="text-xs md:text-sm leading-snug text-center">
+            <p className="font-medium">
+              เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
+            </p>
+            <p className="text-brand-300">
+              ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
