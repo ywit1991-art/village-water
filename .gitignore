@@ -42,3 +42,5 @@ next-env.d.ts
 
 .env*.local
 .env
+
+NEXT_PUBLIC_GOOGLE_MAPS_AIzaSyDmzDcF4E4f8oI6EN6QlnAIEUM8bLuM5BM

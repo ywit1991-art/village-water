@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { X, AlertCircle, Wrench } from 'lucide-react'
+import { X, AlertCircle, Wrench, Eye, EyeOff, MapPin } from 'lucide-react'
 import LeafletBase from './LeafletBase'
 import { createWaterMarkerIcon } from '@/lib/map-icons'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import type { MarkerData } from './VillagesMapClient'
+import ThawangthongBoundary from './thawangthong-boundary'
+import StreetViewModal from './street-view-modal'
 
 interface Props {
   markers: MarkerData[]
@@ -40,7 +42,25 @@ export default function VillagesMapInner({
   height = 'h-[500px]',
 }: Props) {
   const [selected, setSelected] = useState<MarkerData | null>(null)
+  const [boundary, setBoundary] = useState<
+    GeoJSON.FeatureCollection | GeoJSON.Feature | null
+  >(null)
+  const [showHatch, setShowHatch] = useState(true)
+  const [streetViewMarker, setStreetViewMarker] = useState<MarkerData | null>(
+    null,
+  )
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // โหลด GeoJSON boundary
+  useEffect(() => {
+    fetch('/data/thawangthong.geojson')
+      .then(r => {
+        if (!r.ok) throw new Error('GeoJSON 404')
+        return r.json()
+      })
+      .then(data => setBoundary(data))
+      .catch(err => console.warn('Boundary error:', err))
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -50,9 +70,12 @@ export default function VillagesMapInner({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setSelected(null)
+      if (e.key === 'Escape') {
+        if (streetViewMarker) setStreetViewMarker(null)
+        else if (selected) setSelected(null)
+      }
     }
-    if (selected) {
+    if (selected || streetViewMarker) {
       document.addEventListener('keydown', onKey)
       document.body.style.overflow = 'hidden'
     }
@@ -60,7 +83,7 @@ export default function VillagesMapInner({
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [selected])
+  }, [selected, streetViewMarker])
 
   function cancelHover() {
     if (hoverTimer.current) {
@@ -74,6 +97,10 @@ export default function VillagesMapInner({
     hoverTimer.current = setTimeout(() => {
       setSelected(m)
     }, HOVER_DELAY_MS)
+  }
+
+  function handleOpenStreetView(m: MarkerData) {
+    setStreetViewMarker(m)
   }
 
   if (markers.length === 0) {
@@ -99,10 +126,13 @@ export default function VillagesMapInner({
   return (
     <>
       <div
-        className={`${height} rounded-2xl overflow-hidden border border-brand-100`}
+        className={`${height} rounded-2xl overflow-hidden border border-brand-100 relative`}
       >
         <LeafletBase center={center} zoom={13} className="w-full h-full">
           <AutoFitBounds points={allPoints} />
+          {boundary && (
+            <ThawangthongBoundary boundary={boundary} visible={showHatch} />
+          )}
           {markers.map(m => (
             <Marker
               key={m.systemId}
@@ -119,26 +149,68 @@ export default function VillagesMapInner({
             />
           ))}
         </LeafletBase>
+
+        {/* ปุ่ม Toggle Hatch */}
+        <button
+          type="button"
+          onClick={() => setShowHatch(s => !s)}
+          className="absolute top-3 right-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-brand-700 hover:text-brand-900 text-xs font-medium transition"
+          title={showHatch ? 'ปิดลายทแยง' : 'เปิดลายทแยง'}
+        >
+          {showHatch ? (
+            <>
+              <EyeOff size={14} />
+              <span className="hidden sm:inline">ซ่อนลายทแยง</span>
+            </>
+          ) : (
+            <>
+              <Eye size={14} />
+              <span className="hidden sm:inline">แสดงลายทแยง</span>
+            </>
+          )}
+        </button>
       </div>
 
       {selected && (
-        <DetailModal data={selected} onClose={() => setSelected(null)} />
+        <DetailModal
+          data={selected}
+          onClose={() => setSelected(null)}
+          onOpenStreetView={handleOpenStreetView}
+        />
+      )}
+
+      {streetViewMarker && (
+        <StreetViewModal
+          lat={streetViewMarker.lat}
+          lng={streetViewMarker.lng}
+          systemName={streetViewMarker.systemName}
+          onClose={() => setStreetViewMarker(null)}
+        />
       )}
     </>
   )
 }
 
 /* ============================================================ */
-/* MODAL                                                        */
+/* MODAL รายละเอียดระบบ                                        */
 /* ============================================================ */
 function DetailModal({
   data: m,
   onClose,
+  onOpenStreetView,
 }: {
   data: MarkerData
   onClose: () => void
+  onOpenStreetView: (m: MarkerData) => void
 }) {
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
+
+  // ⚡ ป้องกัน undefined — ใช้ ?? [] ทุก array
+  const committee = m.committee ?? []
+  const problems = m.problems ?? []
+  const improvements = m.improvements ?? []
+  const photos = m.photos ?? []
+  const productionTypes = m.productionTypes ?? []
 
   return (
     <div
@@ -182,9 +254,9 @@ function DetailModal({
                   หมู่ {m.villageNo} {m.villageName}
                 </span>
               </p>
-              {m.productionTypes.length > 0 && (
+              {productionTypes.length > 0 && (
                 <p className="text-sm text-white/85 mt-1">
-                  💧 {m.productionTypes.join(', ')}
+                  💧 {productionTypes.join(', ')}
                 </p>
               )}
             </div>
@@ -198,7 +270,7 @@ function DetailModal({
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
             <StatBox
-              value={m.householdCount.toLocaleString()}
+              value={(m.householdCount ?? 0).toLocaleString()}
               label="ครัวเรือน"
             />
             <StatBox
@@ -249,10 +321,10 @@ function DetailModal({
             )}
 
             {/* คณะกรรมการ */}
-            {m.committee.length > 0 && (
-              <Section title={`คณะกรรมการ (${m.committee.length} คน)`}>
+            {committee.length > 0 && (
+              <Section title={`คณะกรรมการ (${committee.length} คน)`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {m.committee.map((person, i) => (
+                  {committee.map((person, i) => (
                     <div
                       key={i}
                       className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition border border-slate-100"
@@ -286,15 +358,15 @@ function DetailModal({
               </Section>
             )}
 
-            {/* ปัญหาที่พบ — แสดงทั้งหมด */}
-            {m.problems.length > 0 && (
+            {/* ปัญหาที่พบ */}
+            {problems.length > 0 && (
               <Section
-                title={`ปัญหาที่พบ (${m.problems.length})`}
+                title={`ปัญหาที่พบ (${problems.length})`}
                 accent="orange"
                 icon={<AlertCircle size={16} />}
               >
                 <ul className="space-y-2">
-                  {m.problems.map((p, i) => (
+                  {problems.map((p, i) => (
                     <li
                       key={i}
                       className="flex items-start gap-3 text-base text-slate-700 bg-orange-50 rounded-xl px-4 py-2.5 border border-orange-100"
@@ -309,15 +381,15 @@ function DetailModal({
               </Section>
             )}
 
-            {/* จุดที่ควรแก้ไข — แสดงทั้งหมด */}
-            {m.improvements.length > 0 && (
+            {/* จุดที่ควรแก้ไข */}
+            {improvements.length > 0 && (
               <Section
-                title={`จุดที่ควรแก้ไข/ปรับปรุง (${m.improvements.length})`}
+                title={`จุดที่ควรแก้ไข/ปรับปรุง (${improvements.length})`}
                 accent="amber"
                 icon={<Wrench size={16} />}
               >
                 <ul className="space-y-2">
-                  {m.improvements.map((p, i) => (
+                  {improvements.map((p, i) => (
                     <li
                       key={i}
                       className="flex items-start gap-3 text-base text-slate-700 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-100"
@@ -333,13 +405,10 @@ function DetailModal({
             )}
 
             {/* ภาพถ่าย */}
-            {m.photos.length > 0 && (
-              <Section
-                title={`ภาพถ่าย (${m.photos.length})`}
-                accent="emerald"
-              >
+            {photos.length > 0 && (
+              <Section title={`ภาพถ่าย (${photos.length})`} accent="emerald">
                 <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                  {m.photos.map((url, i) => (
+                  {photos.map((url, i) => (
                     <a
                       key={i}
                       href={url}
@@ -361,11 +430,27 @@ function DetailModal({
           </div>
         </div>
 
-        <div className="px-8 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500 shrink-0">
-          <span>ระบบที่ {m.systemNo}</span>
-          <span className="font-mono">
-            {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
-          </span>
+        {/* FOOTER */}
+        <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0 flex-wrap">
+          <div className="flex items-center gap-4 text-sm text-slate-500">
+            <span>ระบบที่ {m.systemNo}</span>
+            <span className="font-mono text-xs">
+              {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={e => {
+              e.preventDefault()
+              e.stopPropagation()
+              onOpenStreetView(m)
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+          >
+            <MapPin size={18} />
+            ดู Street View
+          </button>
         </div>
       </div>
     </div>

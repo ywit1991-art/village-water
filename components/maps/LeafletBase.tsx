@@ -30,11 +30,19 @@ export default function LeafletBase({
 }: Props) {
   return (
     <MapContainer
-      center={center}
-      zoom={zoom}
-      className={className}
-      scrollWheelZoom={true}
-    >
+  center={center}
+  zoom={zoom}
+  className={className}
+  scrollWheelZoom={true}
+  minZoom={11}
+  maxZoom={19}
+  maxBounds={[
+    [18.95, 99.75],   // มุมตะวันตกเฉียงใต้
+    [19.40, 100.10],  // มุมตะวันออกเฉียงเหนือ
+  ]}
+  maxBoundsViscosity={1.0}
+  bounceAtZoomLimits={false}
+>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
