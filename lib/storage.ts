@@ -35,7 +35,7 @@ export async function uploadPhoto(
       compressed = await imageCompression(file, {
         maxSizeMB: 0.4,
         maxWidthOrHeight: 1200,
-        useWebWorker: true,
+        useWebWorker: false,
         initialQuality: 0.7,
         maxIteration: 10,
       })
