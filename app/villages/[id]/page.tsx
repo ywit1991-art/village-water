@@ -1,337 +1,274 @@
-'use client'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { MapPin, Home, ArrowLeft, Calendar } from 'lucide-react'
+import { STATUS_COLORS } from '@/lib/constants'
+import type { Village, Survey, WaterSystem } from '@/lib/types'
+import VillageSystemsMap from '@/components/villages/village-systems-map'
 
-import { FormProvider, useForm } from 'react-hook-form'
-import { useRouter, useSearchParams, useParams } from 'next/navigation'
-import { toast } from 'sonner'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+export const revalidate = 60
 
-import { Section1 } from '@/components/forms/sections/Section1'
-import { Section2 } from '@/components/forms/sections/Section2'
-import { Section3 } from '@/components/forms/sections/Section3'
-import { Section4 } from '@/components/forms/sections/Section4'
-import { Section5 } from '@/components/forms/sections/Section5'
-import { Section6 } from '@/components/forms/sections/Section6'
-import { Section7 } from '@/components/forms/sections/Section7'
-import { Section8 } from '@/components/forms/sections/Section8'
-import { Section9 } from '@/components/forms/sections/Section9'
-import { Section10 } from '@/components/forms/sections/Section10'
-import { Section11 } from '@/components/forms/sections/Section11'
-import { Section12 } from '@/components/forms/sections/Section12'
-import { Section13 } from '@/components/forms/sections/Section13'
-import { Section14 } from '@/components/forms/sections/Section14'
-import { Section15 } from '@/components/forms/sections/Section15'
-import { Section16 } from '@/components/forms/sections/Section16'
-import { Section17 } from '@/components/forms/sections/Section17'
+interface Props {
+  params: Promise<{ id: string }>
+}
 
-export default function SurveyFormPage() {
-  const router = useRouter()
-  const params = useParams()
-  const search = useSearchParams()
+export default async function VillagePage({ params }: Props) {
+  const { id } = await params
+  const villageId = Number(id)
+  if (!villageId || Number.isNaN(villageId)) notFound()
 
-  const id = params.id as string
-  const villageId = Number(search.get('village') ?? 0)
-  const systemId = Number(search.get('system') ?? 0)
-  const isNew = id === 'new'
+  const sb = await createClient()
 
-  const methods = useForm({
-    defaultValues: {
-      village_id: villageId,
-      water_system_id: systemId || null,
-      status: 'draft',
-      photos: [],
-      committee_members: [],
-      operator_duties: [],
-      water_source_type: [],
-      water_source_condition: [],
-      pump_types: [],
-      pumps: [],
-      control_box_condition: [],
-      production_type: [],
-      filter_condition: [],
-      tank_types: [],
-      tank_condition: [],
-      tank_surrounding: [],
-      pipe_materials: [],
-      pipe_condition: [],
-      water_quality_appearance: [],
-      problems: [],
-      improvements: [],
-      maintenance_items: {},
-      signatures: [
-        { name: '', phone: '', position: '', date: '' },
-        { name: '', phone: '', position: '', date: '' },
-        { name: '', phone: '', position: '', date: '' },
-      ],
-    },
+  const [{ data: village }, { data: systems }, { data: surveys }] =
+    await Promise.all([
+      sb.from('villages').select('*').eq('id', villageId).single(),
+      sb
+        .from('water_systems')
+        .select('*')
+        .eq('village_id', villageId)
+        .order('system_no'),
+      sb
+        .from('surveys')
+        .select('*')
+        .eq('village_id', villageId)
+        .in('status', ['submitted', 'approved'])
+        .order('created_at', { ascending: false }),
+    ])
+
+  if (!village) notFound()
+
+  const v = village as Village
+  const sysList = (systems as WaterSystem[] | null) ?? []
+  const surveyList = (surveys as Survey[] | null) ?? []
+
+  const totalHouseholds = sysList.reduce(
+    (a, s) => a + (s.household_count ?? 0),
+    0,
+  )
+
+  // สถานะ
+  const statusCount: Record<string, number> = {
+    'ดี': 0,
+    'พอใช้': 0,
+    'ต้องปรับปรุง': 0,
+    'เร่งด่วน': 0,
+    'ไม่มีข้อมูล': 0,
+  }
+  sysList.forEach(s => {
+    const k = s.overall_condition ?? 'ไม่มีข้อมูล'
+    statusCount[k] = (statusCount[k] ?? 0) + 1
   })
 
-  const [village, setVillage] = useState<{
-    village_no: number
-    village_name: string
-  } | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  // ==========================================
-  // โหลดข้อมูลเมื่อเปิดหน้า
-  // ==========================================
-  useEffect(() => {
-    async function load() {
-      const sb = createClient()
-
-      // โหลดข้อมูลหมู่บ้าน
-      if (villageId) {
-        const { data: v } = await sb
-          .from('villages')
-          .select('village_no, village_name')
-          .eq('id', villageId)
-          .single()
-        setVillage(v)
-      }
-
-      // โหลดข้อมูล survey (เฉพาะตอนแก้ไข)
-      if (!isNew && id) {
-        console.log('[Survey] โหลด survey id:', id)
-
-        const { data: s, error } = await sb
-          .from('surveys')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle()
-
-        console.log('[Survey] ผลลัพธ์:', s)
-        console.log('[Survey] error:', error)
-
-        if (error) {
-          console.error('[Survey] โหลดไม่สำเร็จ:', error.message)
-          toast.error('โหลดข้อมูลไม่สำเร็จ: ' + error.message)
-        } else if (s) {
-          // เตรียมข้อมูลก่อน reset
-          const merged = {
-            ...methods.getValues(),
-            ...s,
-            // ป้องกัน null → array ที่ React Hook Form ต้องการ
-            committee_members: s.committee_members ?? [],
-            operator_duties: s.operator_duties ?? [],
-            water_source_type: s.water_source_type ?? [],
-            water_source_condition: s.water_source_condition ?? [],
-            pump_types: s.pump_types ?? [],
-            pumps: s.pumps ?? [],
-            control_box_condition: s.control_box_condition ?? [],
-            production_type: s.production_type ?? [],
-            filter_condition: s.filter_condition ?? [],
-            tank_types: s.tank_types ?? [],
-            tank_condition: s.tank_condition ?? [],
-            tank_surrounding: s.tank_surrounding ?? [],
-            pipe_materials: s.pipe_materials ?? [],
-            pipe_condition: s.pipe_condition ?? [],
-            water_quality_appearance: s.water_quality_appearance ?? [],
-            problems: s.problems ?? [],
-            improvements: s.improvements ?? [],
-            maintenance_items: s.maintenance_items ?? {},
-            photos: s.photos ?? [],
-            signatures:
-              s.signatures && s.signatures.length > 0
-                ? s.signatures
-                : [
-                    { name: '', phone: '', position: '', date: '' },
-                    { name: '', phone: '', position: '', date: '' },
-                    { name: '', phone: '', position: '', date: '' },
-                  ],
-          }
-
-          console.log('[Survey] reset form')
-          methods.reset(merged)
-        }
-      }
-
-      setLoading(false)
+  // รวบรวมรูปจากทุกระบบ
+  const latestBySystem = new Map<number, Survey>()
+  surveyList.forEach(s => {
+    if (s.water_system_id && !latestBySystem.has(s.water_system_id)) {
+      latestBySystem.set(s.water_system_id, s)
     }
+  })
 
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, villageId, isNew])
-
-  // ==========================================
-  // บันทึก
-  // ==========================================
-  async function save(status: 'draft' | 'submitted') {
-    const values = methods.getValues()
-    const sb = createClient()
-    const {
-      data: { user },
-    } = await sb.auth.getUser()
-
-    const cleaned = cleanPayload(values)
-    const payload = { ...cleaned, status, created_by: user?.id }
-
-    console.log('[Survey] payload:', payload)
-
-    const query = isNew
-      ? sb.from('surveys').insert(payload)
-      : sb.from('surveys').update(payload).eq('id', id)
-
-    const { error } = await query
-    if (error) {
-      toast.error('บันทึกไม่สำเร็จ: ' + error.message)
-      return
-    }
-
-    toast.success(status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ')
-    router.push('/admin/dashboard')
-    router.refresh()
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mx-auto" />
-          <p className="mt-3 text-sm text-brand-500">กำลังโหลดข้อมูล...</p>
-        </div>
-      </div>
-    )
-  }
+  const photos: { url: string; label: string; systemName: string }[] = []
+  sysList.forEach(sys => {
+    const s = latestBySystem.get(sys.id)
+    if (!s?.photos?.length) return
+    const labels = [
+      'แหล่งน้ำดิบ',
+      'ระบบสูบน้ำ',
+      'ระบบผลิต/กรองน้ำ',
+      'ถังเก็บน้ำ',
+      'ระบบท่อ',
+      'จุดชำรุด/ปัญหา',
+    ]
+    s.photos.forEach((url, i) => {
+      if (url) {
+        photos.push({
+          url,
+          label: labels[i] ?? `ภาพที่ ${i + 1}`,
+          systemName: sys.system_name,
+        })
+      }
+    })
+  })
 
   return (
-    <div className="min-h-screen bg-brand-50/40">
-      <header className="sticky top-0 z-30 bg-white border-b border-brand-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <p className="text-xs text-brand-500">
-            {village && `หมู่ ${village.village_no}`}
-          </p>
-          <h1 className="font-bold text-brand-900">
-            {isNew ? 'บันทึกแบบสำรวจใหม่' : 'แก้ไขแบบสำรวจ'} —{' '}
-            {village?.village_name}
-          </h1>
+    <div className="min-h-screen flex flex-col bg-brand-50/30">
+      {/* HERO */}
+      <header className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white">
+        <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
+
+        <div className="relative max-w-5xl mx-auto px-4 pt-5 flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+          >
+            <ArrowLeft size={14} /> กลับหน้าหลัก
+          </Link>
+          <Link
+            href="/map"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium bg-white/15 hover:bg-white/25 backdrop-blur transition"
+          >
+            🗺️ ดูแผนที่รวม
+          </Link>
+        </div>
+
+        <div className="relative max-w-5xl mx-auto px-4 pt-8 pb-16">
+          <div className="flex items-start gap-4 md:gap-6">
+            <img
+              src="/logo.png"
+              alt="ตราเทศบาล"
+              className="w-16 h-16 md:w-20 md:h-20 rounded-full shadow-2xl ring-4 ring-white/30 shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-brand-100 font-medium">
+                หมู่ที่ {v.village_no}
+              </p>
+              <h1 className="text-2xl md:text-4xl font-extrabold leading-tight mt-1">
+                {v.village_name}
+              </h1>
+              <p className="text-sm md:text-base text-brand-100 mt-1">
+                ต.{v.tambon} อ.{v.amphoe} จ.{v.province}
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
-      <FormProvider {...methods}>
-        <form
-          className="max-w-4xl mx-auto px-4 py-6 space-y-6"
-          onSubmit={methods.handleSubmit(() => save('submitted'))}
-        >
-          <Section1 />
-          <Section2 />
-          <Section3 />
-          <Section4 />
-          <Section5 />
-          <Section6 />
-          <Section7 />
-          <Section8 />
-          <Section9 />
-          <Section10 />
-          <Section11 />
-          <Section12 />
-          <Section13 />
-          <Section14 />
-          <Section15 />
-          <Section16 />
-          <Section17 />
+      {/* STATS */}
+      <section className="max-w-5xl mx-auto px-4 -mt-10 relative z-10 w-full">
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard
+            icon={<MapPin size={20} />}
+            value={sysList.length}
+            label="ระบบประปา"
+          />
+          <StatCard
+            icon={<Home size={20} />}
+            value={totalHouseholds}
+            label="ครัวเรือน"
+          />
+          <StatCard
+            icon={<Calendar size={20} />}
+            value={surveyList.length}
+            label="แบบสำรวจ"
+          />
+        </div>
+      </section>
 
-          <div className="card p-4 flex flex-wrap items-center gap-3 sticky bottom-4 z-20">
-            <button
-              type="button"
-              onClick={() => save('draft')}
-              className="btn-ghost"
-            >
-              บันทึกร่าง
-            </button>
-            <button type="submit" className="btn-primary">
-              บันทึกและส่ง
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="btn-ghost ml-auto"
-            >
-              ยกเลิก
-            </button>
+      {/* STATUS SUMMARY */}
+      {sysList.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+          <div className="card p-4">
+            <h2 className="text-sm font-bold text-brand-900 mb-3">
+              สรุปสถานะระบบประปา
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {Object.entries(statusCount).map(([status, count]) => {
+                const c = STATUS_COLORS[status]
+                return (
+                  <div
+                    key={status}
+                    className="flex items-center gap-2 p-2 rounded-lg border border-brand-100 bg-white"
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ background: c.hex }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-600 truncate">{status}</p>
+                      <p className="text-lg font-bold text-brand-900 leading-tight">
+                        {count}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </form>
-      </FormProvider>
+        </section>
+      )}
+
+      {/* MAP */}
+      <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-brand-900">
+            ตำแหน่งระบบประปาในหมู่บ้าน
+          </h2>
+          <p className="text-xs text-brand-500">
+            💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด
+          </p>
+        </div>
+        <VillageSystemsMap systems={sysList} surveys={surveyList} />
+      </section>
+
+      {/* PHOTOS */}
+      {photos.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 mt-8 w-full">
+          <h2 className="text-lg font-bold text-brand-900 mb-3">
+            ภาพถ่ายทั้งหมด ({photos.length} ภาพ)
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {photos.map((p, i) => (
+              <a
+                key={i}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative overflow-hidden rounded-xl border border-brand-100 bg-white hover:shadow-lg transition"
+              >
+                <img
+                  src={p.url}
+                  alt={p.label}
+                  className="w-full h-40 object-cover group-hover:scale-105 transition"
+                />
+                <div className="p-2">
+                  <p className="text-xs font-medium text-brand-900 truncate">
+                    {p.label}
+                  </p>
+                  <p className="text-[10px] text-brand-500 truncate">
+                    {p.systemName}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* FOOTER */}
+      <footer className="bg-brand-900 text-brand-100 py-8 mt-12">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col items-center gap-2">
+          <img
+            src="/logo.png"
+            alt="ตราเทศบาล"
+            className="w-12 h-12 rounded-full ring-2 ring-white/20"
+          />
+          <p className="text-sm text-center">
+            เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
 
-// ==========================================
-// Helper: ล้างค่า "" และ NaN ก่อนส่ง Supabase
-// ==========================================
-const NUMERIC_LIMITS: Record<
-  string,
-  { min?: number; max?: number; decimals?: number }
-> = {
-  lat: { min: -90, max: 90, decimals: 7 },
-  lng: { min: -180, max: 180, decimals: 7 },
-  water_source_lat: { min: -90, max: 90, decimals: 7 },
-  water_source_lng: { min: -180, max: 180, decimals: 7 },
-  household_count: { min: 0, max: 1000000, decimals: 0 },
-  user_count: { min: 0, max: 1000000, decimals: 0 },
-  metered_user_count: { min: 0, max: 1000000, decimals: 0 },
-  unmetered_user_count: { min: 0, max: 1000000, decimals: 0 },
-  pump_count: { min: 0, max: 1000, decimals: 0 },
-  tank_count: { min: 0, max: 1000, decimals: 0 },
-  water_rate: { min: 0, max: 100000, decimals: 2 },
-  tank_capacity: { min: 0, max: 1000000, decimals: 2 },
-  pipe_total_length: { min: 0, max: 1000000, decimals: 2 },
-  water_source_distance: { min: 0, max: 100000, decimals: 2 },
-  operator_years: { min: 0, max: 200, decimals: 2 },
-}
-
-function clampNumber(
-  value: number,
-  limits: { min?: number; max?: number; decimals?: number },
-): number | null {
-  if (!Number.isFinite(value)) return null
-  let v = value
-  if (limits.min !== undefined && v < limits.min) v = limits.min
-  if (limits.max !== undefined && v > limits.max) return null
-  if (limits.decimals !== undefined) {
-    const factor = Math.pow(10, limits.decimals)
-    v = Math.round(v * factor) / factor
-  }
-  return v
-}
-
-function cleanPayload(obj: Record<string, any>): Record<string, any> {
-  const out: Record<string, any> = {}
-
-  for (const [key, value] of Object.entries(obj)) {
-    if (key === 'id' || key === 'created_at' || key === 'updated_at') continue
-
-    if (value === '' || value === undefined) {
-      out[key] = null
-      continue
-    }
-
-    if (typeof value === 'number' && Number.isNaN(value)) {
-      out[key] = null
-      continue
-    }
-
-    if (typeof value === 'number' && NUMERIC_LIMITS[key]) {
-      out[key] = clampNumber(value, NUMERIC_LIMITS[key])
-      continue
-    }
-
-    if (Array.isArray(value)) {
-      out[key] = value.map(item => {
-        if (typeof item === 'object' && item !== null) return cleanPayload(item)
-        if (item === '') return null
-        if (typeof item === 'number' && Number.isNaN(item)) return null
-        return item
-      })
-      continue
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      out[key] = cleanPayload(value)
-      continue
-    }
-
-    out[key] = value
-  }
-
-  return out
+function StatCard({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode
+  value: number
+  label: string
+}) {
+  return (
+    <div className="card p-4">
+      <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-2">
+        {icon}
+      </div>
+      <p className="text-2xl font-bold text-brand-900">
+        {value.toLocaleString()}
+      </p>
+      <p className="text-xs text-brand-600 mt-0.5">{label}</p>
+    </div>
+  )
 }

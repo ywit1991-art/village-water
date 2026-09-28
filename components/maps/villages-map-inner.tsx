@@ -1,12 +1,48 @@
 'use client'
 
-import { Marker, Popup } from 'react-leaflet'
+import { useEffect } from 'react'
+import { Marker, Popup, useMap } from 'react-leaflet'
 import LeafletBase from './LeafletBase'
 import { createWaterMarkerIcon } from '@/lib/map-icons'
 import { STATUS_COLORS } from '@/lib/constants'
 import type { MapPoint } from './VillagesMapClient'
 
-export default function VillagesMapInner({ points }: { points: MapPoint[] }) {
+interface Props {
+  points: MapPoint[]
+}
+
+/**
+ * จัด bounds อัตโนมัติให้พอดีกับ markers ทุกตัว
+ */
+function AutoFitBounds({ points }: { points: MapPoint[] }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (points.length === 0) return
+
+    if (points.length === 1) {
+      // มีหมุดเดียว → zoom เข้า
+      map.setView([points[0].lat, points[0].lng], 16)
+      return
+    }
+
+    const lats = points.map(p => p.lat)
+    const lngs = points.map(p => p.lng)
+    const bounds: [[number, number], [number, number]] = [
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)],
+    ]
+
+    map.fitBounds(bounds, {
+      padding: [60, 60],
+      maxZoom: 16,   // ไม่ zoom เกิน 16
+    })
+  }, [points, map])
+
+  return null
+}
+
+export default function VillagesMapInner({ points }: Props) {
   if (!points.length) {
     return (
       <div className="card p-10 text-center text-brand-400">
@@ -18,8 +54,10 @@ export default function VillagesMapInner({ points }: { points: MapPoint[] }) {
   const center: [number, number] = [points[0].lat, points[0].lng]
 
   return (
-    <div className="h-[420px] rounded-2xl overflow-hidden border border-brand-100">
-      <LeafletBase center={center} zoom={12}>
+    <div className="w-full aspect-[21/9] min-h-[400px] max-h-[700px] rounded-2xl overflow-hidden border border-brand-100 shadow-lg">
+      <LeafletBase center={center} zoom={11} className="w-full h-full">
+        <AutoFitBounds points={points} />
+
         {points.map(p => {
           const c = STATUS_COLORS[p.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
 
@@ -31,9 +69,7 @@ export default function VillagesMapInner({ points }: { points: MapPoint[] }) {
             >
               <Popup>
                 <div className="min-w-[200px]">
-                  <p className="font-bold text-brand-900 text-sm">
-                    {p.name}
-                  </p>
+                  <p className="font-bold text-brand-900 text-sm">{p.name}</p>
                   {p.villageLabel && (
                     <p className="text-xs text-brand-500 mb-2">
                       {p.villageLabel}

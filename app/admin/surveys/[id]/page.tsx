@@ -28,6 +28,7 @@ export default function SurveyFormPage() {
   const router = useRouter()
   const params = useParams()
   const search = useSearchParams()
+
   const id = params.id as string
   const villageId = Number(search.get('village') ?? 0)
   const systemId = Number(search.get('system') ?? 0)
@@ -38,7 +39,7 @@ export default function SurveyFormPage() {
       village_id: villageId,
       water_system_id: systemId || null,
       status: 'draft',
-      photos: [],  
+      photos: [],
       committee_members: [],
       operator_duties: [],
       water_source_type: [],
@@ -71,32 +72,79 @@ export default function SurveyFormPage() {
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // ==========================================
+  // โหลดข้อมูล
+  // ==========================================
   useEffect(() => {
     async function load() {
       const sb = createClient()
 
-      const { data: v } = await sb
-        .from('villages')
-        .select('village_no, village_name')
-        .eq('id', villageId)
-        .single()
-      setVillage(v)
+      if (villageId) {
+        const { data: v } = await sb
+          .from('villages')
+          .select('village_no, village_name')
+          .eq('id', villageId)
+          .single()
+        setVillage(v)
+      }
 
-      if (!isNew) {
-        const { data: s } = await sb
+      if (!isNew && id) {
+        const { data: s, error } = await sb
           .from('surveys')
           .select('*')
           .eq('id', id)
-          .single()
-        if (s) methods.reset(s)
+          .maybeSingle()
+
+        if (error) {
+          console.error('[Survey] load error:', error.message)
+        } else if (s) {
+          // เตรียมข้อมูลก่อน reset — ป้องกัน null
+          const merged = {
+            ...methods.getValues(),
+            ...s,
+            committee_members: s.committee_members ?? [],
+            operator_duties: s.operator_duties ?? [],
+            water_source_type: s.water_source_type ?? [],
+            water_source_condition: s.water_source_condition ?? [],
+            pump_types: s.pump_types ?? [],
+            pumps: s.pumps ?? [],
+            control_box_condition: s.control_box_condition ?? [],
+            production_type: s.production_type ?? [],
+            filter_condition: s.filter_condition ?? [],
+            tank_types: s.tank_types ?? [],
+            tank_condition: s.tank_condition ?? [],
+            tank_surrounding: s.tank_surrounding ?? [],
+            pipe_materials: s.pipe_materials ?? [],
+            pipe_condition: s.pipe_condition ?? [],
+            water_quality_appearance: s.water_quality_appearance ?? [],
+            problems: s.problems ?? [],
+            improvements: s.improvements ?? [],
+            maintenance_items: s.maintenance_items ?? {},
+            photos: s.photos ?? [],
+            signatures:
+              s.signatures && s.signatures.length > 0
+                ? s.signatures
+                : [
+                    { name: '', phone: '', position: '', date: '' },
+                    { name: '', phone: '', position: '', date: '' },
+                    { name: '', phone: '', position: '', date: '' },
+                  ],
+          }
+
+          methods.reset(merged)
+        }
       }
 
       setLoading(false)
     }
+
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, villageId])
+  }, [id, villageId, isNew])
 
+  // ==========================================
+  // บันทึก
+  // ==========================================
   async function save(status: 'draft' | 'submitted') {
     const values = methods.getValues()
     const sb = createClient()
@@ -116,6 +164,7 @@ export default function SurveyFormPage() {
       toast.error('บันทึกไม่สำเร็จ: ' + error.message)
       return
     }
+
     toast.success(status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ')
     router.push('/admin/dashboard')
     router.refresh()
@@ -124,7 +173,10 @@ export default function SurveyFormPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mx-auto" />
+          <p className="mt-3 text-sm text-brand-500">กำลังโหลดข้อมูล...</p>
+        </div>
       </div>
     )
   }
@@ -191,29 +243,23 @@ export default function SurveyFormPage() {
   )
 }
 
-// ========================================
+// ==========================================
 // Helper: ล้างค่า "" และ NaN ก่อนส่ง Supabase
-// (อยู่ข้างนอก component)
-// ========================================
-// ========================================
-// Helper: ล้างค่า "" และ NaN + clamp ค่าตัวเลขให้พอดีกับ DB
-// ========================================
-const NUMERIC_LIMITS: Record<string, { min?: number; max?: number; decimals?: number }> = {
-  // พิกัด — numeric(10,7) → max 999.9999999
+// ==========================================
+const NUMERIC_LIMITS: Record<
+  string,
+  { min?: number; max?: number; decimals?: number }
+> = {
   lat: { min: -90, max: 90, decimals: 7 },
   lng: { min: -180, max: 180, decimals: 7 },
   water_source_lat: { min: -90, max: 90, decimals: 7 },
   water_source_lng: { min: -180, max: 180, decimals: 7 },
-
-  // ตัวเลขทั่วไป — จำกัดสูงสุดที่ int (2.1B)
   household_count: { min: 0, max: 1000000, decimals: 0 },
   user_count: { min: 0, max: 1000000, decimals: 0 },
   metered_user_count: { min: 0, max: 1000000, decimals: 0 },
   unmetered_user_count: { min: 0, max: 1000000, decimals: 0 },
   pump_count: { min: 0, max: 1000, decimals: 0 },
   tank_count: { min: 0, max: 1000, decimals: 0 },
-
-  // ทศนิยมทั่วไป
   water_rate: { min: 0, max: 100000, decimals: 2 },
   tank_capacity: { min: 0, max: 1000000, decimals: 2 },
   pipe_total_length: { min: 0, max: 1000000, decimals: 2 },
@@ -221,20 +267,26 @@ const NUMERIC_LIMITS: Record<string, { min?: number; max?: number; decimals?: nu
   operator_years: { min: 0, max: 200, decimals: 2 },
 }
 
+// ฟิลด์วันที่ทั้งหมด — "" → null
+const DATE_FIELDS = [
+  'survey_date',
+  'committee_order_date',
+  'committee_start_date',
+  'last_quality_test_date',
+]
+
 function clampNumber(
   value: number,
   limits: { min?: number; max?: number; decimals?: number },
 ): number | null {
   if (!Number.isFinite(value)) return null
   let v = value
-
   if (limits.min !== undefined && v < limits.min) v = limits.min
-  if (limits.max !== undefined && v > limits.max) return null // ค่าผิดปกติ → ทิ้ง
+  if (limits.max !== undefined && v > limits.max) return null
   if (limits.decimals !== undefined) {
     const factor = Math.pow(10, limits.decimals)
     v = Math.round(v * factor) / factor
   }
-
   return v
 }
 
@@ -242,28 +294,29 @@ function cleanPayload(obj: Record<string, any>): Record<string, any> {
   const out: Record<string, any> = {}
 
   for (const [key, value] of Object.entries(obj)) {
-    // ข้าม meta fields
     if (key === 'id' || key === 'created_at' || key === 'updated_at') continue
 
-    // ค่าว่าง
+    // วันที่ + ค่าว่าง → null
+    if (DATE_FIELDS.includes(key)) {
+      out[key] = value === '' || value === undefined ? null : value
+      continue
+    }
+
     if (value === '' || value === undefined) {
       out[key] = null
       continue
     }
 
-    // NaN
     if (typeof value === 'number' && Number.isNaN(value)) {
       out[key] = null
       continue
     }
 
-    // ตัวเลข → clamp
     if (typeof value === 'number' && NUMERIC_LIMITS[key]) {
       out[key] = clampNumber(value, NUMERIC_LIMITS[key])
       continue
     }
 
-    // Array → recursive
     if (Array.isArray(value)) {
       out[key] = value.map(item => {
         if (typeof item === 'object' && item !== null) return cleanPayload(item)
@@ -274,13 +327,11 @@ function cleanPayload(obj: Record<string, any>): Record<string, any> {
       continue
     }
 
-    // Object → recursive
     if (typeof value === 'object' && value !== null) {
       out[key] = cleanPayload(value)
       continue
     }
 
-    // ค่าปกติ
     out[key] = value
   }
 

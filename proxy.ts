@@ -1,14 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { verifySession } from '@/lib/auth/session'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // ป้องกัน /admin ทุกหน้า ยกเว้น /admin (login)
   if (pathname.startsWith('/admin') && pathname !== '/admin') {
     const token = request.cookies.get('village_session')?.value
-    const session = token ? await verifySession(token) : null
 
-    if (!session) {
+    if (!token) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
   }

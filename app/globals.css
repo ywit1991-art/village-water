@@ -64,3 +64,23 @@
 .leaflet-popup-content {
   margin: 12px 14px;
 }
+
+/* Leaflet Popup — Noto Sans Thai + ตัวใหญ่ */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  padding: 0 !important;
+  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  min-width: 320px;
+}
+
+.leaflet-popup-tip {
+  box-shadow: none !important;
+}

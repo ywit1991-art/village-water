@@ -7,6 +7,8 @@ import VillagesMapClient from '@/components/maps/VillagesMapClient'
 
 export const revalidate = 60
 
+const STATUS_ORDER = ['เร่งด่วน', 'ต้องปรับปรุง', 'พอใช้', 'ดี', 'ไม่มีข้อมูล']
+
 export default async function HomePage() {
   const sb = await createClient()
 
@@ -25,50 +27,45 @@ export default async function HomePage() {
         .order('system_no'),
     ])
 
-  const latest = new Map<number, Survey>()
-  ;(surveys as Survey[] | null)?.forEach(s => {
-    if (!latest.has(s.village_id)) latest.set(s.village_id, s)
-  })
-
   const list = (villages as Village[] | null) ?? []
   const sysList = (systems as WaterSystem[] | null) ?? []
+  const surveyList = (surveys as Survey[] | null) ?? []
 
-  const totalUsers = [...latest.values()].reduce(
-    (a, s) => a + (s.user_count ?? 0),
-    0,
-  )
   const totalHouses = sysList.reduce(
     (a, s) => a + (s.household_count ?? 0),
     0,
   )
 
-  // ⚡ ใช้พิกัดจาก water_systems (เหมือนหน้า /villages/[id])
   const mapPoints = sysList
-    .filter(s => s.lat && s.lng)
     .map(s => {
+      const survey = surveyList.find(
+        x => x.water_system_id === s.id && x.lat && x.lng,
+      )
+      const lat = survey?.lat ?? s.lat
+      const lng = survey?.lng ?? s.lng
+      if (!lat || !lng) return null
+
       const v = list.find(x => x.id === s.village_id)
       return {
         id: s.village_id,
         systemId: s.id,
         name: s.system_name,
         villageLabel: v ? `หมู่ ${v.village_no} ${v.village_name}` : '',
-        lat: s.lat!,
-        lng: s.lng!,
+        lat,
+        lng,
         status: s.overall_condition ?? 'ไม่มีข้อมูล',
         userCount: s.user_count ?? 0,
       }
     })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
 
   return (
     <>
-      {/* ============================================
-          HERO
-          ============================================ */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 text-white">
         <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl" />
 
-        {/* Top bar */}
         <div className="relative max-w-7xl mx-auto px-4 pt-5 pb-2 flex items-center justify-between gap-4">
           <div>
             <h1 className="font-bold leading-tight text-sm md:text-base">
@@ -78,7 +75,6 @@ export default async function HomePage() {
               ทต.ท่าวังทอง · อ.เมืองพะเยา
             </p>
           </div>
-
           <div className="flex items-center gap-2">
             <Link
               href="/overview"
@@ -101,7 +97,6 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 pb-16 md:pb-20">
           <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
             <div>
@@ -118,7 +113,6 @@ export default async function HomePage() {
                 เพื่อการพัฒนาระบบน้ำประปาของชุมชนอย่างโปร่งใส
               </p>
             </div>
-
             <div className="flex justify-center md:justify-end">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl scale-110" />
@@ -133,9 +127,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============================================
-          STATS
-          ============================================ */}
+      {/* STATS */}
       <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Stat
@@ -155,82 +147,121 @@ export default async function HomePage() {
           />
           <Stat
             icon={<ClipboardList className="text-brand-600" />}
-            value={surveys?.length ?? 0}
+            value={surveyList.length}
             label="แบบสำรวจ"
           />
         </div>
       </section>
 
-      {/* ============================================
-          MAP
-          ============================================ */}
+      {/* MAP */}
       <section className="max-w-7xl mx-auto px-4 mt-12">
-        <h3 className="text-2xl font-bold text-brand-900 mb-4">
-          แผนที่ระบบประปาทั้ง 14 หมู่บ้าน
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-2xl font-bold text-brand-900">
+            แผนที่ระบบประปาทั้ง 14 หมู่บ้าน
+          </h3>
+          <a
+            href="/map"
+            className="text-sm font-medium text-brand-600 hover:text-brand-800 hover:underline"
+          >
+            เปิดแผนที่เต็ม →
+          </a>
+        </div>
         <VillagesMapClient points={mapPoints} />
       </section>
 
-      {/* ============================================
-          VILLAGES
-          ============================================ */}
+      {/* VILLAGES */}
       <section className="max-w-7xl mx-auto px-4 mt-12 pb-20">
-        <h3 className="text-2xl font-bold text-brand-900 mb-6">รายชื่อหมู่บ้าน</h3>
+        <h3 className="text-2xl font-bold text-brand-900 mb-6">
+          รายชื่อหมู่บ้าน
+        </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {list.map(v => {
-            const s = latest.get(v.id)
-            const st = s?.overall_condition ?? 'ไม่มีข้อมูล'
             const vSys = sysList.filter(x => x.village_id === v.id)
             const vHouses = vSys.reduce(
               (a, x) => a + (x.household_count ?? 0),
               0,
             )
-            const vRate = vSys[0]?.water_rate
+
+            // นับสถานะแต่ละแบบ
+            const statusCount: Record<string, number> = {}
+            vSys.forEach(s => {
+              const k = s.overall_condition ?? 'ไม่มีข้อมูล'
+              statusCount[k] = (statusCount[k] ?? 0) + 1
+            })
+
+            // เรียงตามความสำคัญ
+            const statusList = STATUS_ORDER.filter(k => (statusCount[k] ?? 0) > 0)
 
             return (
               <Link
                 key={v.id}
                 href={`/villages/${v.id}`}
-                className="card p-5 hover:-translate-y-1 hover:shadow-xl transition-all"
+                className="card p-5 hover:-translate-y-1 hover:shadow-xl hover:border-brand-300 transition-all cursor-pointer flex flex-col"
               >
+                {/* Header */}
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold text-brand-500">
                       หมู่ที่ {v.village_no}
                     </p>
-                    <h4 className="text-lg font-bold text-brand-900 leading-tight">
+                    <h4 className="text-lg font-bold text-brand-900 leading-tight truncate">
                       {v.village_name}
                     </h4>
                   </div>
-                  <span
-                    className={`badge border ${
-                      STATUS_STYLES[st] ?? STATUS_STYLES['ไม่มีข้อมูล']
-                    }`}
-                  >
-                    {STATUS_EMOJI[st] ?? ''} {st}
-                  </span>
                 </div>
-                <p className="text-sm text-brand-700 min-h-[2.5rem] line-clamp-2">
+
+                {/* ระบบประปา */}
+                <p className="text-sm text-brand-700 mb-3">
                   {vSys.length > 0 ? (
-                    `${vSys.length} ระบบประปา`
+                    `💧 ${vSys.length} ระบบประปา`
                   ) : (
-                    <span className="text-slate-400">ยังไม่มีข้อมูล</span>
+                    <span className="text-slate-400">
+                      ยังไม่มีข้อมูลระบบประปา
+                    </span>
                   )}
                 </p>
-                <div className="grid grid-cols-3 gap-2 text-center pt-3 mt-3 border-t border-brand-50">
+
+                {/* Status badges — แสดงทุกสถานะที่มี */}
+                {vSys.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {statusList.map(status => {
+                      const count = statusCount[status]
+                      const style = STATUS_STYLES[status] ?? STATUS_STYLES['ไม่มีข้อมูล']
+                      const emoji = STATUS_EMOJI[status] ?? ''
+                      return (
+                        <span
+                          key={status}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${style}`}
+                        >
+                          <span>{emoji}</span>
+                          <span>{status}</span>
+                          {count > 1 && (
+                            <span className="bg-white/60 rounded-full px-1 text-[10px] font-bold">
+                              {count}
+                            </span>
+                          )}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-2 text-center pt-3 mt-auto border-t border-brand-50">
                   <Mini label="ระบบ" value={vSys.length} />
                   <Mini label="ครัวเรือน" value={vHouses} />
-                  <Mini label="บาท/หน่วย" value={vRate} />
                 </div>
+
+                <p className="text-[11px] text-brand-500 text-center mt-3 flex items-center justify-center gap-1">
+                  ดูรายละเอียด →
+                </p>
               </Link>
             )
           })}
         </div>
       </section>
 
-      {/* ============================================
-          FOOTER
-          ============================================ */}
+      {/* FOOTER */}
       <footer className="bg-brand-900 text-brand-100 py-10 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center gap-3">
           <img
@@ -249,10 +280,6 @@ export default async function HomePage() {
     </>
   )
 }
-
-/* ============================================ */
-/* Sub components                                */
-/* ============================================ */
 
 function Stat({
   icon,
