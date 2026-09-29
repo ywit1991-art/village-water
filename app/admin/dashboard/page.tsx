@@ -7,6 +7,8 @@ import { logoutAction } from '../actions'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import CreateSystemModal from './create-system-modal'
+import IdleGuard from './idle-guard'
+import DeleteSystemButton from './delete-system-button'
 
 interface SystemRow {
   system: WaterSystem
@@ -67,6 +69,8 @@ const surveyMap = new Map<number, Survey>()
 
   return (
     <>
+      <IdleGuard timeout={60_000} warnBefore={15_000} />
+
       <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -244,21 +248,32 @@ const surveyMap = new Map<number, Survey>()
                                 </span>
                               </td>
                               <td className="p-3 text-right whitespace-nowrap">
-                                <Link
-                                  href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
-                                >
-                                  {s ? (
-                                    <>
-                                      <Pencil size={12} /> แก้ไขแบบฟอร์ม
-                                    </>
-                                  ) : (
-                                    <>
-                                      <PlusCircle size={12} /> กรอกแบบฟอร์ม
-                                    </>
-                                  )}
-                                </Link>
-                              </td>
+  <div className="inline-flex items-center gap-3">
+    {/* ปุ่มแก้ไขแบบฟอร์ม */}
+    <Link
+      href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
+    >
+      {s ? (
+        <>
+          <Pencil size={12} /> แก้ไขแบบฟอร์ม
+        </>
+      ) : (
+        <>
+          <PlusCircle size={12} /> กรอกแบบฟอร์ม
+        </>
+      )}
+    </Link>
+
+    {/* ปุ่มลบ */}
+    <DeleteSystemButton
+      systemId={sys.id}
+      systemName={sys.system_name}
+      villageName={`หมู่ ${v.village_no} ${v.village_name}`}
+      hasSurvey={!!s}
+    />
+  </div>
+</td>
                             </tr>
                           )
                         })}
