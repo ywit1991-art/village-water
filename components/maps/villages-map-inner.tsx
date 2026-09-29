@@ -1,13 +1,22 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { X, AlertCircle, Wrench, Eye, EyeOff, MapPin } from 'lucide-react'
+import {
+  X,
+  AlertCircle,
+  Wrench,
+  Eye,
+  EyeOff,
+  MapPin,
+  Navigation,
+} from 'lucide-react'
 import LeafletBase from './LeafletBase'
 import { createWaterMarkerIcon } from '@/lib/map-icons'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
 import type { MarkerData } from './VillagesMapClient'
+import { maskPhone } from '@/lib/utils/phone'
 import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
 
@@ -18,23 +27,77 @@ interface Props {
 
 const HOVER_DELAY_MS = 800
 
+/** ⚡ Fit bounds เฉพาะครั้งแรก หรือเมื่อ filter เปลี่ยน (markers ids เปลี่ยน) */
 function AutoFitBounds({ points }: { points: [number, number][] }) {
   const map = useMap()
+  const fittedKeyRef = useRef<string>('')
+
   useEffect(() => {
     if (points.length === 0) return
-    if (points.length === 1) {
-      map.setView(points[0], 16)
-      return
+
+    const key = points
+      .map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`)
+      .join('|')
+
+    if (fittedKeyRef.current === key) return
+    fittedKeyRef.current = key
+
+    // ⚡ ฟังก์ชัน fit — เรียกได้หลายครั้ง
+function doFit() {
+  map.invalidateSize()
+
+  if (points.length === 1) {
+    map.setView(points[0], 16)
+    return
+  }
+
+  const lats = points.map(p => p[0])
+  const lngs = points.map(p => p[1])
+
+  // ⚡ คำนวณ center + zoom manual
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const minLng = Math.min(...lngs)
+  const maxLng = Math.max(...lngs)
+
+  const centerLat = (minLat + maxLat) / 2
+  const centerLng = (minLng + maxLng) / 2
+
+  // ระยะห่างจริง
+  const latSpan = maxLat - minLat
+  const lngSpan = maxLng - minLng
+  const maxSpan = Math.max(latSpan, lngSpan)
+
+  // คำนวณ zoom จาก maxSpan (ค่าประมาณ)
+  let zoom = 13
+  if (maxSpan < 0.01) zoom = 15
+  else if (maxSpan < 0.02) zoom = 14
+  else if (maxSpan < 0.05) zoom = 13
+  else if (maxSpan < 0.1) zoom = 12
+  else zoom = 11
+
+  map.setView([centerLat, centerLng], zoom, { animate: true })
+}
+
+    // ⚡ เรียก 3 ครั้งที่เวลาต่างกัน — เพื่อจับ container size
+    const t1 = setTimeout(doFit, 50)
+    const t2 = setTimeout(doFit, 300)
+    const t3 = setTimeout(doFit, 800)
+
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
     }
-    const lats = points.map(p => p[0])
-    const lngs = points.map(p => p[1])
-    const bounds: [[number, number], [number, number]] = [
-      [Math.min(...lats), Math.min(...lngs)],
-      [Math.max(...lats), Math.max(...lngs)],
-    ]
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 })
   }, [points, map])
+
   return null
+}
+
+/** เปิด Google Maps นำทางไปยังระบบ */
+function openDirections(lat: number, lng: number) {
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 export default function VillagesMapInner({
@@ -68,6 +131,7 @@ export default function VillagesMapInner({
     }
   }, [])
 
+  // ⚡ ปิด Modal เมื่อกด ESC — ไม่ lock body overflow แล้ว (ไม่ให้ layout shift)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -77,11 +141,9 @@ export default function VillagesMapInner({
     }
     if (selected || streetViewMarker) {
       document.addEventListener('keydown', onKey)
-      document.body.style.overflow = 'hidden'
     }
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
     }
   }, [selected, streetViewMarker])
 
@@ -103,6 +165,12 @@ export default function VillagesMapInner({
     setStreetViewMarker(m)
   }
 
+  // ⚡ Memoize allPoints — ไม่ให้ array อ้างอิงใหม่ทุก render
+  const allPoints = useMemo(
+    () => markers.map(m => [m.lat, m.lng] as [number, number]),
+    [markers],
+  )
+
   if (markers.length === 0) {
     return (
       <div
@@ -121,7 +189,6 @@ export default function VillagesMapInner({
   }
 
   const center: [number, number] = [markers[0].lat, markers[0].lng]
-  const allPoints = markers.map(m => [m.lat, m.lng] as [number, number])
 
   return (
     <>
@@ -205,7 +272,6 @@ function DetailModal({
 }) {
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
 
-  // ⚡ ป้องกัน undefined — ใช้ ?? [] ทุก array
   const committee = m.committee ?? []
   const problems = m.problems ?? []
   const improvements = m.improvements ?? []
@@ -214,7 +280,7 @@ function DetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60"
       onClick={onClose}
     >
       <div
@@ -296,7 +362,6 @@ function DetailModal({
           </div>
 
           <div className="px-8 py-6 space-y-6">
-            {/* ช่างประปา */}
             {m.operatorName && (
               <Section title="ช่างประปา">
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
@@ -309,18 +374,18 @@ function DetailModal({
                     </p>
                   </div>
                   {m.operatorPhone && (
-                    <a
-                      href={`tel:${m.operatorPhone}`}
-                      className="text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2 rounded-lg bg-white border border-brand-100 hover:border-brand-300 transition shrink-0"
-                    >
-                      {m.operatorPhone}
-                    </a>
-                  )}
+  <a
+    href={`tel:${m.operatorPhone}`}
+    className="text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2 rounded-lg bg-white border border-brand-100 hover:border-brand-300 transition shrink-0"
+    title="คลิกเพื่อโทรออก"
+  >
+    📞 {maskPhone(m.operatorPhone)}
+  </a>
+)}
                 </div>
               </Section>
             )}
 
-            {/* คณะกรรมการ */}
             {committee.length > 0 && (
               <Section title={`คณะกรรมการ (${committee.length} คน)`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -338,13 +403,14 @@ function DetailModal({
                             {person.name}
                           </p>
                           {person.phone && (
-                            <a
-                              href={`tel:${person.phone}`}
-                              className="inline-flex items-center gap-1 text-sm font-mono font-semibold text-brand-600 hover:text-brand-800 hover:underline"
-                            >
-                              📞 {person.phone}
-                            </a>
-                          )}
+  <a
+    href={`tel:${person.phone}`}
+    className="inline-flex items-center gap-1 text-sm font-mono font-semibold text-brand-600 hover:text-brand-800 hover:underline"
+    title="คลิกเพื่อโทรออก"
+  >
+    📞 {maskPhone(person.phone)}
+  </a>
+)}
                         </div>
                         {person.position && (
                           <p className="text-sm text-slate-500 truncate mt-0.5">
@@ -358,7 +424,6 @@ function DetailModal({
               </Section>
             )}
 
-            {/* ปัญหาที่พบ */}
             {problems.length > 0 && (
               <Section
                 title={`ปัญหาที่พบ (${problems.length})`}
@@ -381,7 +446,6 @@ function DetailModal({
               </Section>
             )}
 
-            {/* จุดที่ควรแก้ไข */}
             {improvements.length > 0 && (
               <Section
                 title={`จุดที่ควรแก้ไข/ปรับปรุง (${improvements.length})`}
@@ -404,7 +468,6 @@ function DetailModal({
               </Section>
             )}
 
-            {/* ภาพถ่าย */}
             {photos.length > 0 && (
               <Section title={`ภาพถ่าย (${photos.length})`} accent="emerald">
                 <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
@@ -439,18 +502,33 @@ function DetailModal({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={e => {
-              e.preventDefault()
-              e.stopPropagation()
-              onOpenStreetView(m)
-            }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
-          >
-            <MapPin size={18} />
-            ดู Street View
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                openDirections(m.lat, m.lng)
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+            >
+              <Navigation size={18} />
+              นำทาง
+            </button>
+
+            <button
+              type="button"
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                onOpenStreetView(m)
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+            >
+              <MapPin size={18} />
+              Street View
+            </button>
+          </div>
         </div>
       </div>
     </div>

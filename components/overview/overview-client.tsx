@@ -49,15 +49,23 @@ export default function OverviewClient({ villages, systems }: Props) {
     }
   }
 
+  // ==========================================
+  // ⚡ Filtered — ตัด draft ออก (ไม่แสดงทั้งแผนที่ + สถิติ)
+  // ==========================================
   const filtered = useMemo(() => {
     return systems.filter(s => {
+      // ⚡ ไม่นับ draft / ยังไม่มี survey (submitted/approved)
+      if (!s.survey) return false
+
+      // กรองหมู่บ้าน
       if (villageFilter !== 'all' && s.system.village_id !== villageFilter)
         return false
+
+      // กรองสถานะ
       const condition =
-        s.survey?.overall_condition ??
-        s.system.overall_condition ??
-        'ไม่มีข้อมูล'
+        s.survey.overall_condition ?? s.system.overall_condition ?? 'ไม่มีข้อมูล'
       if (statusFilter !== 'all' && condition !== statusFilter) return false
+
       return true
     })
   }, [systems, villageFilter, statusFilter])
@@ -98,7 +106,7 @@ export default function OverviewClient({ villages, systems }: Props) {
   })
 
   // ==========================================
-  // Markers — ⚡ มี improvements ครบ
+  // Markers — ใช้ filtered (ไม่มี draft แล้ว)
   // ==========================================
   const markers: MarkerData[] = useMemo(() => {
     const result: MarkerData[] = []
