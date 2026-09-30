@@ -176,7 +176,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={18} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600 bg-sky-50',
     },
     {
@@ -218,7 +218,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
+                ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-100 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -337,7 +337,7 @@ export default function OverviewClient({ villages, systems }: Props) {
           <div className="card overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-3 border-b border-brand-50">
               <div>
-                <h3 className="font-bold text-brand-900">แผนที่ระบบประปา</h3>
+                <h3 className="font-bold text-brand-900">แผนที่ข้อมูลประปา</h3>
                 <p className="text-[11px] text-brand-500">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด
                 </p>

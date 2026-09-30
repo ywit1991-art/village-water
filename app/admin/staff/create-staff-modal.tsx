@@ -142,7 +142,7 @@ export default function CreateStaffModal({ villages, systems }: Props) {
               {role === 'operator' && (
                 <div>
                   <label className="label">
-                    ระบบประปาที่ดูแล * ({selectedSystems.length} ระบบ)
+                    ข้อมูลประปาที่ดูแล * ({selectedSystems.length} ระบบ)
                   </label>
                   <input
                     type="hidden"
@@ -152,7 +152,7 @@ export default function CreateStaffModal({ villages, systems }: Props) {
                   <div className="border border-brand-100 rounded-lg max-h-64 overflow-y-auto">
                     {groupedSystems.length === 0 ? (
                       <p className="p-4 text-center text-sm text-slate-400">
-                        ยังไม่มีระบบประปา
+                        ยังไม่มีข้อมูลประปา
                       </p>
                     ) : (
                       groupedSystems.map(({ village, systems: sysList }) => (

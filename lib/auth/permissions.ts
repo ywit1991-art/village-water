@@ -41,7 +41,7 @@ export function canAccessVillage(
   return false
 }
 
-/** เข้าระบบประปานี้ได้ไหม */
+/** เข้าข้อมูลประปานี้ได้ไหม */
 export function canAccessSystem(
   session: SessionData | null,
   systemId: number,

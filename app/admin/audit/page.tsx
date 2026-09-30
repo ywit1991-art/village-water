@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft, ClipboardList, User, Clock, Activity } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getSession } from '@/lib/auth/session'
 import { canViewAudit } from '@/lib/auth/permissions'
 
@@ -11,9 +11,9 @@ const ACTION_LABELS: Record<string, string> = {
   create_staff: 'สร้างเจ้าหน้าที่',
   update_staff: 'แก้ไขเจ้าหน้าที่',
   delete_staff: 'ลบเจ้าหน้าที่',
-  create_system: 'สร้างระบบประปา',
-  update_system: 'แก้ไขระบบประปา',
-  delete_system: 'ลบระบบประปา',
+  create_system: 'สร้างข้อมูลประปา',
+  update_system: 'แก้ไขข้อมูลประปา',
+  delete_system: 'ลบข้อมูลประปา',
   save_survey: 'บันทึกแบบสำรวจ',
 }
 
@@ -31,6 +31,12 @@ const ACTION_COLORS: Record<string, string> = {
 
 export default async function AuditPage() {
   const session = await getSession()
+    const sb = createAdminClient()
+  const { data: logs } = await sb
+    .from('audit_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(200)
   if (!session) redirect('/admin')
   if (!canViewAudit(session)) {
     return (
