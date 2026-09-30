@@ -54,13 +54,16 @@ export default function OverviewClient({ villages, systems }: Props) {
   const filtered = useMemo(() => {
     return systems.filter(s => {
       if (!s.survey) return false
+
       if (villageFilter !== 'all' && s.system.village_id !== villageFilter)
         return false
+
       const condition =
         s.survey.overall_condition ??
         s.system.overall_condition ??
         'ไม่มีข้อมูล'
       if (statusFilter !== 'all' && condition !== statusFilter) return false
+
       return true
     })
   }, [systems, villageFilter, statusFilter])
@@ -173,7 +176,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={18} />,
       value: stats.systems,
-      label: 'ข้อมูลประปา',
+      label: 'ระบบประปา',
       color: 'text-sky-600 bg-sky-50',
     },
     {
@@ -196,44 +199,9 @@ export default function OverviewClient({ villages, systems }: Props) {
     },
   ]
 
-  const chartToggle = (
-  <div className="flex items-center gap-2 shrink-0">
-    <a
-      href="/api/pdf/summary"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition shadow-sm"
-      title="ดาวน์โหลด PDF รายงานสรุป"
-    >
-      📄 PDF
-    </a>
-
-    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 shadow-sm">
-      <button
-        type="button"
-        onClick={() => setChartMode('status')}
-        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
-          chartMode === 'status'
-            ? 'bg-white text-brand-700 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700'
-        }`}
-      >
-        🍩 สถานะ
-      </button>
-      <button
-        type="button"
-        onClick={() => setChartMode('village')}
-        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
-          chartMode === 'village'
-            ? 'bg-white text-brand-700 shadow-sm'
-            : 'text-slate-500 hover:text-slate-700'
-        }`}
-      >
-        📊 หมู่บ้าน
-      </button>
-    </div>
-  </div>
-)
+  const toggleSlot = (
+    <ChartToggle chartMode={chartMode} setChartMode={setChartMode} />
+  )
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-50/30">
@@ -250,7 +218,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ข้อมูลประปาหมู่บ้าน
+                ระบบประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-100 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -330,7 +298,7 @@ export default function OverviewClient({ villages, systems }: Props) {
               )}
 
               <div className="text-sm text-brand-700 font-medium ml-auto">
-                พบ <span className="font-bold">{filtered.length}</span> ข้อมูล
+                พบ <span className="font-bold">{filtered.length}</span> ระบบ
               </div>
             </div>
           </div>
@@ -352,28 +320,24 @@ export default function OverviewClient({ villages, systems }: Props) {
 
         {/* CHART + MAP */}
         <div className="grid lg:grid-cols-[minmax(320px,1fr)_2fr] gap-5">
-          {/* Chart */}
-          <div>
-            {chartMode === 'status' ? (
-              <StatusChart
-                statusCount={statusCount}
-                total={stats.systems}
-                rightSlot={chartToggle}
-              />
-            ) : (
-              <VillageStatusChart
-                villages={villages}
-                systems={filtered}
-                rightSlot={chartToggle}
-              />
-            )}
-          </div>
+          {chartMode === 'status' ? (
+            <StatusChart
+              statusCount={statusCount}
+              total={stats.systems}
+              rightSlot={toggleSlot}
+            />
+          ) : (
+            <VillageStatusChart
+              villages={villages}
+              systems={filtered}
+              rightSlot={toggleSlot}
+            />
+          )}
 
-          {/* Map */}
           <div className="card overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-3 border-b border-brand-50">
               <div>
-                <h3 className="font-bold text-brand-900">แผนที่ข้อมูลประปา</h3>
+                <h3 className="font-bold text-brand-900">แผนที่ระบบประปา</h3>
                 <p className="text-[11px] text-brand-500">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด
                 </p>
@@ -392,9 +356,7 @@ export default function OverviewClient({ villages, systems }: Props) {
               ref={mapRef}
               className="flex-1 bg-white"
               style={
-                isFullscreen
-                  ? { height: '100vh', width: '100vw' }
-                  : undefined
+                isFullscreen ? { height: '100vh', width: '100vw' } : undefined
               }
             >
               <VillagesMapClient
@@ -423,6 +385,44 @@ export default function OverviewClient({ villages, systems }: Props) {
           </div>
         </div>
       </footer>
+    </div>
+  )
+}
+
+/* ============================================================ */
+/* SUB COMPONENTS                                               */
+/* ============================================================ */
+function ChartToggle({
+  chartMode,
+  setChartMode,
+}: {
+  chartMode: 'status' | 'village'
+  setChartMode: (m: 'status' | 'village') => void
+}) {
+  return (
+    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 shadow-sm shrink-0">
+      <button
+        type="button"
+        onClick={() => setChartMode('status')}
+        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
+          chartMode === 'status'
+            ? 'bg-white text-brand-700 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+        }`}
+      >
+        🍩 สถานะ
+      </button>
+      <button
+        type="button"
+        onClick={() => setChartMode('village')}
+        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
+          chartMode === 'village'
+            ? 'bg-white text-brand-700 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+        }`}
+      >
+        📊 หมู่บ้าน
+      </button>
     </div>
   )
 }
