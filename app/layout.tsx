@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { Toaster } from 'sonner'
 import './globals.css'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: 'ประปาหมู่บ้าน · เทศบาลตำบลท่าวังทอง',
-  description: 'ข้อมูลประปาหมู่บ้าน ต.ท่าวังทอง อ.เมืองพะเยา จ.พะเยา',
+  title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
+  description: 'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
 }
 
 export default function RootLayout({
@@ -15,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <head>
+        {/* โหลดฟอนต์ตรงจาก Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -22,13 +23,13 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="font-sans bg-brand-50/40 text-slate-800 antialiased min-h-screen flex flex-col">
+      <body className="antialiased">
         {children}
-        <Toaster position="top-center" richColors />
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   )

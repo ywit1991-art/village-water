@@ -1,9 +1,10 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
+/* ============================================================ */
+/* Theme — กำหนดสี brand + ฟอนต์                                */
+/* ============================================================ */
 @theme {
-  --font-sans: "Noto Sans Thai", system-ui, sans-serif;
-
-  --color-brand-50:  #f0f9ff;
+  --color-brand-50: #f0f9ff;
   --color-brand-100: #e0f2fe;
   --color-brand-200: #bae6fd;
   --color-brand-300: #7dd3fc;
@@ -14,87 +15,287 @@
   --color-brand-800: #075985;
   --color-brand-900: #0c4a6e;
 
-  --shadow-card: 0 4px 20px -4px rgba(2, 132, 199, 0.12);
+  --font-sans: 'Noto Sans Thai', 'Tahoma', sans-serif;
+  --font-report: 'Sarabun', 'TH Sarabun New', 'Tahoma', sans-serif;
 }
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-  body {
-    font-family: var(--font-sans);
-  }
+html,
+body {
+  font-family: 'Noto Sans Thai', 'Tahoma', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  color: #1e293b;
+  background-color: #f8fafc;
+}
+
+/* ============================================================ */
+/* Components                                                    */
+/* ============================================================ */
 @layer components {
   .card {
-    @apply bg-white rounded-2xl border border-brand-100;
-    box-shadow: var(--shadow-card);
-  }
-  .input {
-    @apply w-full px-3 py-2 rounded-lg border border-brand-200 bg-white text-sm
-           focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition;
-  }
-  .label {
-    @apply block text-sm font-medium text-brand-800 mb-1.5;
-  }
-  .badge {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0f2fe;
   }
 
-  /* ปุ่ม — ไม่ใช้ @apply btn เพราะ Tailwind v4 ไม่รองรับ */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition
-           disabled:opacity-50 disabled:cursor-not-allowed
-           bg-gradient-to-r from-brand-500 to-brand-600 text-white hover:opacity-90;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    background-color: #0ea5e9;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
   }
+  .btn-primary:hover:not(:disabled) {
+    background-color: #0284c7;
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition
-           disabled:opacity-50 disabled:cursor-not-allowed
-           border border-brand-200 text-brand-700 hover:bg-brand-50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #bae6fd;
+    background-color: #ffffff;
+    color: #0369a1;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: #f0f9ff;
+  }
+  .btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #bae6fd;
+    background-color: #ffffff;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: #1e293b;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+  }
+  .input::placeholder {
+    color: #94a3b8;
+  }
+
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #0369a1;
+    margin-bottom: 0.375rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
   }
 }
 
-/* Leaflet fixes */
+/* ============================================================ */
+/* Leaflet                                                       */
+/* ============================================================ */
 .leaflet-container {
   font-family: inherit;
-  border-radius: 1rem;
-  z-index: 1;
+  z-index: 0;
 }
-.leaflet-popup-content {
-  margin: 12px 14px;
-}
-
-/* Leaflet Popup — Noto Sans Thai + ตัวใหญ่ */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
-  padding: 0 !important;
-  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+.water-marker-icon {
+  background: transparent !important;
+  border: none !important;
 }
 
-.leaflet-popup-content {
-  margin: 0 !important;
-  padding: 14px 16px !important;
-  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
-  font-size: 15px !important;
-  line-height: 1.5 !important;
-  min-width: 320px;
+/* ============================================================ */
+/* Report — ใช้ Sarabun เท่านั้น (override ทุก element)          */
+/* ============================================================ */
+.report-page,
+.report-page * {
+  font-family: 'Sarabun', 'TH Sarabun New', 'Tahoma', sans-serif !important;
 }
 
-.leaflet-popup-tip {
-  box-shadow: none !important;
+.report-page {
+  font-size: 10pt;
+  line-height: 1;
+  color: #0f172a;
+  background: #ffffff;
 }
 
-/* Leaflet Popup — กว้างพิเศษ */
-.leaflet-popup-content {
-  margin: 0 !important;
-  min-width: 620px !important;
-  max-width: 680px !important;
+.report-page table {
+  font-size: 10pt;
+  width: 100%;
+  table-layout: fixed;           /* ⬅️ บังคับความกว้างคอลัมน์ */
+  border-collapse: collapse;
+  border: 1px solid #cbd5e1;     /* ⬅️ เพิ่มเส้นรอบนอกให้ครบ */
 }
 
-.leaflet-popup-content-wrapper {
-  padding: 0 !important;
-  border-radius: 12px !important;
-  overflow: hidden;
-  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+.report-page th,
+.report-page td {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #cbd5e1;     /* ⬅️ บังคับเส้นขอบทุกด้าน */
+  word-wrap: break-word;          /* ⬅️ กันข้อความล้น */
+  overflow-wrap: break-word;
+}
+
+/* คอลัมน์สุดท้าย — กันเส้นขวาหาย */
+.report-page th:last-child,
+.report-page td:last-child {
+  border-right: 1px solid #cbd5e1 !important;
+  padding-right: 0.5rem;
+}
+
+/* หัวข้อ section เล็กลงเล็กน้อย */
+.report-page h2 {
+  font-size: 12pt;
+}
+
+.report-page h1,
+.report-page h2,
+.report-page h3,
+.report-page h4 {
+  font-weight: 700;
+}
+
+.report-field-label {
+  color: #475569;
+  min-width: 9rem;
+  flex-shrink: 0;
+}
+.report-field-value {
+  color: #0f172a;
+  font-weight: 500;
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+/* Section — บังคับให้อยู่หน้าเดียวกันทั้งหมด */
+/* Section ปกติ — ห้ามขาดหน้า */
+.report-section {
+  margin-bottom: 1rem;
+  orphans: 4;
+  widows: 4;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Section ยาว — ยอมให้ตัดข้ามหน้า */
+.report-section.long-section {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+/* หัวข้อเกาะเนื้อหา */
+.report-section > h2 {
+  break-after: avoid-page;
+  break-inside: avoid;
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+
+/* Section 17 — ไม่บังคับขึ้นหน้าใหม่ ให้ flow ตามเนื้อหา */
+.report-section[data-section="17"] {
+  margin-top: 1rem;
+}
+
+/* Signature block ห้ามขาด */
+.signature-block {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+@page {
+  size: A4;
+  margin: 1.5cm 1.2cm 1.8cm 1.2cm;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    font-size: 13pt;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .report-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* ⬇️ Footer อยู่ที่ขอบล่างของ printable area — ไม่ทับเนื้อหา */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    line-height: 1.2;
+    color: #94a3b8;
+    background: #ffffff;
+    padding: 2px 0 4px 0;
+    border-top: 0.5px solid #e2e8f0;
+    z-index: 9999;
+  }
+  
+    /* ใส่เลขหน้า + จำนวนหน้ารวม — ใช้ counter ที่ browser รองรับ */
+  .report-page {
+    counter-reset: page;
+  }
+
+
+  /* เพิ่ม CSS page counter ผ่าน pseudo element (Firefox รองรับ) */
+  .print-footer::after {
+    content: '';
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
 }

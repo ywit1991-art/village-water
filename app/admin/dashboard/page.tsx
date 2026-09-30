@@ -11,8 +11,9 @@ import {
   Home,
   Droplets,
   Info,
+  FileText,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getSession } from '@/lib/auth/session'
 import { logoutAction } from '../actions'
 import type { Village, Survey, WaterSystem } from '@/lib/types'
@@ -24,8 +25,8 @@ import {
   canDeleteSystem,
   canAccessVillage,
   canAccessSystem,
+  ROLE_LABELS,
 } from '@/lib/auth/permissions'
-import { ROLE_LABELS } from '@/lib/auth/permissions'
 import { RoleBadge } from '@/components/ui/role-badge'
 import CreateSystemModal from './create-system-modal'
 import IdleGuard from './idle-guard'
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/admin')
 
-  const sb = await createClient()
+  const sb = createAdminClient()
 
   const [{ data: villages }, { data: systems }, { data: surveys }] =
     await Promise.all([
@@ -83,17 +84,14 @@ export default async function DashboardPage() {
   const rawSystems = (systems as WaterSystem[] | null) ?? []
   const rawSurveys = (surveys as Survey[] | null) ?? []
 
-  // กรองหมู่บ้าน
   const filteredVillages = rawVillages.filter(v =>
     canAccessVillage(session, v.id),
   )
 
-  // กรองระบบ
   const filteredSystems = rawSystems.filter(s =>
     canAccessSystem(session, s.id, s.village_id),
   )
 
-  // กรอง surveys ให้ตรงกับ systems ที่เห็น
   const visibleSystemIds = new Set(filteredSystems.map(s => s.id))
   const filteredSurveys = rawSurveys.filter(
     s => s.water_system_id && visibleSystemIds.has(s.water_system_id),
@@ -167,7 +165,6 @@ export default async function DashboardPage() {
           </Link>
 
           <nav className="flex items-center gap-1 md:gap-2">
-            {/* แสดง Badge บทบาท */}
             <span className="hidden md:inline-flex">
               <RoleBadge role={session.role} />
             </span>
@@ -214,17 +211,13 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 w-full">
-        {/* ============================== */}
-        {/* Subtitle + Scope Banner         */}
-        {/* ============================== */}
+        {/* Subtitle */}
         <div className="mb-4 flex items-center gap-2 text-sm text-brand-700">
           <Info size={14} className="shrink-0" />
           <span>{header.subtitle}</span>
         </div>
 
-        {/* ============================== */}
-        {/* บอกขอบเขตการเข้าถึง             */}
-        {/* ============================== */}
+        {/* Scope Banner */}
         {session.role === 'village_head' && session.village_id && (
           <ScopeBanner
             icon={<Home size={18} />}
@@ -232,7 +225,9 @@ export default async function DashboardPage() {
             title="ขอบเขตของคุณ"
             detail={
               villageMap.get(session.village_id)
-                ? `หมู่ ${villageMap.get(session.village_id)!.village_no} ${villageMap.get(session.village_id)!.village_name}`
+                ? `หมู่ ${villageMap.get(session.village_id)!.village_no} ${
+                    villageMap.get(session.village_id)!.village_name
+                  }`
                 : 'หมู่บ้านของคุณ'
             }
           />
@@ -280,7 +275,9 @@ export default async function DashboardPage() {
           </div>
           <div className="card p-4">
             <p className="text-xs text-brand-500">
-              {session.role === 'super_admin' ? 'บทบาทของคุณ' : 'สิทธิ์การใช้งาน'}
+              {session.role === 'super_admin'
+                ? 'บทบาทของคุณ'
+                : 'สิทธิ์การใช้งาน'}
             </p>
             <p className="text-base font-bold text-brand-900 mt-1">
               {ROLE_LABELS[session.role]}
@@ -294,10 +291,7 @@ export default async function DashboardPage() {
         <div className="space-y-4">
           {filteredVillages.length === 0 && (
             <div className="card p-10 text-center">
-              <Shield
-                size={32}
-                className="mx-auto text-slate-300 mb-3"
-              />
+              <Shield size={32} className="mx-auto text-slate-300 mb-3" />
               <p className="text-slate-500">
                 {session.role === 'operator'
                   ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา — กรุณาติดต่อผู้ดูแลระบบ'
@@ -309,11 +303,11 @@ export default async function DashboardPage() {
           {filteredVillages.map(v => {
             const rows = grouped.get(v.id) ?? []
 
-            // ถ้า operator/village_head และไม่มีระบบในหมู่นี้ → ข้าม
             if (rows.length === 0 && !showCreate) return null
 
             return (
               <div key={v.id} className="card overflow-hidden">
+                {/* Header หมู่บ้าน */}
                 <div className="px-4 py-3 bg-brand-50/60 border-b border-brand-100 flex items-center justify-between">
                   <div>
                     <p className="text-xs text-brand-500">
@@ -324,7 +318,6 @@ export default async function DashboardPage() {
                     </h2>
                   </div>
 
-                  {/* แสดงปุ่มเพิ่มข้อมูล — เฉพาะคนที่มีสิทธิ์ */}
                   {showCreate && (
                     <CreateSystemModal
                       villageId={v.id}
@@ -333,6 +326,7 @@ export default async function DashboardPage() {
                   )}
                 </div>
 
+                {/* ตารางข้อมูล */}
                 {rows.length === 0 ? (
                   <div className="p-8 text-center text-sm text-slate-400">
                     ยังไม่มีข้อมูลประปาในหมู่บ้านนี้
@@ -348,7 +342,7 @@ export default async function DashboardPage() {
                           <th className="p-3 text-left w-32">สถานะ</th>
                           <th className="p-3 text-left w-32">วันที่ตรวจ</th>
                           <th className="p-3 text-left w-40">สภาพ</th>
-                          <th className="p-3 text-right w-48">จัดการ</th>
+                          <th className="p-3 text-right w-72">จัดการ</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -416,8 +410,8 @@ export default async function DashboardPage() {
                                 </span>
                               </td>
                               <td className="p-3 text-right whitespace-nowrap">
-                                <div className="inline-flex items-center gap-3">
-                                  {/* ปุ่มแก้ไขแบบฟอร์ม — ทุกคนที่มีสิทธิ์เข้าถึงสามารถทำได้ */}
+                                <div className="inline-flex items-center gap-2">
+                                  {/* ปุ่มแก้ไขแบบฟอร์ม */}
                                   <Link
                                     href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
@@ -432,6 +426,19 @@ export default async function DashboardPage() {
                                       </>
                                     )}
                                   </Link>
+
+                                  {/* ปุ่มรายงาน — แสดงเมื่อมี survey เท่านั้น */}
+                                  {s && (
+                                    <Link
+                                      href={`/admin/surveys/${s.id}/report`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-medium transition"
+                                      title="เปิดรายงานแบบเต็มเพื่อพิมพ์"
+                                    >
+                                      <FileText size={12} /> รายงาน
+                                    </Link>
+                                  )}
 
                                   {/* ปุ่มลบ — เฉพาะ staff/super_admin */}
                                   {showDelete && (
