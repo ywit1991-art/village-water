@@ -17,12 +17,12 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
       <div className="card p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-bold text-brand-900">
-            สถานะระบบประปา
+            สถานะข้อมูลประปา
           </h2>
           {rightSlot}
         </div>
         <p className="text-sm text-brand-400 text-center py-10">
-          ยังไม่มีข้อมูลระบบประปา
+          ยังไม่มีข้อมูลข้อมูลประปา
         </p>
       </div>
     )
@@ -47,7 +47,7 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
       {/* Header พร้อม Toggle */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-bold text-brand-900">
-          สถานะระบบประปา
+          สถานะข้อมูลประปา
         </h2>
         {rightSlot}
       </div>
@@ -63,7 +63,7 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
               <p className="text-4xl font-extrabold text-brand-900 leading-none">
                 {total}
               </p>
-              <p className="text-xs text-brand-500 mt-1">ระบบทั้งหมด</p>
+              <p className="text-xs text-brand-500 mt-1">ข้อมูลทั้งหมด</p>
             </div>
           </div>
         </div>

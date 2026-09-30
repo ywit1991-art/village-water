@@ -8,8 +8,8 @@ export function Section7() {
   const { register } = useFormContext()
 
   return (
-    <FormSection number={7} title="ระบบผลิตน้ำประปา">
-      <label className="label">ประเภทระบบผลิต</label>
+    <FormSection number={7} title="ข้อมูลผลิตน้ำประปา">
+      <label className="label">ประเภทข้อมูลผลิต</label>
       <div className="mb-4">
         <CheckboxGroup
           name="production_type"
@@ -23,15 +23,15 @@ export function Section7() {
         <input {...register('production_other')} className="input" />
       </div>
 
-      <label className="label">มีระบบกรองน้ำหรือไม่</label>
+      <label className="label">มีข้อมูลกรองน้ำหรือไม่</label>
       <div className="mb-4">
         <RadioGroup name="has_filter" options={CK.has_filter} columns={3} />
       </div>
 
-      <label className="label">ประเภทระบบกรอง/วัสดุกรอง</label>
+      <label className="label">ประเภทข้อมูลกรอง/วัสดุกรอง</label>
       <textarea {...register('filter_type')} rows={2} className="input mb-4" />
 
-      <label className="label">สภาพระบบกรอง</label>
+      <label className="label">สภาพข้อมูลกรอง</label>
       <div className="mb-4">
         <CheckboxGroup
           name="filter_condition"
@@ -40,7 +40,7 @@ export function Section7() {
         />
       </div>
 
-      <label className="label">ระบบฆ่าเชื้อ/เติมคลอรีน</label>
+      <label className="label">ข้อมูลฆ่าเชื้อ/เติมคลอรีน</label>
       <RadioGroup name="chlorination" options={CK.chlorination} columns={3} />
     </FormSection>
   )

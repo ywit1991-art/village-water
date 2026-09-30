@@ -10,7 +10,7 @@ export function Section1() {
     <FormSection number={1} title="ข้อมูลทั่วไป">
       <div className="grid md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-          <label className="label">ชื่อระบบประปาหมู่บ้าน</label>
+          <label className="label">ชื่อข้อมูลประปาหมู่บ้าน</label>
           <input {...register('water_system_name')} className="input" />
         </div>
         <div className="md:col-span-2">
@@ -18,7 +18,7 @@ export function Section1() {
           <input {...register('group_name')} className="input" />
         </div>
         <div className="md:col-span-2">
-          <label className="label">สถานที่ตั้งระบบประปา</label>
+          <label className="label">สถานที่ตั้งข้อมูลประปา</label>
           <input {...register('location')} className="input" />
         </div>
         <div>

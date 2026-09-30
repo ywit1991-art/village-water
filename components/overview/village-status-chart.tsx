@@ -62,7 +62,7 @@ export default function VillageStatusChart({
           {rightSlot}
         </div>
         <p className="text-sm text-brand-400 text-center py-10">
-          ยังไม่มีข้อมูลระบบประปา
+          ยังไม่มีข้อมูลข้อมูลประปา
         </p>
       </div>
     )
@@ -154,7 +154,7 @@ export default function VillageStatusChart({
                             width: `${segPct}%`,
                             background: c.hex,
                           }}
-                          title={`${k}: ${count} ระบบ`}
+                          title={`${k}: ${count} ข้อมูล`}
                         >
                           {count >= 1 && segPct >= 15 && count}
                         </div>
@@ -177,7 +177,7 @@ export default function VillageStatusChart({
       <div className="mt-4 pt-3 border-t border-brand-50 text-xs text-slate-500 flex items-center justify-between">
         <span>รวม {stats.length} หมู่บ้าน</span>
         <span className="font-semibold text-brand-700">
-          {grandTotal} ระบบ
+          {grandTotal} ข้อมูล
         </span>
       </div>
     </div>

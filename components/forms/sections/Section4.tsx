@@ -38,7 +38,7 @@ export function Section4() {
           <input {...register('water_source_name')} className="input" />
         </div>
         <div>
-          <label className="label">ระยะห่างจากระบบผลิต (ม.)</label>
+          <label className="label">ระยะห่างจากข้อมูลผลิต (ม.)</label>
           <input
             type="number"
             step="any"
@@ -60,11 +60,11 @@ export function Section4() {
       {haveSystem && haveSource && (
         <div className="mt-5">
           <label className="label">
-            เส้นทางจากแหล่งน้ำ → ระบบผลิต (OSRM)
+            เส้นทางจากแหล่งน้ำ → ข้อมูลผลิต (OSRM)
           </label>
           <RouteMap
             from={{ lat: srcLat!, lng: srcLng!, label: 'แหล่งน้ำดิบ' }}
-            to={{ lat: systemLat!, lng: systemLng!, label: 'ระบบผลิตน้ำ' }}
+            to={{ lat: systemLat!, lng: systemLng!, label: 'ข้อมูลผลิตน้ำ' }}
           />
         </div>
       )}

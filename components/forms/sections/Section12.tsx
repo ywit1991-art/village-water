@@ -8,8 +8,8 @@ export function Section12() {
   const { register, watch, setValue } = useFormContext()
 
   return (
-    <FormSection number={12} title="การบำรุงรักษาระบบ">
-      <label className="label">มีการบำรุงรักษาระบบเป็นประจำหรือไม่</label>
+    <FormSection number={12} title="การบำรุงรักษาข้อมูล">
+      <label className="label">มีการบำรุงรักษาข้อมูลเป็นประจำหรือไม่</label>
       <div className="grid md:grid-cols-2 gap-1 mb-4">
         {CK.has_maintenance.map(opt => {
           const checked = watch('has_maintenance') === opt

@@ -173,7 +173,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={18} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600 bg-sky-50',
     },
     {
@@ -197,7 +197,18 @@ export default function OverviewClient({ villages, systems }: Props) {
   ]
 
   const chartToggle = (
-    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 shadow-sm shrink-0">
+  <div className="flex items-center gap-2 shrink-0">
+    <a
+      href="/api/pdf/summary"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition shadow-sm"
+      title="ดาวน์โหลด PDF รายงานสรุป"
+    >
+      📄 PDF
+    </a>
+
+    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 shadow-sm">
       <button
         type="button"
         onClick={() => setChartMode('status')}
@@ -221,7 +232,8 @@ export default function OverviewClient({ villages, systems }: Props) {
         📊 หมู่บ้าน
       </button>
     </div>
-  )
+  </div>
+)
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-50/30">
@@ -238,7 +250,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
+                ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-100 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -318,7 +330,7 @@ export default function OverviewClient({ villages, systems }: Props) {
               )}
 
               <div className="text-sm text-brand-700 font-medium ml-auto">
-                พบ <span className="font-bold">{filtered.length}</span> ระบบ
+                พบ <span className="font-bold">{filtered.length}</span> ข้อมูล
               </div>
             </div>
           </div>
@@ -361,7 +373,7 @@ export default function OverviewClient({ villages, systems }: Props) {
           <div className="card overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-3 border-b border-brand-50">
               <div>
-                <h3 className="font-bold text-brand-900">แผนที่ระบบประปา</h3>
+                <h3 className="font-bold text-brand-900">แผนที่ข้อมูลประปา</h3>
                 <p className="text-[11px] text-brand-500">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด
                 </p>

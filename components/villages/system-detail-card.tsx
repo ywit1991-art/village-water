@@ -44,7 +44,7 @@ export default function SystemDetailCard({ system, survey }: Props) {
               {system.system_name}
             </h3>
             <p className="text-xs text-brand-500 mt-0.5">
-              ระบบที่ {system.system_no}
+              ข้อมูลที่ {system.system_no}
             </p>
 
             <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -200,7 +200,7 @@ export default function SystemDetailCard({ system, survey }: Props) {
       {open && !survey && (
         <div className="px-4 pb-4 pt-1 border-t border-brand-50">
           <p className="text-sm text-slate-400 text-center py-4">
-            ยังไม่มีแบบสำรวจสำหรับระบบนี้
+            ยังไม่มีแบบสำรวจสำหรับข้อมูลนี้
           </p>
         </div>
       )}

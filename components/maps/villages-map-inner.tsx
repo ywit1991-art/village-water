@@ -94,7 +94,7 @@ function doFit() {
   return null
 }
 
-/** เปิด Google Maps นำทางไปยังระบบ */
+/** เปิด Google Maps นำทางไปยังข้อมูล */
 function openDirections(lat: number, lng: number) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
   window.open(url, '_blank', 'noopener,noreferrer')
@@ -178,7 +178,7 @@ export default function VillagesMapInner({
       >
         <div className="text-center">
           <p className="text-base font-medium text-brand-600">
-            ไม่พบระบบประปาตามเงื่อนไข
+            ไม่พบข้อมูลประปาตามเงื่อนไข
           </p>
           <p className="text-sm text-slate-400 mt-1">
             ลองเปลี่ยนตัวกรองหรือเลือก "ทั้งหมด"
@@ -259,7 +259,7 @@ export default function VillagesMapInner({
 }
 
 /* ============================================================ */
-/* MODAL รายละเอียดระบบ                                        */
+/* MODAL รายละเอียดข้อมูล                                        */
 /* ============================================================ */
 function DetailModal({
   data: m,
@@ -496,7 +496,7 @@ function DetailModal({
         {/* FOOTER */}
         <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0 flex-wrap">
           <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>ระบบที่ {m.systemNo}</span>
+            <span>ข้อมูลที่ {m.systemNo}</span>
             <span className="font-mono text-xs">
               {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
             </span>

@@ -23,7 +23,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-extrabold text-brand-900 leading-tight">
-            ระบบข้อมูลประปาหมู่บ้าน
+            ข้อมูลข้อมูลประปาหมู่บ้าน
           </h1>
           <p className="mt-3 text-lg md:text-xl text-brand-600 font-medium">
             เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
@@ -31,18 +31,12 @@ export default function HomePage() {
 
           <div className="my-8 h-1.5 w-24 mx-auto bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 rounded-full" />
 
-          <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            ศูนย์รวมข้อมูลระบบประปาหมู่บ้านทั้ง <strong className="text-brand-700">14 แห่ง</strong>
-            {' '}เพื่อการบริหารจัดการน้ำที่ยั่งยืน โปร่งใส ตรวจสอบได้
-            และพร้อมให้บริการประชาชนในพื้นที่
-          </p>
-
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             <Feature
               icon={<Droplets className="text-sky-600" />}
               bg="bg-sky-50"
-              title="ข้อมูลระบบประปา"
-              desc="ตำแหน่ง สถานะ และข้อมูลระบบ"
+              title="ข้อมูลประปา"
+              desc="ตำแหน่ง สถานะ และข้อมูลข้อมูล"
             />
             <Feature
               icon={<Users className="text-indigo-600" />}
@@ -64,7 +58,7 @@ export default function HomePage() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-brand-700 text-white font-bold text-base shadow-xl shadow-brand-500/30 hover:scale-105 hover:shadow-2xl transition-all"
             >
               <MapPin size={20} />
-              ดูระบบประปาหมู่บ้าน
+              ดูข้อมูลประปาหมู่บ้าน
               <ArrowRight size={18} />
             </Link>
             <Link
@@ -77,9 +71,23 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="relative py-6 text-center text-sm text-slate-500">
-        <p>© 2568 เทศบาลตำบลท่าวังทอง · ระบบประปาหมู่บ้าน</p>
-      </footer>
+<footer className="relative py-4 px-4">
+  <div className="flex items-center justify-center gap-3 text-xs md:text-sm text-slate-600">
+    <img
+      src="/logo.png"
+      alt="ตราเทศบาล"
+      className="w-11 h-11 rounded-full ring-2 ring-brand-200 shrink-0"
+    />
+    <div className="text-center leading-snug">
+      <p className="font-medium text-brand-800">
+        เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
+      </p>
+      <p className="text-slate-500">
+        ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
+      </p>
+    </div>
+  </div>
+</footer>
     </div>
   )
 }

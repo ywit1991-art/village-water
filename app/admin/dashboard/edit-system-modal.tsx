@@ -34,7 +34,7 @@ export default function EditSystemModal({ system }: Props) {
         className="text-brand-600 hover:text-brand-800 text-xs font-medium"
         title="แก้ไขชื่อ/พิกัด"
       >
-        แก้ไขระบบ
+        แก้ไขข้อมูล
       </button>
 
       {open && (
@@ -48,8 +48,8 @@ export default function EditSystemModal({ system }: Props) {
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-bold text-brand-900">แก้ไขระบบประปา</h3>
-                <p className="text-xs text-brand-500 mt-0.5">ระบบที่ {system.system_no}</p>
+                <h3 className="font-bold text-brand-900">แก้ไขข้อมูลประปา</h3>
+                <p className="text-xs text-brand-500 mt-0.5">ข้อมูลที่ {system.system_no}</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
@@ -63,7 +63,7 @@ export default function EditSystemModal({ system }: Props) {
               <input type="hidden" name="id" value={system.id} />
 
               <div>
-                <label className="label">ชื่อระบบประปา *</label>
+                <label className="label">ชื่อข้อมูลประปา *</label>
                 <input
                   name="system_name"
                   required

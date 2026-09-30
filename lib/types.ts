@@ -148,7 +148,7 @@ export interface VillageWithSurvey extends Village {
   survey: Survey | null
 }
 // ========================================
-// Water System — ระบบประปาแต่ละจุด
+// Water System — ข้อมูลประปาแต่ละจุด
 // ========================================
 export type SystemStatus = 'active' | 'inactive' | 'closed'
 

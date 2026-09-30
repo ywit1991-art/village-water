@@ -74,7 +74,7 @@ export default function HomepageClient({ markers, totalVillages }: Props) {
     {
       icon: <Users size={20} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600 bg-sky-50',
     },
     {
@@ -178,7 +178,7 @@ export default function HomepageClient({ markers, totalVillages }: Props) {
                 hasFilter ? 'ml-4' : 'ml-auto'
               }`}
             >
-              พบ <span className="font-bold">{filtered.length}</span> ระบบ
+              พบ <span className="font-bold">{filtered.length}</span> ข้อมูล
             </div>
           </div>
         </div>

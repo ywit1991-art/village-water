@@ -22,7 +22,7 @@ export function Section17() {
     <FormSection number={17} title="การรับรองข้อมูล">
       <div className="mb-4 p-4 bg-brand-50/50 border border-brand-100 rounded-lg">
         <p className="text-xs text-brand-700 leading-relaxed">
-          ข้าพเจ้าขอรับรองว่าข้อมูลที่ให้ไว้ในแบบตรวจสอบข้อมูลระบบประปาหมู่บ้านฉบับนี้
+          ข้าพเจ้าขอรับรองว่าข้อมูลที่ให้ไว้ในแบบตรวจสอบข้อมูลข้อมูลประปาหมู่บ้านฉบับนี้
           เป็นข้อมูลตามสภาพข้อเท็จจริงที่สามารถตรวจสอบได้ ณ วัน ที่ลงพื้นที่สำรวจ
         </p>
       </div>

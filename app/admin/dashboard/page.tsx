@@ -36,7 +36,7 @@ export default async function DashboardPage() {
   const villageMap = new Map<number, Village>()
   ;(villages as Village[] | null)?.forEach(v => villageMap.set(v.id, v))
 
-// เลือก survey ล่าสุดของแต่ละระบบ (ทุกสถานะ)
+// เลือก survey ล่าสุดของแต่ละข้อมูล (ทุกสถานะ)
 const surveyMap = new Map<number, Survey>()
 ;(surveys as Survey[] | null)?.forEach(s => {
   if (s.water_system_id && !surveyMap.has(s.water_system_id)) {
@@ -122,7 +122,7 @@ const surveyMap = new Map<number, Survey>()
             </p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-brand-500">ระบบประปาทั้งหมด</p>
+            <p className="text-xs text-brand-500">ข้อมูลประปาทั้งหมด</p>
             <p className="text-2xl font-bold text-brand-900">
               {systems?.length ?? 0}
             </p>
@@ -137,7 +137,7 @@ const surveyMap = new Map<number, Survey>()
             </p>
           </div>
           <div className="card p-4">
-            <p className="text-xs text-brand-500">ผู้ใช้ในระบบ</p>
+            <p className="text-xs text-brand-500">ผู้ใช้ในข้อมูล</p>
             <p className="text-2xl font-bold text-brand-900">1</p>
           </div>
         </div>
@@ -165,18 +165,18 @@ const surveyMap = new Map<number, Survey>()
                   />
                 </div>
 
-                {/* ตารางระบบ */}
+                {/* ตารางข้อมูล */}
                 {rows.length === 0 ? (
                   <div className="p-8 text-center text-sm text-slate-400">
-                    ยังไม่มีระบบประปาในหมู่บ้านนี้ — กด "เพิ่มระบบ" ด้านบน
+                    ยังไม่มีข้อมูลประปาในหมู่บ้านนี้ — กด "เพิ่มข้อมูล" ด้านบน
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-white text-brand-700 border-b border-brand-50">
                         <tr>
-                          <th className="p-3 text-left w-24">ระบบที่</th>
-                          <th className="p-3 text-left">ชื่อระบบ</th>
+                          <th className="p-3 text-left w-24">ข้อมูลที่</th>
+                          <th className="p-3 text-left">ชื่อข้อมูล</th>
                           <th className="p-3 text-left w-32">สถานะ</th>
                           <th className="p-3 text-left w-32">วันที่ตรวจ</th>
                           <th className="p-3 text-left w-40">สภาพ</th>

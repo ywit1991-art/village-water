@@ -24,7 +24,7 @@ export default function VillagesMapInner({ points }: { points: Point[] }) {
   if (!points.length) {
     return (
       <div className="card p-10 text-center text-brand-400">
-        ยังไม่มีข้อมูลพิกัดในระบบ
+        ยังไม่มีข้อมูลพิกัดในข้อมูล
       </div>
     )
   }

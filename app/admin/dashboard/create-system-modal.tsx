@@ -18,7 +18,7 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
 
   useEffect(() => {
     if (state?.id) {
-      toast.success('สร้างระบบใหม่แล้ว')
+      toast.success('สร้างข้อมูลใหม่แล้ว')
       setOpen(false)
       router.push(`/admin/surveys/new?village=${villageId}&system=${state.id}`)
       router.refresh()
@@ -35,7 +35,7 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium text-sm"
       >
-        <Plus size={14} /> เพิ่มระบบ
+        <Plus size={14} /> เพิ่มข้อมูล
       </button>
 
       {open && (
@@ -49,7 +49,7 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="font-bold text-brand-900">เพิ่มระบบประปาใหม่</h3>
+                <h3 className="font-bold text-brand-900">เพิ่มข้อมูลประปาใหม่</h3>
                 <p className="text-xs text-brand-500 mt-0.5">{villageName}</p>
               </div>
               <button
@@ -65,12 +65,12 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
               <input type="hidden" name="village_id" value={villageId} />
 
               <div>
-                <label className="label">ชื่อระบบประปา *</label>
+                <label className="label">ชื่อข้อมูลประปา *</label>
                 <input
                   name="system_name"
                   required
                   className="input"
-                  placeholder="เช่น ระบบบ้านบน, ระบบวัด, ระบบโรงเรียน"
+                  placeholder="เช่น ข้อมูลบ้านบน, ข้อมูลวัด, ข้อมูลโรงเรียน"
                   autoFocus
                 />
               </div>

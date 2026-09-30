@@ -27,7 +27,7 @@ export default function DeleteSystemButton({
     startTransition(async () => {
       try {
         await deleteWaterSystemAction(systemId)
-        toast.success('ลบระบบแล้ว')
+        toast.success('ลบข้อมูลแล้ว')
         setOpen(false)
         router.refresh()
       } catch (err) {
@@ -43,7 +43,7 @@ export default function DeleteSystemButton({
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs transition"
-        title="ลบระบบ"
+        title="ลบข้อมูล"
       >
         <Trash2 size={14} />
         ลบ
@@ -84,7 +84,7 @@ export default function DeleteSystemButton({
             {/* Body */}
             <div className="p-5 space-y-3">
               <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-xs text-slate-500">ระบบที่จะลบ</p>
+                <p className="text-xs text-slate-500">ข้อมูลที่จะลบ</p>
                 <p className="font-semibold text-slate-900">{systemName}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{villageName}</p>
               </div>
@@ -92,7 +92,7 @@ export default function DeleteSystemButton({
               {hasSurvey && (
                 <div className="bg-red-50 border border-red-100 rounded-xl p-3">
                   <p className="text-xs text-red-700 font-medium">
-                    ⚠️ ระบบนี้มีแบบสำรวจแล้ว
+                    ⚠️ ข้อมูลนี้มีแบบสำรวจแล้ว
                   </p>
                   <p className="text-xs text-red-600 mt-0.5">
                     ข้อมูลแบบสำรวจและรูปภาพทั้งหมดจะถูกลบไปด้วย
@@ -101,7 +101,7 @@ export default function DeleteSystemButton({
               )}
 
               <p className="text-sm text-slate-600">
-                ต้องการลบระบบนี้ใช่หรือไม่?
+                ต้องการลบข้อมูลนี้ใช่หรือไม่?
               </p>
             </div>
 
@@ -121,7 +121,7 @@ export default function DeleteSystemButton({
                 disabled={isPending}
                 className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold text-sm shadow-md transition disabled:opacity-50"
               >
-                {isPending ? 'กำลังลบ...' : 'ลบระบบ'}
+                {isPending ? 'กำลังลบ...' : 'ลบข้อมูล'}
               </button>
             </div>
           </div>

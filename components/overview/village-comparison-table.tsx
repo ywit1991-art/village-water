@@ -102,7 +102,7 @@ export default function VillageComparisonTable({ rows }: Props) {
                   onClick={() => toggleSort('systems')}
                   className="inline-flex items-center gap-1 hover:text-brand-900"
                 >
-                  ระบบ
+                  ข้อมูล
                   {sortKey === 'systems' ? (
                     asc ? (
                       <ChevronUp size={12} />

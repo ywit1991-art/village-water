@@ -35,7 +35,7 @@ export async function loginAction(
     .single()
 
   if (error || !staff) {
-    return { error: 'ไม่พบเลขนี้ในระบบ' }
+    return { error: 'ไม่พบเลขนี้ในข้อมูล' }
   }
   if (!staff.is_active) {
     return { error: 'บัญชีนี้ถูกระงับการใช้งาน' }
@@ -81,7 +81,7 @@ export async function createWaterSystemAction(
   const lng = formData.get('lng') ? Number(formData.get('lng')) : null
 
   if (!villageId) return { error: 'ไม่พบหมู่บ้าน' }
-  if (!systemName) return { error: 'กรุณากรอกชื่อระบบ' }
+  if (!systemName) return { error: 'กรุณากรอกชื่อข้อมูล' }
 
   const sb = adminSb()
 
@@ -129,7 +129,7 @@ export async function updateWaterSystemAction(
   const lng = formData.get('lng') ? Number(formData.get('lng')) : null
 
   if (!id) return { error: 'ไม่พบ id' }
-  if (!systemName) return { error: 'กรุณากรอกชื่อระบบ' }
+  if (!systemName) return { error: 'กรุณากรอกชื่อข้อมูล' }
 
   const sb = adminSb()
   const { error } = await sb

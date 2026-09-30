@@ -77,7 +77,7 @@ useEffect(() => {
   if (markers.length === 0) {
     return (
       <div className="card p-8 text-center text-brand-400 text-base">
-        ยังไม่มีพิกัดของระบบประปา
+        ยังไม่มีพิกัดของข้อมูลประปา
       </div>
     )
   }
@@ -138,7 +138,7 @@ useEffect(() => {
         </p>
         {productionTypes.length > 0 && (
           <p className="text-xs text-slate-500 leading-tight truncate">
-            ประเภทระบบผลิต: {productionTypes.join(', ')}
+            ประเภทข้อมูลผลิต: {productionTypes.join(', ')}
           </p>
         )}
       </div>

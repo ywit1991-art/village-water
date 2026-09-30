@@ -8,8 +8,8 @@ export function Section6() {
   const { register } = useFormContext()
 
   return (
-    <FormSection number={6} title="ระบบไฟฟ้าและตู้ควบคุม">
-      <label className="label">ระบบไฟฟ้า</label>
+    <FormSection number={6} title="ข้อมูลไฟฟ้าและตู้ควบคุม">
+      <label className="label">ข้อมูลไฟฟ้า</label>
       <div className="mb-4">
         <RadioGroup name="electrical_phase" options={CK.electrical_phase} />
       </div>
@@ -33,7 +33,7 @@ export function Section6() {
         <input {...register('control_box_other')} className="input" />
       </div>
 
-      <label className="label">ระบบสายไฟ/อุปกรณ์ไฟฟ้า</label>
+      <label className="label">ข้อมูลสายไฟ/อุปกรณ์ไฟฟ้า</label>
       <div className="mb-4">
         <RadioGroup
           name="electrical_wiring_condition"

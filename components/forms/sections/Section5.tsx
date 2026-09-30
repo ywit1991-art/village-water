@@ -10,7 +10,7 @@ export function Section5() {
   const { fields, append, remove } = useFieldArray({ control, name: 'pumps' })
 
   return (
-    <FormSection number={5} title="ระบบสูบน้ำ">
+    <FormSection number={5} title="ข้อมูลสูบน้ำ">
       <label className="label">ประเภทเครื่องสูบน้ำ</label>
       <div className="mb-4">
         <CheckboxGroup name="pump_types" options={CK.pump_types} />

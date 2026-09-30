@@ -8,7 +8,7 @@ export function Section9() {
   const { register } = useFormContext()
 
   return (
-    <FormSection number={9} title="ระบบท่อส่งน้ำและระบบจ่ายน้ำ">
+    <FormSection number={9} title="ข้อมูลท่อส่งน้ำและข้อมูลจ่ายน้ำ">
       <label className="label">วัสดุท่อที่ใช้</label>
       <div className="mb-4">
         <CheckboxGroup
@@ -39,7 +39,7 @@ export function Section9() {
         </div>
       </div>
 
-      <label className="label">สภาพระบบท่อ</label>
+      <label className="label">สภาพข้อมูลท่อ</label>
       <div className="mb-4">
         <CheckboxGroup
           name="pipe_condition"

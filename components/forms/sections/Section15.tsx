@@ -16,8 +16,8 @@ export function Section15() {
   const current = watch('overall_condition')
 
   return (
-    <FormSection number={15} title="สรุปผลการตรวจสอบระบบประปา">
-      <label className="label">สภาพโดยรวมของระบบประปา</label>
+    <FormSection number={15} title="สรุปผลการตรวจสอบข้อมูลประปา">
+      <label className="label">สภาพโดยรวมของข้อมูลประปา</label>
       <div className="grid md:grid-cols-2 gap-2 mb-4">
         {OVERALL_CONDITIONS.map(o => {
           const active = current === o.value
