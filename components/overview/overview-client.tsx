@@ -127,7 +127,15 @@ export default function OverviewClient({ villages, systems }: Props) {
         (u): u is string => typeof u === 'string' && u.length > 0,
       )
 
-      result.push({
+      console.log('[Marker]', {
+  systemName: s.system.system_name,
+  survey_date: s.survey?.survey_date,
+  updated_at: s.survey?.updated_at,
+})
+
+
+
+            result.push({
         systemId: s.system.id,
         villageId: s.system.village_id,
         villageNo: s.village.village_no,
@@ -149,6 +157,8 @@ export default function OverviewClient({ villages, systems }: Props) {
         sufficiency: s.survey?.water_source_sufficiency ?? null,
         operatorName: s.survey?.operator_name ?? null,
         operatorPhone: s.survey?.operator_phone ?? null,
+        surveyDate: s.survey?.survey_date ?? null,
+        updatedAt: s.survey?.updated_at ?? null,
         committee: s.survey?.committee_members ?? [],
         problems,
         improvements,

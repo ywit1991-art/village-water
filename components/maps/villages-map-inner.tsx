@@ -334,32 +334,52 @@ function DetailModal({
 
         {/* CONTENT */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
-            <StatBox
-              value={(m.householdCount ?? 0).toLocaleString()}
-              label="ครัวเรือน"
-            />
-            <StatBox
-              value={m.tankCapacity != null ? `${m.tankCapacity}` : '–'}
-              label="ความจุ (ลบ.ม.)"
-            />
-            <StatBox
-              value={m.waterRate != null ? `${m.waterRate}` : '–'}
-              label="บาท/หน่วย"
-              suffix={m.waterRate != null ? '฿' : undefined}
-            />
-            <StatBox
-              value={
-                m.sufficiency === 'เพียงพอ'
-                  ? 'เพียงพอ'
-                  : m.sufficiency?.includes('ไม่เพียงพอ')
-                    ? 'ไม่พอ'
-                    : '–'
-              }
-              label="น้ำดิบ"
-              small
-            />
-          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100 border-b border-slate-100">
+  <StatBox
+    value={(m.householdCount ?? 0).toLocaleString()}
+    label="ครัวเรือน"
+  />
+  <StatBox
+    value={m.tankCapacity != null ? `${m.tankCapacity}` : '–'}
+    label="ความจุ (ลบ.ม.)"
+  />
+  <StatBox
+    value={m.waterRate != null ? `${m.waterRate}` : '–'}
+    label="บาท/หน่วย"
+    suffix={m.waterRate != null ? '฿' : undefined}
+  />
+  <StatBox
+    value={
+      m.sufficiency === 'เพียงพอ'
+        ? 'เพียงพอ'
+        : m.sufficiency?.includes('ไม่เพียงพอ')
+          ? 'ไม่พอ'
+          : '–'
+    }
+    label="น้ำดิบ"
+    small
+  />
+  {/* 👇 เพิ่มช่องวันที่อัปเดทข้อมูล */}
+  <StatBox
+    value={
+      m.updatedAt
+        ? new Date(m.updatedAt).toLocaleDateString('th-TH', {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit',
+          })
+        : m.surveyDate
+          ? new Date(m.surveyDate).toLocaleDateString('th-TH', {
+              day: '2-digit',
+              month: 'short',
+              year: '2-digit',
+            })
+          : '–'
+    }
+    label="ข้อมูลล่าสุด"
+    small
+  />
+</div>
 
           <div className="px-8 py-6 space-y-6">
             {m.operatorName && (

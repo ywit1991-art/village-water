@@ -340,7 +340,7 @@ export default async function DashboardPage() {
                           <th className="p-3 text-left w-24">ข้อมูลที่</th>
                           <th className="p-3 text-left">ชื่อข้อมูล</th>
                           <th className="p-3 text-left w-32">สถานะ</th>
-                          <th className="p-3 text-left w-32">วันที่ตรวจ</th>
+                          <th className="p-3 text-left w-32">วันที่ลงข้อมูล</th>
                           <th className="p-3 text-left w-40">สภาพ</th>
                           <th className="p-3 text-right w-72">จัดการ</th>
                         </tr>
@@ -396,8 +396,14 @@ export default async function DashboardPage() {
                                 )}
                               </td>
                               <td className="p-3 text-brand-600 text-xs">
-                                {s?.survey_date ?? '–'}
-                              </td>
+  {s?.updated_at
+    ? new Date(s.updated_at).toLocaleDateString('th-TH', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '–'}
+</td>
                               <td className="p-3">
                                 <span
                                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"

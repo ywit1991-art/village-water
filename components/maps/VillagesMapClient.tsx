@@ -33,6 +33,8 @@ export interface MarkerData {
   sufficiency: string | null
   operatorName: string | null
   operatorPhone: string | null
+  surveyDate: string | null      
+  updatedAt: string | null 
   committee: CommitteeMember[]
   problems: string[]
   improvements: string[]
