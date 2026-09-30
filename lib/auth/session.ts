@@ -3,11 +3,15 @@ import { cookies } from 'next/headers'
 const COOKIE_NAME = 'village_session'
 const SECRET = process.env.SESSION_SECRET || 'change-me-in-env'
 
-interface SessionData {
+export type StaffRole = 'super_admin' | 'staff' | 'village_head' | 'operator'
+
+export interface SessionData {
   id: number
   code: string
   full_name: string | null
-  role: string
+  role: StaffRole
+  village_id: number | null
+  system_ids: number[]
 }
 
 export async function createSession(data: SessionData): Promise<string> {
@@ -32,7 +36,16 @@ export async function verifySession(
       .update(payload)
       .digest('base64url')
     if (expected !== sig) return null
-    return JSON.parse(Buffer.from(payload, 'base64url').toString())
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
+    // ⚡ default ค่าที่อาจขาด
+    return {
+      id: data.id,
+      code: data.code,
+      full_name: data.full_name,
+      role: data.role ?? 'staff',
+      village_id: data.village_id ?? null,
+      system_ids: data.system_ids ?? [],
+    }
   } catch {
     return null
   }

@@ -23,7 +23,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-extrabold text-brand-900 leading-tight">
-            ข้อมูลข้อมูลประปาหมู่บ้าน
+            ข้อมูลประปาหมู่บ้าน
           </h1>
           <p className="mt-3 text-lg md:text-xl text-brand-600 font-medium">
             เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
@@ -36,7 +36,7 @@ export default function HomePage() {
               icon={<Droplets className="text-sky-600" />}
               bg="bg-sky-50"
               title="ข้อมูลประปา"
-              desc="ตำแหน่ง สถานะ และข้อมูลข้อมูล"
+              desc="ตำแหน่ง สถานะ และข้อมูล"
             />
             <Feature
               icon={<Users className="text-indigo-600" />}

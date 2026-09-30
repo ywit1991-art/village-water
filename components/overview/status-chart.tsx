@@ -22,7 +22,7 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
           {rightSlot}
         </div>
         <p className="text-sm text-brand-400 text-center py-10">
-          ยังไม่มีข้อมูลข้อมูลประปา
+          ยังไม่มีข้อมูลประปา
         </p>
       </div>
     )
