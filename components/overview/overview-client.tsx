@@ -13,6 +13,7 @@ import {
   Minimize2,
 } from 'lucide-react'
 import StatusChart from './status-chart'
+import VillageStatusChart from './village-status-chart'
 import VillagesMapClient, {
   type MarkerData,
 } from '@/components/maps/VillagesMapClient'
@@ -30,6 +31,7 @@ export default function OverviewClient({ villages, systems }: Props) {
   const [villageFilter, setVillageFilter] = useState<number | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [chartMode, setChartMode] = useState<'status' | 'village'>('status')
   const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,23 +51,16 @@ export default function OverviewClient({ villages, systems }: Props) {
     }
   }
 
-  // ==========================================
-  // ⚡ Filtered — ตัด draft ออก (ไม่แสดงทั้งแผนที่ + สถิติ)
-  // ==========================================
   const filtered = useMemo(() => {
     return systems.filter(s => {
-      // ⚡ ไม่นับ draft / ยังไม่มี survey (submitted/approved)
       if (!s.survey) return false
-
-      // กรองหมู่บ้าน
       if (villageFilter !== 'all' && s.system.village_id !== villageFilter)
         return false
-
-      // กรองสถานะ
       const condition =
-        s.survey.overall_condition ?? s.system.overall_condition ?? 'ไม่มีข้อมูล'
+        s.survey.overall_condition ??
+        s.system.overall_condition ??
+        'ไม่มีข้อมูล'
       if (statusFilter !== 'all' && condition !== statusFilter) return false
-
       return true
     })
   }, [systems, villageFilter, statusFilter])
@@ -105,9 +100,6 @@ export default function OverviewClient({ villages, systems }: Props) {
     statusCount[k] = (statusCount[k] ?? 0) + 1
   })
 
-  // ==========================================
-  // Markers — ใช้ filtered (ไม่มี draft แล้ว)
-  // ==========================================
   const markers: MarkerData[] = useMemo(() => {
     const result: MarkerData[] = []
 
@@ -203,6 +195,33 @@ export default function OverviewClient({ villages, systems }: Props) {
       color: 'text-emerald-600 bg-emerald-50',
     },
   ]
+
+  const chartToggle = (
+    <div className="inline-flex bg-slate-100 rounded-lg p-0.5 shadow-sm shrink-0">
+      <button
+        type="button"
+        onClick={() => setChartMode('status')}
+        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
+          chartMode === 'status'
+            ? 'bg-white text-brand-700 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+        }`}
+      >
+        🍩 สถานะ
+      </button>
+      <button
+        type="button"
+        onClick={() => setChartMode('village')}
+        className={`px-2.5 py-1 rounded-md text-[11px] md:text-xs font-medium transition whitespace-nowrap ${
+          chartMode === 'village'
+            ? 'bg-white text-brand-700 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+        }`}
+      >
+        📊 หมู่บ้าน
+      </button>
+    </div>
+  )
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-50/30">
@@ -321,8 +340,24 @@ export default function OverviewClient({ villages, systems }: Props) {
 
         {/* CHART + MAP */}
         <div className="grid lg:grid-cols-[minmax(320px,1fr)_2fr] gap-5">
-          <StatusChart statusCount={statusCount} total={stats.systems} />
+          {/* Chart */}
+          <div>
+            {chartMode === 'status' ? (
+              <StatusChart
+                statusCount={statusCount}
+                total={stats.systems}
+                rightSlot={chartToggle}
+              />
+            ) : (
+              <VillageStatusChart
+                villages={villages}
+                systems={filtered}
+                rightSlot={chartToggle}
+              />
+            )}
+          </div>
 
+          {/* Map */}
           <div className="card overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-3 border-b border-brand-50">
               <div>
