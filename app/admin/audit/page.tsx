@@ -1,9 +1,15 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, ClipboardList, User, Clock, Activity } from 'lucide-react'
-import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  ArrowLeft,
+  ClipboardList,
+  User,
+  Clock,
+  Activity,
+} from 'lucide-react'
 import { getSession } from '@/lib/auth/session'
 import { canViewAudit } from '@/lib/auth/permissions'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const ACTION_LABELS: Record<string, string> = {
   login: 'เข้าสู่ระบบ',
@@ -11,9 +17,9 @@ const ACTION_LABELS: Record<string, string> = {
   create_staff: 'สร้างเจ้าหน้าที่',
   update_staff: 'แก้ไขเจ้าหน้าที่',
   delete_staff: 'ลบเจ้าหน้าที่',
-  create_system: 'สร้างข้อมูลประปา',
-  update_system: 'แก้ไขข้อมูลประปา',
-  delete_system: 'ลบข้อมูลประปา',
+  create_system: 'สร้างระบบประปา',
+  update_system: 'แก้ไขระบบประปา',
+  delete_system: 'ลบระบบประปา',
   save_survey: 'บันทึกแบบสำรวจ',
 }
 
@@ -31,18 +37,14 @@ const ACTION_COLORS: Record<string, string> = {
 
 export default async function AuditPage() {
   const session = await getSession()
-    const sb = createAdminClient()
-  const { data: logs } = await sb
-    .from('audit_log')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(200)
   if (!session) redirect('/admin')
   if (!canViewAudit(session)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card p-8 max-w-md text-center">
-          <h1 className="text-xl font-bold text-slate-900 mb-2">ไม่มีสิทธิ์เข้าถึง</h1>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">
+            ไม่มีสิทธิ์เข้าถึง
+          </h1>
           <Link href="/admin/dashboard" className="btn-primary mt-4">
             ← กลับแดชบอร์ด
           </Link>
@@ -51,7 +53,7 @@ export default async function AuditPage() {
     )
   }
 
-  const sb = await createClient()
+  const sb = createAdminClient()
   const { data: logs } = await sb
     .from('audit_log')
     .select('*')
@@ -112,12 +114,17 @@ export default async function AuditPage() {
                 </thead>
                 <tbody>
                   {list.map(log => {
-                    const actionLabel = ACTION_LABELS[log.action] ?? log.action
+                    const actionLabel =
+                      ACTION_LABELS[log.action] ?? log.action
                     const actionColor =
-                      ACTION_COLORS[log.action] ?? 'bg-slate-100 text-slate-600'
+                      ACTION_COLORS[log.action] ??
+                      'bg-slate-100 text-slate-600'
                     const dt = new Date(log.created_at)
                     return (
-                      <tr key={log.id} className="border-t border-brand-50 hover:bg-brand-50/40">
+                      <tr
+                        key={log.id}
+                        className="border-t border-brand-50 hover:bg-brand-50/40"
+                      >
                         <td className="p-3 text-xs">
                           <div className="flex items-center gap-1.5 text-slate-600">
                             <Clock size={12} />
@@ -148,7 +155,9 @@ export default async function AuditPage() {
                           </div>
                         </td>
                         <td className="p-3">
-                          <span className={`badge ${actionColor}`}>{actionLabel}</span>
+                          <span className={`badge ${actionColor}`}>
+                            {actionLabel}
+                          </span>
                         </td>
                         <td className="p-3 text-xs text-slate-600">
                           {log.target_label ?? log.target_type ?? '–'}
