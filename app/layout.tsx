@@ -3,8 +3,8 @@ import './globals.css'
 import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
-  description: 'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
+  title: 'ข้อมูลประปาหมู่บ้าน - เทศบาลตำบลท่าวังทอง อ.เมืองพะเยา จ.พะเยา',
+  description: 'ฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
 }
 
 export default function RootLayout({
