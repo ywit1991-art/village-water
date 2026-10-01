@@ -640,29 +640,33 @@ function DetailModal({
               )}
             </Section>
 
-            {m.operatorName && (
-              <Section title="ช่างประปา">
-                <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
-                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600 shrink-0 text-2xl">
-                    👷
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-lg font-bold text-brand-900 truncate">
-                      {m.operatorName}
-                    </p>
-                  </div>
-                  {m.operatorPhone && (
-  <a
-    href={`tel:${m.operatorPhone}`}
-    className="text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2 rounded-lg bg-white border border-brand-100 hover:border-brand-300 transition shrink-0"
-    title="คลิกเพื่อโทรออก"
-  >
-    📞 {maskPhone(m.operatorPhone)}
-  </a>
+{m.operatorName && (
+  <Section title="ช่างประปา">
+    <div className="p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
+      {/* ชื่อ + icon */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600 shrink-0 text-2xl">
+          👷
+        </div>
+        <p className="text-base md:text-lg font-bold text-brand-900 leading-tight min-w-0 flex-1">
+          {m.operatorName}
+        </p>
+      </div>
+
+      {/* เบอร์โทร — อยู่บรรทัดล่าง */}
+      {m.operatorPhone && (
+        <a
+          href={`tel:${m.operatorPhone}`}
+          className="mt-3 w-full inline-flex items-center justify-center gap-2 text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2.5 rounded-lg bg-white border border-brand-100 hover:border-brand-300 active:scale-95 transition"
+          title="คลิกเพื่อโทรออก"
+        >
+          📞 {maskPhone(m.operatorPhone)}
+        </a>
+      )}
+    </div>
+  </Section>
 )}
-                </div>
-              </Section>
-            )}
+       
 {/* อัตราค่าน้ำขั้นบันได */}
 {m.waterRateType === 'tiered' &&
   m.waterRateTiers &&
