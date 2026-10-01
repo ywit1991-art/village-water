@@ -9,6 +9,7 @@ import type {
   CommitteeMember,
   Pump,
   Signature,
+  WaterRateTier,
 } from '@/lib/types'
 import { STATUS_EMOJI } from '@/lib/constants'
 
@@ -99,6 +100,9 @@ export default function ReportView({
   const signatures: Signature[] = Array.isArray(s.signatures)
     ? s.signatures
     : []
+  const waterRateTiers: WaterRateTier[] = Array.isArray(s.water_rate_tiers)
+    ? s.water_rate_tiers
+    : []
   const photos = (s.photos ?? []).filter((u): u is string => !!u)
   const problems = (s.problems ?? []).filter((p): p is string => !!p)
   const improvements = (s.improvements ?? []).filter((p): p is string => !!p)
@@ -109,6 +113,10 @@ export default function ReportView({
     'ผู้ตรวจสอบ/ผู้ร่วมตรวจ',
   ]
 
+  // ⭐ ตรวจสอบว่าใช้ขั้นบันไดหรือไม่
+  const isTiered =
+    s.water_rate_type === 'tiered' && waterRateTiers.length > 0
+
   return (
     <>
       {/* ============ TOOLBAR (ซ่อนตอนพิมพ์) ============ */}
@@ -118,7 +126,7 @@ export default function ReportView({
             href="/admin/dashboard"
             className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium"
           >
-            <ArrowLeft size={18} /> กลับแดชบอร์ด
+            <ArrowLeft size={18} /> กลับหน้าเจ้าหน้าที่
           </Link>
           <button
             onClick={() => window.print()}
@@ -396,8 +404,8 @@ export default function ReportView({
           <Row label="ทะเบียนผู้ใช้น้ำ" value={fmt(s.has_user_registry)} />
         </Section>
 
-        {/* -------- 11. บริหารจัดการ -------- */}
-        <Section num={11} title="การบริหารจัดการกิจการประปา">
+        {/* -------- 11. บริหารจัดการ (มี tiers) -------- */}
+        <Section num={11} title="การบริหารจัดการกิจการประปา" long={isTiered}>
           <Row label="ระเบียบ/ข้อบังคับ" value={fmt(s.has_regulations)} />
           <Row
             label="การประชุมคณะกรรมการ"
@@ -409,10 +417,55 @@ export default function ReportView({
           />
           <Row label="บัญชีเงินฝาก" value={fmt(s.has_bank_account)} />
           <Row label="การจัดเก็บค่าน้ำ" value={fmt(s.has_fee_collection)} />
-          <Row
-            label="อัตราค่าน้ำ"
-            value={s.water_rate != null ? `${s.water_rate} บาท/หน่วย` : '—'}
-          />
+
+          {/* ⭐ แสดงอัตราค่าน้ำ — tiered */}
+          {isTiered ? (
+            <>
+              <SubTitle>
+                อัตราค่าน้ำแบบขั้นบันได ({waterRateTiers.length} ขั้น)
+              </SubTitle>
+              <table className="w-full text-sm border-collapse mt-1">
+                <thead>
+                  <tr className="bg-slate-100">
+                    <th className="border border-slate-300 px-2 py-1 w-12 text-center">
+                      ลำดับ
+                    </th>
+                    <th className="border border-slate-300 px-2 py-1 text-left">
+                      ช่วงหน่วย
+                    </th>
+                    <th className="border border-slate-300 px-2 py-1 w-32 text-right">
+                      บาท/หน่วย
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {waterRateTiers.map((tier, i) => (
+                    <tr key={i}>
+                      <td className="border border-slate-300 px-2 py-1 text-center">
+                        {i + 1}
+                      </td>
+                      <td className="border border-slate-300 px-2 py-1">
+                        {tier.from} – {tier.to ?? 'ไม่จำกัด'} หน่วย
+                      </td>
+                      <td className="border border-slate-300 px-2 py-1 text-right">
+                        {tier.rate}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <Row
+              label="อัตราค่าน้ำ"
+              value={
+                s.water_rate != null
+                  ? `${s.water_rate} บาท/หน่วย`
+                  : '—'
+              }
+            />
+          )}
+
           <Row label="เงินค้างชำระ" value={fmt(s.has_debt)} />
           <Row label="หมายเหตุ" value={fmt(s.debt_notes)} />
         </Section>
@@ -433,25 +486,27 @@ export default function ReportView({
                       <th className="border border-slate-300 px-2 py-1 w-20 text-center">
                         สถานะ
                       </th>
-                      <th className="border border-slate-300 px-2 py-1 w-1/3 text-left">
+                      <th className="border border-slate-300 px-2 py-1 w-1/4 text-left">
                         หมายเหตุ
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(s.maintenance_items).map(([item, val]) => (
-                      <tr key={item}>
-                        <td className="border border-slate-300 px-2 py-1">
-                          {item}
-                        </td>
-                        <td className="border border-slate-300 px-2 py-1 text-center">
-                          {fmt(val?.status)}
-                        </td>
-                        <td className="border border-slate-300 px-2 py-1">
-                          {fmt(val?.note)}
-                        </td>
-                      </tr>
-                    ))}
+                    {Object.entries(s.maintenance_items).map(
+                      ([item, val]) => (
+                        <tr key={item}>
+                          <td className="border border-slate-300 px-2 py-1">
+                            {item}
+                          </td>
+                          <td className="border border-slate-300 px-2 py-1 text-center">
+                            {fmt(val?.status)}
+                          </td>
+                          <td className="border border-slate-300 px-2 py-1">
+                            {fmt(val?.note)}
+                          </td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               </>
@@ -547,7 +602,7 @@ export default function ReportView({
           )}
         </Section>
 
-        {/* -------- 17. รับรอง (ห้ามขาด) -------- */}
+        {/* -------- 17. รับรอง -------- */}
         <Section num={17} title="การรับรองข้อมูล">
           <p className="mb-4 leading-relaxed">
             ข้าพเจ้าขอรับรองว่าข้อมูลที่ให้ไว้ในแบบตรวจสอบข้อมูลประปาหมู่บ้านฉบับนี้
@@ -582,7 +637,7 @@ export default function ReportView({
           </div>
         </Section>
 
-        {/* -------- Footer (แสดงท้ายรายงานเท่านั้น) -------- */}
+        {/* -------- Footer -------- */}
         <footer className="mt-8 pt-3 border-t border-slate-300 text-center text-xs text-slate-500">
           <p>
             เอกสารนี้พิมพ์จากระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง

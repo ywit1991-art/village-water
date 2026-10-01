@@ -46,7 +46,7 @@ export default async function AuditPage() {
             ไม่มีสิทธิ์เข้าถึง
           </h1>
           <Link href="/admin/dashboard" className="btn-primary mt-4">
-            ← กลับแดชบอร์ด
+            ← กลับหน้าเจ้าหน้าที่
           </Link>
         </div>
       </div>

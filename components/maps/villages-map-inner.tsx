@@ -344,10 +344,18 @@ function DetailModal({
     label="ความจุ (ลบ.ม.)"
   />
   <StatBox
-    value={m.waterRate != null ? `${m.waterRate}` : '–'}
-    label="บาท/หน่วย"
-    suffix={m.waterRate != null ? '฿' : undefined}
-  />
+  value={
+    m.waterRateType === 'tiered' && m.waterRateTiers && m.waterRateTiers.length > 0
+      ? `${m.waterRateTiers[0].rate}-${m.waterRateTiers[m.waterRateTiers.length - 1].rate}`
+      : m.waterRate != null
+        ? `${m.waterRate}`
+        : '–'
+  }
+  label={m.waterRateType === 'tiered' ? 'ขั้นบันได' : 'บาท/หน่วย'}
+  suffix={
+    m.waterRateType !== 'tiered' && m.waterRate != null ? '฿' : undefined
+  }
+/>
   <StatBox
     value={
       m.sufficiency === 'เพียงพอ'
@@ -405,7 +413,42 @@ function DetailModal({
                 </div>
               </Section>
             )}
-
+{/* อัตราค่าน้ำขั้นบันได */}
+{m.waterRateType === 'tiered' &&
+  m.waterRateTiers &&
+  m.waterRateTiers.length > 0 && (
+    <Section title="อัตราค่าน้ำ (ขั้นบันได)">
+      <div className="rounded-xl overflow-hidden border border-slate-200">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500">
+                ช่วงหน่วย
+              </th>
+              <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500">
+                บาท/หน่วย
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {m.waterRateTiers.map((tier, i) => (
+              <tr
+                key={i}
+                className="border-t border-slate-100"
+              >
+                <td className="px-3 py-2 text-slate-700">
+                  {tier.from} – {tier.to ?? 'ไม่จำกัด'}
+                </td>
+                <td className="px-3 py-2 text-right font-medium text-slate-800">
+                  {tier.rate} บาท
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Section>
+  )}
             {committee.length > 0 && (
               <Section title={`คณะกรรมการ (${committee.length} คน)`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

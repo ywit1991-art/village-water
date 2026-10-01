@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Clock } from 'lucide-react'
+import { logoutAction } from '../actions'
 
 interface Props {
   timeout?: number
@@ -66,15 +67,32 @@ export default function IdleGuard({
 
   async function handleLogout() {
     try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
-      })
-    } catch (err) {
-      console.error('[IdleGuard] logout fetch error:', err)
+      // เรียก Server Action — บันทึก Audit Log + clear session + redirect
+      await logoutAction()
+    } catch (err: any) {
+      // ⚠️ Server Action ที่ redirect() จะ throw NEXT_REDIRECT
+      // Next.js จะจัดการให้เอง — ไม่ต้องทำอะไร
+      const isRedirect =
+        err?.message === 'NEXT_REDIRECT' ||
+        err?.digest?.startsWith?.('NEXT_REDIRECT')
+
+      if (isRedirect) return
+
+      console.error('[IdleGuard] logout error:', err)
+
+      // Fallback: ลบ cookie ผ่าน API แล้ว reload
+      try {
+        await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include',
+        })
+      } catch (fetchErr) {
+        console.error('[IdleGuard] fallback fetch error:', fetchErr)
+      }
+
+      // Full reload เพื่อให้ middleware เช็ค session ใหม่
+      window.location.href = '/admin'
     }
-    // ใช้ full reload เพื่อให้ middleware เช็ค session ใหม่
-    window.location.href = '/admin'
   }
 
   if (secondsLeft === null) return null

@@ -4,7 +4,7 @@ import { SESSION_COOKIE } from '@/lib/auth/session'
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true })
 
-  // ลบ cookie httpOnly ฝั่ง server
+  // ลบ cookie village_session (Custom Session)
   response.cookies.set(SESSION_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',

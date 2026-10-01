@@ -33,7 +33,6 @@ export default async function ReportPage({
     )
   }
 
-  // 🔒 ตรวจสอบสิทธิ์
   if (
     !canAccessSystem(
       session,

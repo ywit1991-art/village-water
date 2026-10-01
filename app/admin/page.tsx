@@ -13,7 +13,7 @@ function SubmitButton() {
       disabled={pending}
       className="btn-primary w-full py-2.5"
     >
-      {pending ? 'กำลังเข้าสู่ข้อมูล...' : 'เข้าสู่ข้อมูล'}
+      {pending ? 'กำลังเข้าใช้งาน...' : 'เข้าใช้งาน'}
     </button>
   )
 }
@@ -36,7 +36,7 @@ export default function AdminLogin() {
           </div>
           <div className="flex-1">
             <h1 className="text-lg md:text-xl font-bold text-brand-900 leading-tight">
-              เข้าสู่ข้อมูลเจ้าหน้าที่
+              สำหรับเจ้าหน้าที่
             </h1>
           </div>
         </div>

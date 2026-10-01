@@ -44,22 +44,24 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
 
   return (
     <div className="card p-6">
-      {/* Header พร้อม Toggle */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 mb-6">
         <h2 className="text-lg font-bold text-brand-900">
           สถานะข้อมูลประปา
         </h2>
         {rightSlot}
       </div>
 
-      <div className="flex flex-col items-center gap-6">
+      {/* Layout: Donut ซ้าย + รายการ ขวา — อยู่ใกล้กัน */}
+      <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
+        {/* Donut — ซ้าย */}
         <div className="relative shrink-0">
           <div
-            className="w-56 h-56 rounded-full"
+            className="w-52 h-52 rounded-full"
             style={{ background: gradient }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-36 h-36 rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
+            <div className="w-32 h-32 rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
               <p className="text-4xl font-extrabold text-brand-900 leading-none">
                 {total}
               </p>
@@ -68,7 +70,8 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
           </div>
         </div>
 
-        <div className="w-full space-y-1.5">
+        {/* List — ขวา */}
+        <div className="w-full max-w-sm space-y-2">
           {ORDER.map(key => {
             const count = statusCount[key] ?? 0
             const pct = total > 0 ? Math.round((count / total) * 100) : 0
@@ -76,7 +79,7 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
             return (
               <div
                 key={key}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-brand-50/60 transition"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-brand-50/60 transition"
               >
                 <span
                   className="w-4 h-4 rounded-full border-2 border-white shadow shrink-0"
@@ -88,7 +91,7 @@ export default function StatusChart({ statusCount, total, rightSlot }: Props) {
                 <span className="text-sm font-bold text-brand-900 tabular-nums">
                   {count}
                 </span>
-                <span className="text-xs text-slate-400 w-10 text-right tabular-nums">
+                <span className="text-xs text-slate-400 w-12 text-right tabular-nums">
                   {pct}%
                 </span>
               </div>

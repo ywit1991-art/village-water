@@ -1,6 +1,21 @@
 export type SurveyStatus = 'draft' | 'submitted' | 'approved'
 export type OverallCondition = 'ดี' | 'พอใช้' | 'ต้องปรับปรุง' | 'เร่งด่วน'
 
+// ========================================
+// Water Rate Types
+// ========================================
+export type WaterRateType = 'flat' | 'tiered' | 'by_user_type'
+
+export interface WaterRateTier {
+  from: number
+  to: number | null
+  rate: number
+  label?: string
+}
+
+// ========================================
+// Entities
+// ========================================
 export interface Village {
   id: number
   village_no: number
@@ -40,7 +55,7 @@ export interface MaintenanceItem {
 export interface Survey {
   id: string
   village_id: number
-  water_system_id: number | null   // ← เพิ่ม
+  water_system_id: number | null
   survey_date: string | null
   status: SurveyStatus
 
@@ -116,6 +131,8 @@ export interface Survey {
   has_financial_books: string | null
   has_bank_account: string | null
   has_fee_collection: string | null
+  water_rate_type: WaterRateType | null
+  water_rate_tiers: WaterRateTier[] | null
   water_rate: number | null
   has_debt: string | null
   debt_notes: string | null
@@ -147,8 +164,9 @@ export interface Survey {
 export interface VillageWithSurvey extends Village {
   survey: Survey | null
 }
+
 // ========================================
-// Water System — ข้อมูลประปาแต่ละจุด
+// Water System
 // ========================================
 export type SystemStatus = 'active' | 'inactive' | 'closed'
 
@@ -166,12 +184,12 @@ export interface WaterSystem {
   household_count: number
   water_source_type: string | null
   water_rate: number | null
-  tank_capacity: number | null            // ✅ เพิ่ม
-  tank_count: number | null               // ✅ เพิ่ม
-  water_source_sufficiency: string | null // ✅ เพิ่ม
-  pipe_total_length: number | null        // ✅ เพิ่ม
-  operator_name: string | null            // ✅ เพิ่ม
-  operator_phone: string | null           // ✅ เพิ่ม
+  tank_capacity: number | null
+  tank_count: number | null
+  water_source_sufficiency: string | null
+  pipe_total_length: number | null
+  operator_name: string | null
+  operator_phone: string | null
   last_survey_id: string | null
   last_survey_date: string | null
   photo_url: string | null

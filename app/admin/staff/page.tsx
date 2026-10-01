@@ -24,7 +24,7 @@ export default async function StaffPage() {
             หน้านี้สำหรับผู้ดูแลระบบเท่านั้น
           </p>
           <Link href="/admin/dashboard" className="btn-primary">
-            ← กลับแดชบอร์ด
+            ← กลับหน้าเจ้าหน้าที่
           </Link>
         </div>
       </div>

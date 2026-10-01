@@ -84,42 +84,44 @@ export default function VillageStatusChart({
 
   return (
     <div className="card p-6 flex flex-col">
-      {/* Header + Toggle */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <h2 className="text-lg font-bold text-brand-900">
+      {/* Header + Legend inline */}
+      <div className="flex items-center gap-3 mb-5 pb-3 border-b border-brand-50 flex-wrap">
+        <h2 className="text-lg font-bold text-brand-900 shrink-0">
           สถานะแยกตามหมู่บ้าน
         </h2>
-        {rightSlot}
-      </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-5 pb-4 border-b border-brand-50">
-        {STATUS_ORDER.map(k => {
-          const c = STATUS_COLORS[k]
-          const count = totals[k]
-          if (count === 0) return null
-          const pct =
-            grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0
-          return (
-            <div key={k} className="flex items-center gap-1.5 text-xs">
-              <span
-                className="w-3 h-3 rounded-sm border border-white shadow"
-                style={{ background: c.hex }}
-              />
-              <span className="text-slate-600">{k}</span>
-              <span className="font-bold text-brand-900 tabular-nums">
-                {count}
-              </span>
-              <span className="text-slate-400">({pct}%)</span>
-            </div>
-          )
-        })}
+        {/* Legend — inline ต่อท้ายหัวข้อ */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {STATUS_ORDER.map(k => {
+            const c = STATUS_COLORS[k]
+            const count = totals[k]
+            if (count === 0) return null
+            const pct =
+              grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0
+            return (
+              <div key={k} className="flex items-center gap-1.5 text-xs">
+                <span
+                  className="w-3 h-3 rounded-sm border border-white shadow shrink-0"
+                  style={{ background: c.hex }}
+                />
+                <span className="text-slate-600">{k}</span>
+                <span className="font-bold text-brand-900 tabular-nums">
+                  {count}
+                </span>
+                <span className="text-slate-400">({pct}%)</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Right slot (toggle) */}
+        {rightSlot && <div className="ml-auto shrink-0">{rightSlot}</div>}
       </div>
 
       {/* Bars */}
       <div
         className="space-y-3.5 overflow-y-auto pr-1"
-        style={{ maxHeight: '380px' }}
+        style={{ maxHeight: '480px' }}
       >
         {stats.map(({ village, counts, total }) => {
           const scalePct = (total / maxTotal) * 100
