@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState, useEffect } from 'react'
-import { createWaterSystemAction } from '../actions'
+import { createWaterSystemAction } from '@/app/admin/actions'
 import { X, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'

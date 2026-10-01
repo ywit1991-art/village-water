@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Trash2, AlertTriangle, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { deleteWaterSystemAction } from '../actions'
+import { deleteWaterSystemAction } from '@/app/admin/actions'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
 
 interface Props {

@@ -2,14 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 
-/**
- * Focus Trap Hook — ล็อก focus ให้วนใน modal
- * - กด Tab → วนเฉพาะ elements ใน modal
- * - กด Shift+Tab → วนย้อนกลับ
- * - กด Esc → เรียก onClose
- * - Focus element แรกอัตโนมัติ
- * - คืนค่า focus กลับให้ element เดิมเมื่อปิด
- */
 export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   isOpen: boolean,
   onClose?: () => void,
@@ -20,30 +12,27 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   useEffect(() => {
     if (!isOpen) return
 
-    // เก็บ element ที่มี focus อยู่ก่อนเปิด
     previousFocusRef.current = document.activeElement as HTMLElement
 
     const container = containerRef.current
     if (!container) return
 
-    // หา focusable elements ทั้งหมดใน modal
     const getFocusable = () => {
+      if (!container) return []
       return Array.from(
         container.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ),
-      ).filter(el => el.offsetParent !== null) // กรอง hidden
+      ).filter(el => el.offsetParent !== null)
     }
 
-    // Focus element แรกอัตโนมัติ (หรือ modal เอง)
     const focusables = getFocusable()
     if (focusables.length > 0) {
-      setTimeout(() => focusables[0].focus(), 50)
+      setTimeout(() => focusables[0]?.focus(), 50)
     } else {
       container.focus()
     }
 
-    // จัดการ Tab / Shift+Tab / Esc
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault()
@@ -53,22 +42,23 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
 
       if (e.key !== 'Tab') return
 
-      const focusables = getFocusable()
-      if (focusables.length === 0) return
+      const c = containerRef.current
+      if (!c) return
 
-      const first = focusables[0]
-      const last = focusables[focusables.length - 1]
+      const list = getFocusable()
+      if (list.length === 0) return
+
+      const first = list[0]
+      const last = list[list.length - 1]
       const active = document.activeElement as HTMLElement
 
       if (e.shiftKey) {
-        // Shift+Tab: ถ้าอยู่แรก → ไปท้าย
-        if (active === first || !container.contains(active)) {
+        if (active === first || !c.contains(active)) {
           e.preventDefault()
           last.focus()
         }
       } else {
-        // Tab: ถ้าอยู่ท้าย → ไปแรก
-        if (active === last || !container.contains(active)) {
+        if (active === last || !c.contains(active)) {
           e.preventDefault()
           first.focus()
         }
@@ -77,7 +67,6 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
 
     document.addEventListener('keydown', handleKeyDown)
 
-    // ป้องกัน scroll body
     const oldOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
@@ -85,7 +74,6 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = oldOverflow
 
-      // คืน focus ให้ element เดิม
       setTimeout(() => {
         previousFocusRef.current?.focus()
       }, 50)
