@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
 import { Droplets, Info } from 'lucide-react'
 import {
   calcSufficiency,
@@ -35,6 +36,8 @@ type SeasonFilter = 'both' | Season
 
 export default function SufficiencyChart({ markers, rightSlot }: Props) {
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('both')
+  const chartRef = useRef<HTMLDivElement>(null)
+  const inView = useInView(chartRef, { once: true, margin: '-50px' })
 
   const rows: Row[] = useMemo(() => {
     return markers
@@ -49,8 +52,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         normal: calcSufficiency(m.householdCount, null, 'normal'),
         dry: calcSufficiency(m.householdCount, null, 'dry'),
       }))
-            .sort((a, b) => {
-        // เรียงตามหมู่บ้านก่อน แล้วค่อยตาม system_no
+      .sort((a, b) => {
         if (a.villageNo !== b.villageNo) return a.villageNo - b.villageNo
         return a.systemNo - b.systemNo
       })
@@ -73,7 +75,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
     )
   }
 
-  // นับตามฤดูแล้ง (worst case)
   const summary = {
     excellent: rows.filter(r => r.dry.level === 'excellent').length,
     good: rows.filter(r => r.dry.level === 'good').length,
@@ -82,36 +83,32 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
     critical: rows.filter(r => r.dry.level === 'critical').length,
   }
 
-    // ⭐ แกน Y คงที่: 0, 250, 500, 750, 1000
+  // ⭐ แกน Y คงที่: 0, 250, 500, 750, 1000
   const yMax = 1000
   const yTicks = [1000, 750, 500, 250, 0]
+
   const refPct = (100 / yMax) * 100
 
-  // ความกว้างขั้นต่ำต่อระบบ (มี 2 แท่ง + label)
   const minWidthPerSystem = seasonFilter === 'both' ? 56 : 40
   const chartMinWidth = Math.max(rows.length * minWidthPerSystem, 400)
 
-    return (
+  return (
     <div className="card p-6 flex flex-col">
-      {/* ============ Header (รวมทุกอย่างแถวเดียว) ============ */}
+      {/* ============ Header ============ */}
       <div className="flex items-center gap-3 flex-wrap pb-3 mb-4 border-b border-slate-100">
-        {/* Title */}
         <h2 className="text-lg font-bold text-brand-900 flex items-center gap-2 shrink-0">
           <Droplets size={18} className="text-brand-600" />
           ความเพียงพอของน้ำ
         </h2>
 
-        {/* Theory info (inline) */}
         <span className="text-[11px] text-slate-500 whitespace-nowrap">
           {rows.length} ระบบ · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
           {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน ·{' '}
           {PRODUCTION_HOURS_PER_DAY} ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR}
         </span>
 
-        {/* Divider */}
         <span className="text-slate-300 hidden md:inline">|</span>
 
-        {/* Season filter (inline) */}
         <div className="inline-flex items-center gap-1.5">
           <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
             แสดง:
@@ -140,10 +137,8 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
           </div>
         </div>
 
-        {/* Divider */}
         <span className="text-slate-300 hidden md:inline">|</span>
 
-        {/* Season colors legend */}
         <div className="flex items-center gap-3">
           {seasonFilter !== 'dry' && (
             <div className="flex items-center gap-1.5 text-xs">
@@ -161,7 +156,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
           )}
         </div>
 
-        {/* Status legend (ขวาสุด) */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 ml-auto">
           {(['critical', 'poor', 'fair', 'good', 'excellent'] as const).map(
             k => {
@@ -186,11 +180,10 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
       </div>
 
       {/* ============ Chart ============ */}
-      <div className="overflow-x-auto pb-2">
+      <div ref={chartRef} className="overflow-x-auto pb-2">
         <div style={{ minWidth: `${chartMinWidth}px` }} className="px-2">
-          {/* Chart area with Y-axis */}
           <div className="flex gap-2">
-                      {/* Y-axis labels */}
+            {/* Y-axis labels */}
             <div
               className="relative shrink-0 w-14"
               style={{ height: '360px' }}
@@ -214,7 +207,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
               className="relative flex-1 min-w-0"
               style={{ height: '360px' }}
             >
-                            {/* Grid lines */}
               {yTicks.map((_, i) => (
                 <div
                   key={i}
@@ -223,8 +215,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
                 />
               ))}
 
-              
-              {/* 100% reference line */}
               <div
                 className="absolute left-0 right-0 border-t-2 border-dashed border-red-300 z-10"
                 style={{ top: `${100 - refPct}%` }}
@@ -234,27 +224,33 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
                 </span>
               </div>
 
-              {/* Bars */}
               <div className="absolute inset-0 flex items-end gap-1">
-                {rows.map(row => {
+                {rows.map((row, idx) => {
                   const normalPct = (row.normal.ratio / yMax) * 100
                   const dryPct = (row.dry.ratio / yMax) * 100
                   const dryColor = SUFFICIENCY_COLORS[row.dry.level].hex
-                  const normalColor = '#0ea5e9' // sky-500
+                  const normalColor = '#0ea5e9'
 
                   return (
                     <div
                       key={row.systemId}
-                      className="flex-1 flex items-end justify-center gap-0.5 min-w-0 h-full group"
+                      className="flex-1 flex items-end justify-center gap-0.5 min-w-0 h-full"
                     >
-                      {/* Normal bar */}
                       {seasonFilter !== 'dry' && (
-                        <div
-                          className="w-3 md:w-4 rounded-t transition-all cursor-pointer hover:brightness-110"
-                          style={{
-                            height: `${Math.min(normalPct, 100)}%`,
-                            background: normalColor,
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={
+                            inView
+                              ? { height: `${Math.min(normalPct, 100)}%` }
+                              : { height: 0 }
+                          }
+                          transition={{
+                            duration: 0.7,
+                            delay: 0.1 + idx * 0.04,
+                            ease: 'easeOut',
                           }}
+                          className="w-3 md:w-4 rounded-t cursor-pointer hover:brightness-110"
+                          style={{ background: normalColor }}
                           title={`ม.${row.villageNo} ${row.systemName}
 ── ฤดูปกติ ──
 ครัวเรือน: ${row.householdCount} หลัง (${row.normal.peopleCount} คน)
@@ -265,14 +261,21 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
                         />
                       )}
 
-                      {/* Dry bar */}
                       {seasonFilter !== 'normal' && (
-                        <div
-                          className="w-3 md:w-4 rounded-t transition-all cursor-pointer hover:brightness-110"
-                          style={{
-                            height: `${Math.min(dryPct, 100)}%`,
-                            background: dryColor,
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={
+                            inView
+                              ? { height: `${Math.min(dryPct, 100)}%` }
+                              : { height: 0 }
+                          }
+                          transition={{
+                            duration: 0.7,
+                            delay: 0.2 + idx * 0.04,
+                            ease: 'easeOut',
                           }}
+                          className="w-3 md:w-4 rounded-t cursor-pointer hover:brightness-110"
+                          style={{ background: dryColor }}
                           title={`ม.${row.villageNo} ${row.systemName}
 ── ฤดูแล้ง (×${DRY_SEASON_FACTOR}) ──
 ครัวเรือน: ${row.householdCount} หลัง (${row.dry.peopleCount} คน)
@@ -290,12 +293,9 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
           </div>
 
           {/* X-axis labels */}
-          <div className="flex gap-1 ml-14 mt-2">
+          <div className="flex gap-1 ml-16 mt-2">
             {rows.map(row => (
-              <div
-                key={row.systemId}
-                className="flex-1 min-w-0 text-center"
-              >
+              <div key={row.systemId} className="flex-1 min-w-0 text-center">
                 <p className="text-[10px] font-semibold text-brand-700 truncate leading-tight">
                   ม.{row.villageNo}
                 </p>
@@ -312,9 +312,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
         <SummaryCard
           label="ฤดูปกติ"
-          value={
-            rows.reduce((a, r) => a + r.normal.ratio, 0) / rows.length
-          }
+          value={rows.reduce((a, r) => a + r.normal.ratio, 0) / rows.length}
           color="sky"
           unit="%"
         />
@@ -338,7 +336,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         />
       </div>
 
-      {/* ============ Reference ============ */}
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
         <Info size={12} className="shrink-0 mt-0.5 text-slate-400" />
         <span>
@@ -353,9 +350,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
   )
 }
 
-// ========================================
-// Sub-component: Summary Card
-// ========================================
 function SummaryCard({
   label,
   value,

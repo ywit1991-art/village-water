@@ -38,25 +38,22 @@ interface SystemRow {
   survey: Survey | null
 }
 
-// ========================================
-// ข้อความ Header ตาม Role
-// ========================================
 const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
   super_admin: {
     title: 'แผงควบคุมผู้ดูแลระบบ',
     subtitle: 'จัดการเจ้าหน้าที่ ดูประวัติ และดูแลข้อมูลทั้งหมด',
   },
   staff: {
-    title: 'หน้าเจ้าหน้าที่',
+    title: 'แดชบอร์ดเจ้าหน้าที่',
     subtitle: 'ดูแลข้อมูลประปาทั้งตำบล',
   },
   village_head: {
-    title: 'หน้าผู้ใหญ่บ้าน',
+    title: 'แดชบอร์ดผู้ใหญ่บ้าน',
     subtitle: 'ดูแลข้อมูลประปาในหมู่บ้านของท่าน',
   },
   operator: {
-    title: 'หน้าผู้ดูแลข้อมูลประปา',
-    subtitle: 'ดูแลเฉพาะข้อมูลประปาที่ท่านรับผิดชอบ',
+    title: 'แดชบอร์ดผู้ดูแลระบบประปา',
+    subtitle: 'ดูแลเฉพาะระบบประปาที่ท่านรับผิดชอบ',
   },
 }
 
@@ -77,9 +74,6 @@ export default async function DashboardPage() {
       sb.from('surveys').select('*').order('created_at', { ascending: false }),
     ])
 
-  // ========================================
-  // 🔒 กรองข้อมูลตามสิทธิ์
-  // ========================================
   const rawVillages = (villages as Village[] | null) ?? []
   const rawSystems = (systems as WaterSystem[] | null) ?? []
   const rawSurveys = (surveys as Survey[] | null) ?? []
@@ -97,9 +91,6 @@ export default async function DashboardPage() {
     s => s.water_system_id && visibleSystemIds.has(s.water_system_id),
   )
 
-  // ========================================
-  // สร้าง Maps
-  // ========================================
   const villageMap = new Map<number, Village>()
   filteredVillages.forEach(v => villageMap.set(v.id, v))
 
@@ -123,9 +114,6 @@ export default async function DashboardPage() {
     grouped.get(sys.village_id)!.push(row)
   })
 
-  // ========================================
-  // Stats
-  // ========================================
   const totalSurveys = filteredSurveys.length
   const submittedCount = filteredSurveys.filter(
     s => s.status === 'submitted',
@@ -144,27 +132,27 @@ export default async function DashboardPage() {
       {/* HEADER                          */}
       {/* ============================== */}
       <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-3 min-w-0">
             <div className="relative shrink-0">
               <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
               <img
                 src="/logo.png"
                 alt="ตราเทศบาลตำบลท่าวังทอง"
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
+                className="relative w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
               />
             </div>
-            <div>
-              <h1 className="font-bold leading-tight text-sm md:text-base">
+            <div className="min-w-0">
+              <h1 className="font-bold leading-tight text-sm md:text-base truncate">
                 {header.title}
               </h1>
-              <p className="text-[11px] text-brand-100 hidden md:block">
+              <p className="text-[11px] text-brand-100 hidden md:block truncate">
                 {session.full_name ?? 'เจ้าหน้าที่'} · {session.code}
               </p>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-1 md:gap-2">
+          <nav className="flex items-center gap-1 md:gap-2 shrink-0">
             <span className="hidden md:inline-flex">
               <RoleBadge role={session.role} />
             </span>
@@ -172,7 +160,8 @@ export default async function DashboardPage() {
             {canManageStaff(session) && (
               <Link
                 href="/admin/staff"
-                className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+                aria-label="จัดการเจ้าหน้าที่"
+                className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
               >
                 <Users size={16} />
                 <span className="hidden md:inline">เจ้าหน้าที่</span>
@@ -182,7 +171,8 @@ export default async function DashboardPage() {
             {canViewAudit(session) && (
               <Link
                 href="/admin/audit"
-                className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+                aria-label="ดูประวัติการใช้งาน"
+                className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
               >
                 <ClipboardList size={16} />
                 <span className="hidden md:inline">ประวัติ</span>
@@ -191,16 +181,18 @@ export default async function DashboardPage() {
 
             <Link
               href="/overview"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+              aria-label="ดูข้อมูลสาธารณะ"
+              className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
             >
               <Eye size={16} />
-              <span className="hidden md:inline">ดูสาธารณะ</span>
+              <span className="hidden md:inline">สาธารณะ</span>
             </Link>
 
             <form action={logoutAction}>
               <button
-                className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+                className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
                 type="submit"
+                aria-label="ออกจากระบบ"
               >
                 <LogOut size={16} />
                 <span className="hidden md:inline">ออก</span>
@@ -210,9 +202,9 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 w-full">
+      <main className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 w-full">
         {/* Subtitle */}
-        <div className="mb-4 flex items-center gap-2 text-sm text-brand-700">
+        <div className="mb-3 md:mb-4 flex items-center gap-2 text-xs md:text-sm text-brand-700">
           <Info size={14} className="shrink-0" />
           <span>{header.subtitle}</span>
         </div>
@@ -238,48 +230,52 @@ export default async function DashboardPage() {
             icon={<Droplets size={18} />}
             color="amber"
             title="ระบบที่คุณดูแล"
-            detail={`${filteredSystems.length} ข้อมูลประปา ใน ${grouped.size} หมู่บ้าน`}
+            detail={`${filteredSystems.length} ระบบประปา ใน ${grouped.size} หมู่บ้าน`}
           />
         )}
 
         {/* ============================== */}
-        {/* Stats                            */}
+        {/* Stats — Responsive              */}
         {/* ============================== */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="card p-4">
-            <p className="text-xs text-brand-500">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
+          <div className="card p-3 md:p-4">
+            <p className="text-[11px] md:text-xs text-brand-500 truncate">
               {session.role === 'village_head'
                 ? 'หมู่บ้านของฉัน'
                 : session.role === 'operator'
                   ? 'หมู่บ้านที่มีระบบ'
                   : 'หมู่บ้านทั้งหมด'}
             </p>
-            <p className="text-2xl font-bold text-brand-900">
+            <p className="text-xl md:text-2xl font-bold text-brand-900">
               {grouped.size || filteredVillages.length}
             </p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-brand-500">ข้อมูลประปา</p>
-            <p className="text-2xl font-bold text-brand-900">
+          <div className="card p-3 md:p-4">
+            <p className="text-[11px] md:text-xs text-brand-500 truncate">
+              ข้อมูลประปา
+            </p>
+            <p className="text-xl md:text-2xl font-bold text-brand-900">
               {filteredSystems.length}
             </p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-brand-500">แบบสำรวจ</p>
-            <p className="text-2xl font-bold text-brand-900">
+          <div className="card p-3 md:p-4">
+            <p className="text-[11px] md:text-xs text-brand-500 truncate">
+              แบบสำรวจ
+            </p>
+            <p className="text-xl md:text-2xl font-bold text-brand-900">
               {totalSurveys}{' '}
-              <span className="text-xs text-slate-400 font-normal">
+              <span className="text-[10px] md:text-xs text-slate-400 font-normal">
                 ({submittedCount} ส่ง, {draftCount} ร่าง)
               </span>
             </p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-brand-500">
+          <div className="card p-3 md:p-4">
+            <p className="text-[11px] md:text-xs text-brand-500 truncate">
               {session.role === 'super_admin'
-                ? 'บทบาทของคุณ'
+                ? 'บทบาท'
                 : 'สิทธิ์การใช้งาน'}
             </p>
-            <p className="text-base font-bold text-brand-900 mt-1">
+            <p className="text-xs md:text-base font-bold text-brand-900 mt-0.5 md:mt-1 leading-snug">
               {ROLE_LABELS[session.role]}
             </p>
           </div>
@@ -288,13 +284,13 @@ export default async function DashboardPage() {
         {/* ============================== */}
         {/* ตารางกลุ่มตามหมู่บ้าน             */}
         {/* ============================== */}
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {filteredVillages.length === 0 && (
-            <div className="card p-10 text-center">
+            <div className="card p-8 md:p-10 text-center">
               <Shield size={32} className="mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-500">
+              <p className="text-sm text-slate-500">
                 {session.role === 'operator'
-                  ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา — กรุณาติดต่อผู้ดูแลระบบ'
+                  ? 'คุณยังไม่ได้รับมอบหมายระบบประปา'
                   : 'ไม่พบข้อมูลหมู่บ้านที่คุณเข้าถึงได้'}
               </p>
             </div>
@@ -302,18 +298,17 @@ export default async function DashboardPage() {
 
           {filteredVillages.map(v => {
             const rows = grouped.get(v.id) ?? []
-
             if (rows.length === 0 && !showCreate) return null
 
             return (
               <div key={v.id} className="card overflow-hidden">
                 {/* Header หมู่บ้าน */}
-                <div className="px-4 py-3 bg-brand-50/60 border-b border-brand-100 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-brand-500">
+                <div className="px-3 md:px-4 py-2.5 md:py-3 bg-brand-50/60 border-b border-brand-100 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] md:text-xs text-brand-500">
                       หมู่ที่ {v.village_no}
                     </p>
-                    <h2 className="font-bold text-brand-900">
+                    <h2 className="font-bold text-brand-900 text-sm md:text-base truncate">
                       {v.village_name}
                     </h2>
                   </div>
@@ -326,143 +321,267 @@ export default async function DashboardPage() {
                   )}
                 </div>
 
-                {/* ตารางข้อมูล */}
+                {/* ==================== */}
+                {/* Mobile: Card list    */}
+                {/* ==================== */}
                 {rows.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-slate-400">
-                    ยังไม่มีข้อมูลประปาในหมู่บ้านนี้
-                    {showCreate && ' — กด "เพิ่มข้อมูล" ด้านบน'}
+                  <div className="p-6 md:p-8 text-center text-xs md:text-sm text-slate-400">
+                    ยังไม่มีข้อมูลประปา
+                    {showCreate && ' — กด "เพิ่มข้อมูล"'}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-white text-brand-700 border-b border-brand-50">
-                        <tr>
-                          <th className="p-3 text-left w-24">ข้อมูลที่</th>
-                          <th className="p-3 text-left">ชื่อข้อมูล</th>
-                          <th className="p-3 text-left w-32">สถานะ</th>
-                          <th className="p-3 text-left w-32">วันที่ลงข้อมูล</th>
-                          <th className="p-3 text-left w-40">สภาพ</th>
-                          <th className="p-3 text-right w-72">จัดการ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map(({ system: sys, survey: s }) => {
-                          const st =
-                            s?.overall_condition ??
-                            sys.overall_condition ??
-                            'ไม่มีข้อมูล'
-                          const conditionStyle = STATUS_COLORS[st]
+                  <>
+                    {/* Mobile Card Layout */}
+                    <div className="md:hidden divide-y divide-brand-50">
+                      {rows.map(({ system: sys, survey: s }) => {
+                        const st =
+                          s?.overall_condition ??
+                          sys.overall_condition ??
+                          'ไม่มีข้อมูล'
+                        const conditionStyle = STATUS_COLORS[st]
 
-                          return (
-                            <tr
-                              key={sys.id}
-                              className="border-t border-brand-50 hover:bg-brand-50/40"
-                            >
-                              <td className="p-3">
-                                <span className="badge bg-brand-100 text-brand-700">
-                                  {sys.system_no}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <div>
-                                  <p className="font-medium text-brand-900">
-                                    {sys.system_name}
+                        return (
+                          <div key={sys.id} className="p-3 space-y-2">
+                            {/* Row 1: ข้อมูลที่ + ชื่อ */}
+                            <div className="flex items-start gap-2">
+                              <span className="badge bg-brand-100 text-brand-700 shrink-0">
+                                {sys.system_no}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-brand-900 text-sm truncate">
+                                  {sys.system_name}
+                                </p>
+                                {sys.user_count > 0 && (
+                                  <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                    <Users size={10} />
+                                    {sys.user_count} ราย
                                   </p>
-                                  {sys.user_count > 0 && (
-                                    <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                                      <Users size={10} />
-                                      {sys.user_count} ราย
-                                    </p>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="p-3">
-                                {!s ? (
-                                  <span className="badge bg-slate-100 text-slate-500">
-                                    ยังไม่มี
-                                  </span>
-                                ) : s.status === 'draft' ? (
-                                  <span className="badge bg-yellow-100 text-yellow-700">
-                                    ฉบับร่าง
-                                  </span>
-                                ) : s.status === 'submitted' ? (
-                                  <span className="badge bg-green-100 text-green-700">
-                                    ส่งแล้ว
-                                  </span>
-                                ) : (
-                                  <span className="badge bg-blue-100 text-blue-700">
-                                    อนุมัติ
-                                  </span>
                                 )}
-                              </td>
-                              <td className="p-3 text-brand-600 text-xs">
-  {s?.updated_at
-    ? new Date(s.updated_at).toLocaleDateString('th-TH', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
-    : '–'}
-</td>
-                              <td className="p-3">
-                                <span
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                                  style={{
-                                    background: `${conditionStyle?.hex}20`,
-                                    color: conditionStyle?.hex,
-                                  }}
-                                >
-                                  {STATUS_EMOJI[st] ?? ''} {st}
+                              </div>
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0"
+                                style={{
+                                  background: `${conditionStyle?.hex}20`,
+                                  color: conditionStyle?.hex,
+                                }}
+                              >
+                                {STATUS_EMOJI[st] ?? ''} {st}
+                              </span>
+                            </div>
+
+                            {/* Row 2: สถานะ + วันที่ */}
+                            <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                              {!s ? (
+                                <span className="badge bg-slate-100 text-slate-500">
+                                  ยังไม่มีแบบสำรวจ
                                 </span>
-                              </td>
-                              <td className="p-3 text-right whitespace-nowrap">
-                                <div className="inline-flex items-center gap-2">
-                                  {/* ปุ่มแก้ไขแบบฟอร์ม */}
-                                  <Link
-                                    href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
-                                  >
-                                    {s ? (
-                                      <>
-                                        <Pencil size={12} /> แก้ไขแบบฟอร์ม
-                                      </>
-                                    ) : (
-                                      <>
-                                        <PlusCircle size={12} /> กรอกแบบฟอร์ม
-                                      </>
+                              ) : s.status === 'draft' ? (
+                                <span className="badge bg-yellow-100 text-yellow-700">
+                                  ฉบับร่าง
+                                </span>
+                              ) : s.status === 'submitted' ? (
+                                <span className="badge bg-green-100 text-green-700">
+                                  ส่งแล้ว
+                                </span>
+                              ) : (
+                                <span className="badge bg-blue-100 text-blue-700">
+                                  อนุมัติ
+                                </span>
+                              )}
+                              {s?.updated_at && (
+                                <span className="text-slate-500">
+                                  อัปเดต:{' '}
+                                  {new Date(s.updated_at).toLocaleDateString(
+                                    'th-TH',
+                                    {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: '2-digit',
+                                    },
+                                  )}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Row 3: ปุ่มจัดการ */}
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
+                              >
+                                {s ? (
+                                  <>
+                                    <Pencil size={12} /> แก้ไข
+                                  </>
+                                ) : (
+                                  <>
+                                    <PlusCircle size={12} /> กรอก
+                                  </>
+                                )}
+                              </Link>
+
+                              {s && (
+                                <Link
+                                  href={`/admin/surveys/${s.id}/report`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label="เปิดรายงาน"
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 active:scale-95 text-white text-xs font-medium transition"
+                                >
+                                  <FileText size={12} /> รายงาน
+                                </Link>
+                              )}
+
+                              {showDelete && (
+                                <DeleteSystemButton
+                                  systemId={sys.id}
+                                  systemName={sys.system_name}
+                                  villageName={`หมู่ ${v.village_no} ${v.village_name}`}
+                                  hasSurvey={!!s}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* ==================== */}
+                    {/* Desktop: Table        */}
+                    {/* ==================== */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-white text-brand-700 border-b border-brand-50">
+                          <tr>
+                            <th className="p-3 text-left w-24">ข้อมูลที่</th>
+                            <th className="p-3 text-left">ชื่อข้อมูล</th>
+                            <th className="p-3 text-left w-32">สถานะ</th>
+                            <th className="p-3 text-left w-40">
+                              วันที่อัปเดทข้อมูล
+                            </th>
+                            <th className="p-3 text-left w-40">สภาพ</th>
+                            <th className="p-3 text-right w-72">จัดการ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map(({ system: sys, survey: s }) => {
+                            const st =
+                              s?.overall_condition ??
+                              sys.overall_condition ??
+                              'ไม่มีข้อมูล'
+                            const conditionStyle = STATUS_COLORS[st]
+
+                            return (
+                              <tr
+                                key={sys.id}
+                                className="border-t border-brand-50 hover:bg-brand-50/40 transition"
+                              >
+                                <td className="p-3">
+                                  <span className="badge bg-brand-100 text-brand-700">
+                                    {sys.system_no}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <div>
+                                    <p className="font-medium text-brand-900">
+                                      {sys.system_name}
+                                    </p>
+                                    {sys.user_count > 0 && (
+                                      <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <Users size={10} />
+                                        {sys.user_count} ราย
+                                      </p>
                                     )}
-                                  </Link>
-
-                                  {/* ปุ่มรายงาน — แสดงเมื่อมี survey เท่านั้น */}
-                                  {s && (
+                                  </div>
+                                </td>
+                                <td className="p-3">
+                                  {!s ? (
+                                    <span className="badge bg-slate-100 text-slate-500">
+                                      ยังไม่มี
+                                    </span>
+                                  ) : s.status === 'draft' ? (
+                                    <span className="badge bg-yellow-100 text-yellow-700">
+                                      ฉบับร่าง
+                                    </span>
+                                  ) : s.status === 'submitted' ? (
+                                    <span className="badge bg-green-100 text-green-700">
+                                      ส่งแล้ว
+                                    </span>
+                                  ) : (
+                                    <span className="badge bg-blue-100 text-blue-700">
+                                      อนุมัติ
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-brand-600 text-xs">
+                                  {s?.updated_at
+                                    ? new Date(
+                                        s.updated_at,
+                                      ).toLocaleDateString('th-TH', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                      })
+                                    : '–'}
+                                </td>
+                                <td className="p-3">
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                                    style={{
+                                      background: `${conditionStyle?.hex}20`,
+                                      color: conditionStyle?.hex,
+                                    }}
+                                  >
+                                    {STATUS_EMOJI[st] ?? ''} {st}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-right whitespace-nowrap">
+                                  <div className="inline-flex items-center gap-2">
                                     <Link
-                                      href={`/admin/surveys/${s.id}/report`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-xs font-medium transition"
-                                      title="เปิดรายงานแบบเต็มเพื่อพิมพ์"
+                                      href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
                                     >
-                                      <FileText size={12} /> รายงาน
+                                      {s ? (
+                                        <>
+                                          <Pencil size={12} /> แก้ไขแบบฟอร์ม
+                                        </>
+                                      ) : (
+                                        <>
+                                          <PlusCircle size={12} />{' '}
+                                          กรอกแบบฟอร์ม
+                                        </>
+                                      )}
                                     </Link>
-                                  )}
 
-                                  {/* ปุ่มลบ — เฉพาะ staff/super_admin */}
-                                  {showDelete && (
-                                    <DeleteSystemButton
-                                      systemId={sys.id}
-                                      systemName={sys.system_name}
-                                      villageName={`หมู่ ${v.village_no} ${v.village_name}`}
-                                      hasSurvey={!!s}
-                                    />
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                                    {s && (
+                                      <Link
+                                        href={`/admin/surveys/${s.id}/report`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="เปิดรายงานแบบเต็ม"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 active:scale-95 text-white text-xs font-medium transition"
+                                      >
+                                        <FileText size={12} /> รายงาน
+                                      </Link>
+                                    )}
+
+                                    {showDelete && (
+                                      <DeleteSystemButton
+                                        systemId={sys.id}
+                                        systemName={sys.system_name}
+                                        villageName={`หมู่ ${v.village_no} ${v.village_name}`}
+                                        hasSurvey={!!s}
+                                      />
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             )

@@ -198,8 +198,20 @@ export default function SurveyFormPage() {
       toast.success(
         status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ',
       )
+      toast.success(
+        status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ 🎉',
+      )
+
+      // 🎉 ยิง confetti ตอนส่งสำเร็จ (ไม่ใช่ draft)
+      if (status === 'submitted') {
+        fireConfetti('success')
+        // รอ confetti นิดนึงก่อน redirect
+        await new Promise(r => setTimeout(r, 800))
+      }
+
       router.push('/admin/dashboard')
-      router.refresh()
+      router.refresh()      
+
     } catch (err) {
       console.error('[save]', err)
       toast.error('เกิดข้อผิดพลาดในการบันทึก')
