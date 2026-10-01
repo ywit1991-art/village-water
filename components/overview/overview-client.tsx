@@ -12,6 +12,7 @@ import {
   Maximize2,
   Minimize2,
   BarChart3,
+  TrendingUp,
 } from 'lucide-react'
 import StatusChart from './status-chart'
 import VillageStatusChart from './village-status-chart'
@@ -19,6 +20,7 @@ import SufficiencyChart from '@/components/stats/SufficiencyChart'
 import VillagesMapClient, {
   type MarkerData,
 } from '@/components/maps/VillagesMapClient'
+import { AnimatedCounter } from '@/components/ui/animated-counter'
 import type { Village, Survey } from '@/lib/types'
 import type { SystemWithContext } from '@/app/overview/page'
 
@@ -38,6 +40,10 @@ export default function OverviewClient({ villages, systems }: Props) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [chartMode, setChartMode] = useState<ChartMode>('status')
+  const [chartFilter, setChartFilter] = useState<{
+    type: 'status' | 'village' | null
+    value: string | number | null
+  }>({ type: null, value: null })
   const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,29 +63,28 @@ export default function OverviewClient({ villages, systems }: Props) {
     }
   }
 
-  // ========================================
-  // FILTER
-  // ========================================
   const filtered = useMemo(() => {
     return systems.filter(s => {
       if (!s.survey) return false
-
       if (villageFilter !== 'all' && s.system.village_id !== villageFilter)
         return false
-
       const condition =
         s.survey.overall_condition ??
         s.system.overall_condition ??
         'ไม่มีข้อมูล'
       if (statusFilter !== 'all' && condition !== statusFilter) return false
-
+      // chart filter
+      if (chartFilter.type === 'status' && condition !== chartFilter.value)
+        return false
+      if (
+        chartFilter.type === 'village' &&
+        s.system.village_id !== chartFilter.value
+      )
+        return false
       return true
     })
-  }, [systems, villageFilter, statusFilter])
+  }, [systems, villageFilter, statusFilter, chartFilter])
 
-  // ========================================
-  // STATS
-  // ========================================
   const stats = useMemo(() => {
     const uniqueVillages = new Set(filtered.map(s => s.system.village_id)).size
     const totalSystems = filtered.length
@@ -92,7 +97,6 @@ export default function OverviewClient({ villages, systems }: Props) {
       0,
     )
     const totalSurveys = filtered.filter(s => s.survey != null).length
-
     return {
       villages: uniqueVillages,
       systems: totalSystems,
@@ -102,9 +106,6 @@ export default function OverviewClient({ villages, systems }: Props) {
     }
   }, [filtered])
 
-  // ========================================
-  // STATUS COUNT
-  // ========================================
   const statusCount: Record<string, number> = {
     'ดี': 0,
     'พอใช้': 0,
@@ -118,12 +119,8 @@ export default function OverviewClient({ villages, systems }: Props) {
     statusCount[k] = (statusCount[k] ?? 0) + 1
   })
 
-  // ========================================
-  // MARKERS
-  // ========================================
   const markers: MarkerData[] = useMemo(() => {
     const result: MarkerData[] = []
-
     for (const s of filtered) {
       const lat = s.survey?.lat ?? s.system.lat
       const lng = s.survey?.lng ?? s.system.lng
@@ -132,15 +129,12 @@ export default function OverviewClient({ villages, systems }: Props) {
       const productionTypes = (s.survey?.production_type ?? []).filter(
         (t): t is string => typeof t === 'string' && t.length > 0,
       )
-
       const problems = (s.survey?.problems ?? []).filter(
         (p): p is string => typeof p === 'string' && p.length > 0,
       )
-
       const improvements = (s.survey?.improvements ?? []).filter(
         (p): p is string => typeof p === 'string' && p.length > 0,
       )
-
       const photos = (s.survey?.photos ?? []).filter(
         (u): u is string => typeof u === 'string' && u.length > 0,
       )
@@ -164,7 +158,14 @@ export default function OverviewClient({ villages, systems }: Props) {
         tankCapacity: s.survey?.tank_capacity ?? s.system.tank_capacity ?? null,
         waterRate: s.survey?.water_rate ?? s.system.water_rate ?? null,
         waterRateType: s.survey?.water_rate_type ?? null,
-        waterRateTiers: s.survey?.water_rate_tiers ?? null,
+        waterRateTiers: Array.isArray(s.survey?.water_rate_tiers)
+          ? s.survey.water_rate_tiers.map(t => ({
+              from: t.from,
+              to: t.to,
+              rate: t.rate,
+              label: t.label,
+            }))
+          : null,
         productionTypes,
         sufficiency: s.survey?.water_source_sufficiency ?? null,
         operatorName: s.survey?.operator_name ?? null,
@@ -177,7 +178,6 @@ export default function OverviewClient({ villages, systems }: Props) {
         photos,
       })
     }
-
     return result
   }, [filtered])
 
@@ -188,39 +188,41 @@ export default function OverviewClient({ villages, systems }: Props) {
     setStatusFilter('all')
   }
 
-  // ========================================
-  // STAT CARDS
-  // ========================================
   const cards = [
     {
-      icon: <MapPin size={18} />,
+      icon: <MapPin size={20} />,
       value: stats.villages,
       label: 'หมู่บ้าน',
-      color: 'text-brand-600 bg-brand-50',
+      color: 'text-brand-600',
+      bg: 'bg-brand-50',
     },
     {
-      icon: <Droplets size={18} />,
+      icon: <Droplets size={20} />,
       value: stats.systems,
       label: 'ระบบประปา',
-      color: 'text-sky-600 bg-sky-50',
+      color: 'text-sky-600',
+      bg: 'bg-sky-50',
     },
     {
-      icon: <Home size={18} />,
+      icon: <Home size={20} />,
       value: stats.households,
       label: 'ครัวเรือน',
-      color: 'text-indigo-600 bg-indigo-50',
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50',
     },
     {
-      icon: <Package size={18} />,
+      icon: <Package size={20} />,
       value: stats.capacity,
       label: 'ความจุ (ลบ.ม.)',
-      color: 'text-amber-600 bg-amber-50',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
     },
     {
-      icon: <ClipboardList size={18} />,
+      icon: <ClipboardList size={20} />,
       value: stats.surveys,
       label: 'แบบสำรวจ',
-      color: 'text-emerald-600 bg-emerald-50',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
     },
   ]
 
@@ -270,16 +272,104 @@ export default function OverviewClient({ villages, systems }: Props) {
         {/* ============================ */}
         {/* FILTER + STATS                */}
         {/* ============================ */}
-        <div className="card overflow-hidden">
-          <div className="p-3.5 border-b border-brand-100">
+                <div className="card overflow-hidden shadow-md">
+          {/* Filter */}
+          <div className="p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-brand-600">
-                <Filter size={14} />
-                <span className="font-medium">กรองข้อมูล:</span>
+              <div className="flex items-center gap-2 text-sm font-semibold text-brand-700">
+                <Filter size={16} />
+                <span>กรองข้อมูล</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500">หมู่บ้าน</label>
+                <label className="text-xs text-slate-500 whitespace-nowrap">
+                  หมู่บ้าน
+                </label>
+                <select
+                  value={villageFilter}
+                  onChange={e => {
+                    setVillageFilter(
+                      e.target.value === 'all' ? 'all' : Number(e.target.value),
+                    )
+                    setChartFilter({ type: null, value: null })
+                  }}
+                  className="input text-sm py-1.5 pr-8 min-w-[200px]"
+                >
+                  <option value="all">ทั้งหมด ({villages.length} หมู่)</option>
+                  {villages.map(v => (
+                    <option key={v.id} value={v.id}>
+                      หมู่ {v.village_no} {v.village_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500 whitespace-nowrap">
+                  สถานะ
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={e => {
+                    setStatusFilter(e.target.value)
+                    setChartFilter({ type: null, value: null })
+                  }}
+                  className="input text-sm py-1.5 pr-8 min-w-[160px]"
+                >
+                  <option value="all">ทั้งหมด</option>
+                  {STATUS_OPTIONS.map(s => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {chartFilter.type && (
+                <button
+                  onClick={() => setChartFilter({ type: null, value: null })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800 text-xs font-medium hover:bg-brand-200 transition"
+                >
+                  🎯{' '}
+                  {chartFilter.type === 'status'
+                    ? chartFilter.value
+                    : `หมู่ ${chartFilter.value}`}
+                  <span className="text-brand-500 ml-1">×</span>
+                </button>
+              )}
+
+              {(hasFilter || chartFilter.type) && (
+                <button
+                  onClick={() => {
+                    clearFilters()
+                    setChartFilter({ type: null, value: null })
+                  }}
+                  className="text-xs text-brand-600 hover:underline font-medium"
+                >
+                  ล้างตัวกรอง
+                </button>
+              )}
+
+              <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800">
+                <TrendingUp size={14} />
+                <span className="text-xs font-semibold">
+                  พบ {filtered.length} ระบบ
+                </span>
+              </div>
+            </div>
+          </div>
+          {/* Filter */}
+          <div className="p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-brand-700">
+                <Filter size={16} />
+                <span>กรองข้อมูล</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500 whitespace-nowrap">
+                  หมู่บ้าน
+                </label>
                 <select
                   value={villageFilter}
                   onChange={e =>
@@ -299,7 +389,9 @@ export default function OverviewClient({ villages, systems }: Props) {
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500">สถานะ</label>
+                <label className="text-xs text-slate-500 whitespace-nowrap">
+                  สถานะ
+                </label>
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value)}
@@ -317,27 +409,40 @@ export default function OverviewClient({ villages, systems }: Props) {
               {hasFilter && (
                 <button
                   onClick={clearFilters}
-                  className="text-xs text-brand-600 hover:underline"
+                  className="text-xs text-brand-600 hover:underline font-medium"
                 >
                   ล้างตัวกรอง
                 </button>
               )}
 
-              <div className="text-sm text-brand-700 font-medium ml-auto">
-                พบ <span className="font-bold">{filtered.length}</span> ระบบ
+              <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800">
+                <TrendingUp size={14} />
+                <span className="text-xs font-semibold">
+                  พบ {filtered.length} ระบบ
+                </span>
               </div>
             </div>
           </div>
 
+          {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-brand-50">
             {cards.map((c, i) => (
-              <div key={i} className="p-3.5 hover:bg-brand-50/40 transition">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={c.color.split(' ')[0]}>{c.icon}</span>
-                  <span className="text-xs text-slate-500">{c.label}</span>
+              <div
+                key={i}
+                className="p-4 hover:bg-brand-50/60 transition-all group cursor-default"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${c.bg} ${c.color}`}
+                  >
+                    {c.icon}
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {c.label}
+                  </span>
                 </div>
-                <p className="text-2xl font-bold text-brand-900 leading-none tabular-nums">
-                  {c.value.toLocaleString()}
+                <p className="text-2xl md:text-3xl font-extrabold text-brand-900 leading-none tabular-nums">
+                  <AnimatedCounter value={c.value} />
                 </p>
               </div>
             ))}
@@ -345,18 +450,17 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
 
         {/* ============================ */}
-        {/* MAIN TABS + SUB-TOGGLE        */}
+        {/* MAIN TABS                     */}
         {/* ============================ */}
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Main tabs */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
             <button
               type="button"
               onClick={() => setViewMode('map')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shadow-sm ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                 viewMode === 'map'
-                  ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-300'
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <MapPin size={16} />
@@ -365,10 +469,10 @@ export default function OverviewClient({ villages, systems }: Props) {
             <button
               type="button"
               onClick={() => setViewMode('stats')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shadow-sm ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                 viewMode === 'stats'
-                  ? 'bg-brand-600 text-white shadow-md ring-2 ring-brand-300'
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <BarChart3 size={16} />
@@ -376,7 +480,6 @@ export default function OverviewClient({ villages, systems }: Props) {
             </button>
           </div>
 
-          {/* Sub-toggle — แสดงเฉพาะเมื่อเลือก "สถิติ" */}
           {viewMode === 'stats' && (
             <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200 shadow-sm">
               <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
@@ -412,21 +515,24 @@ export default function OverviewClient({ villages, systems }: Props) {
         {/* VIEW: แผนที่                  */}
         {/* ============================ */}
         {viewMode === 'map' && (
-          <div className="card overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-3 border-b border-brand-50">
+          <div className="card overflow-hidden flex flex-col shadow-md">
+            <div className="flex items-center justify-between p-4 border-b border-brand-50 bg-gradient-to-r from-sky-50/60 to-white">
               <div>
-                <h3 className="font-bold text-brand-900">
+                <h3 className="font-bold text-brand-900 flex items-center gap-2">
+                  <MapPin size={18} className="text-sky-600" />
                   แผนที่ระบบประปา
                 </h3>
-                <p className="text-[11px] text-brand-500">
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
-                  {markers.length} ระบบ
+                  <span className="font-semibold text-sky-700">
+                    {markers.length} ระบบ
+                  </span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="w-9 h-9 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 flex items-center justify-center transition shrink-0"
+                className="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-sky-50 hover:border-sky-300 text-slate-700 hover:text-sky-700 flex items-center justify-center transition shrink-0"
                 title={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
               >
                 {isFullscreen ? (
@@ -463,12 +569,38 @@ export default function OverviewClient({ villages, systems }: Props) {
               <StatusChart
                 statusCount={statusCount}
                 total={stats.systems}
+                activeStatus={
+                  chartFilter.type === 'status'
+                    ? (chartFilter.value as string)
+                    : null
+                }
+                onStatusClick={status => {
+                  setChartFilter(prev =>
+                    prev.type === 'status' && prev.value === status
+                      ? { type: null, value: null }
+                      : { type: 'status', value: status },
+                  )
+                  setViewMode('map')
+                }}
               />
             )}
             {chartMode === 'village' && (
               <VillageStatusChart
                 villages={villages}
                 systems={filtered}
+                activeVillage={
+                  chartFilter.type === 'village'
+                    ? (chartFilter.value as number)
+                    : null
+                }
+                onVillageClick={villageId => {
+                  setChartFilter(prev =>
+                    prev.type === 'village' && prev.value === villageId
+                      ? { type: null, value: null }
+                      : { type: 'village', value: villageId },
+                  )
+                  setViewMode('map')
+                }}
               />
             )}
             {chartMode === 'sufficiency' && (
