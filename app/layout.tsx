@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { SkipLink } from '@/components/ui/skip-link'
 
 export const metadata: Metadata = {
-  title: 'ข้อมูลประปาหมู่บ้าน - เทศบาลตำบลท่าวังทอง อ.เมืองพะเยา จ.พะเยา',
-  description: 'ฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
+  title: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+  description: 'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
 }
 
 export default function RootLayout({
@@ -15,7 +16,6 @@ export default function RootLayout({
   return (
     <html lang="th">
       <head>
-        {/* โหลดฟอนต์ตรงจาก Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -28,6 +28,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <SkipLink />
         {children}
         <Toaster position="top-right" richColors />
       </body>

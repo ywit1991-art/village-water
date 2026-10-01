@@ -8,6 +8,8 @@ import { RoleBadge } from '@/components/ui/role-badge'
 import CreateStaffModal from './create-staff-modal'
 import EditStaffModal from './edit-staff-modal'
 import DeleteStaffButton from './delete-staff-button'
+import { NavLink } from '@/components/ui/nav-link'
+
 
 export default async function StaffPage() {
   const session = await getSession()
@@ -73,13 +75,13 @@ export default async function StaffPage() {
             </div>
           </div>
           <nav className="flex items-center gap-1 md:gap-2">
-            <Link
+            <NavLink
               href="/admin/audit"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition inline-flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
             >
               <ClipboardList size={16} />
               <span className="hidden md:inline">ประวัติการใช้งาน</span>
-            </Link>
+            </NavLink>
           </nav>
         </div>
       </header>

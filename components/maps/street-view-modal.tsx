@@ -1,6 +1,8 @@
 'use client'
 
 import { X, ExternalLink } from 'lucide-react'
+import { useFocusTrap } from '@/components/ui/use-focus-trap'
+
 
 interface Props {
   lat: number
@@ -15,6 +17,7 @@ export default function StreetViewModal({
   systemName,
   onClose,
 }: Props) {
+  const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
   const embedUrl = apiKey
@@ -27,9 +30,15 @@ export default function StreetViewModal({
     <div
       className="fixed inset-0 z-[10000] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="relative w-full max-w-6xl h-[85vh] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl flex flex-col"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Street View ของ ${systemName}`}
+        tabIndex={-1}
+        className="relative w-full max-w-6xl h-[85vh] rounded-3xl overflow-hidden bg-slate-900 shadow-2xl flex flex-col outline-none"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -64,8 +73,8 @@ export default function StreetViewModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-red-500 text-white flex items-center justify-center transition"
-              aria-label="ปิด"
+              className="w-9 h-9 rounded-lg bg-slate-700 hover:bg-red-500 active:scale-95 text-white flex items-center justify-center transition"
+              aria-label="ปิด Street View"
             >
               <X size={18} />
             </button>

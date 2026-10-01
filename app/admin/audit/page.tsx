@@ -88,10 +88,14 @@ export default async function AuditPage() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="card overflow-hidden">
           <div className="p-4 border-b border-brand-50 flex items-center gap-2">
-            <Activity size={18} className="text-brand-600" />
+            <Activity size={18} className="text-brand-600" aria-hidden="true" />
             <h2 className="font-bold text-brand-900">Audit Log</h2>
-            <span className="text-xs text-slate-500 ml-auto">
-              เก็บ 200 รายการล่าสุด
+            <span
+              role="status"
+              aria-live="polite"
+              className="text-xs text-slate-500 ml-auto"
+            >
+              {list.length} รายการล่าสุด
             </span>
           </div>
 
@@ -102,14 +106,17 @@ export default async function AuditPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table
+                className="w-full text-sm"
+                aria-label="ตารางประวัติการใช้งาน"
+              >
                 <thead className="bg-brand-50 text-brand-700">
                   <tr>
-                    <th className="p-3 text-left w-40">เวลา</th>
-                    <th className="p-3 text-left w-32">เลข/ชื่อ</th>
-                    <th className="p-3 text-left w-40">การกระทำ</th>
-                    <th className="p-3 text-left">เป้าหมาย</th>
-                    <th className="p-3 text-left w-32">IP</th>
+                    <th className="p-3 text-left w-40" scope="col">เวลา</th>
+                    <th className="p-3 text-left w-32" scope="col">เลข/ชื่อ</th>
+                    <th className="p-3 text-left w-40" scope="col">การกระทำ</th>
+                    <th className="p-3 text-left" scope="col">เป้าหมาย</th>
+                    <th className="p-3 text-left w-32" scope="col">IP</th>
                   </tr>
                 </thead>
                 <tbody>

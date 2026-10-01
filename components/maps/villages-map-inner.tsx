@@ -19,6 +19,8 @@ import type { MarkerData } from './VillagesMapClient'
 import { maskPhone } from '@/lib/utils/phone'
 import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
+import { useFocusTrap } from '@/components/ui/use-focus-trap'
+
 
 interface Props {
   markers: MarkerData[]
@@ -221,8 +223,10 @@ export default function VillagesMapInner({
         <button
           type="button"
           onClick={() => setShowHatch(s => !s)}
-          className="absolute top-3 right-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-brand-700 hover:text-brand-900 text-xs font-medium transition"
+          className="absolute top-3 right-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-brand-700 hover:text-brand-900 text-xs font-medium transition active:scale-95"
           title={showHatch ? 'ปิดลายทแยง' : 'เปิดลายทแยง'}
+          aria-label={showHatch ? 'ปิดลายทแยง' : 'เปิดลายทแยง'}
+          aria-pressed={showHatch}
         >
           {showHatch ? (
             <>
@@ -270,6 +274,7 @@ function DetailModal({
   onClose: () => void
   onOpenStreetView: (m: MarkerData) => void
 }) {
+  const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
 
   const committee = m.committee ?? []
@@ -282,9 +287,15 @@ function DetailModal({
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="relative w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl flex flex-col"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`รายละเอียด ${m.systemName}`}
+        tabIndex={-1}
+        className="relative w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl flex flex-col outline-none"
         onClick={e => e.stopPropagation()}
       >
         <button
@@ -573,6 +584,7 @@ function DetailModal({
                 e.stopPropagation()
                 openDirections(m.lat, m.lng)
               }}
+              aria-label={`นำทางไป ${m.systemName} ด้วย Google Maps`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
             >
               <Navigation size={18} />
@@ -586,6 +598,7 @@ function DetailModal({
                 e.stopPropagation()
                 onOpenStreetView(m)
               }}
+              aria-label={`เปิด Street View ของ ${m.systemName}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
             >
               <MapPin size={18} />

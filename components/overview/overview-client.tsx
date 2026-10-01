@@ -24,6 +24,8 @@ import VillagesMapClient, {
 import { AnimatedCounter } from '@/components/ui/animated-counter'
 import type { Village, Survey } from '@/lib/types'
 import type { SystemWithContext } from '@/app/overview/page'
+import { NavLink } from '@/components/ui/nav-link'
+
 
 const STATUS_OPTIONS = ['ดี', 'พอใช้', 'ต้องปรับปรุง', 'เร่งด่วน', 'ไม่มีข้อมูล']
 
@@ -286,23 +288,27 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
           </Link>
           <nav className="flex items-center gap-1 md:gap-2">
-            <Link
+            <NavLink
               href="/"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition"
+              exact
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition"
             >
               หน้าหลัก
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/admin"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 transition"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition"
             >
               👤 เจ้าหน้าที่
-            </Link>
+            </NavLink>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 w-full space-y-5">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 py-6 w-full space-y-5"
+      >
         {/* ============================ */}
         {/* FILTER + STATS                */}
         {/* ============================ */}
@@ -340,8 +346,13 @@ export default function OverviewClient({ villages, systems }: Props) {
               </div>
 
               {/* พบ X ระบบ — แสดงเสมอ */}
-              <div className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800">
-                <TrendingUp size={14} />
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label={`พบ ${filtered.length} ระบบ`}
+                className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800"
+              >
+                <TrendingUp size={14} aria-hidden="true" />
                 <span className="text-xs font-semibold whitespace-nowrap">
                   พบ {filtered.length} ระบบ
                 </span>

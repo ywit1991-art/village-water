@@ -31,6 +31,9 @@ import { RoleBadge } from '@/components/ui/role-badge'
 import CreateSystemModal from './create-system-modal'
 import IdleGuard from './idle-guard'
 import DeleteSystemButton from './delete-system-button'
+import { NavLink } from '@/components/ui/nav-link'
+
+
 
 interface SystemRow {
   system: WaterSystem
@@ -158,35 +161,32 @@ export default async function DashboardPage() {
             </span>
 
             {canManageStaff(session) && (
-              <Link
+              <NavLink
                 href="/admin/staff"
-                aria-label="จัดการเจ้าหน้าที่"
                 className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
               >
                 <Users size={16} />
                 <span className="hidden md:inline">เจ้าหน้าที่</span>
-              </Link>
+              </NavLink>
             )}
 
             {canViewAudit(session) && (
-              <Link
+              <NavLink
                 href="/admin/audit"
-                aria-label="ดูประวัติการใช้งาน"
                 className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
               >
                 <ClipboardList size={16} />
                 <span className="hidden md:inline">ประวัติ</span>
-              </Link>
+              </NavLink>
             )}
 
-            <Link
+            <NavLink
               href="/overview"
-              aria-label="ดูข้อมูลสาธารณะ"
               className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
             >
               <Eye size={16} />
               <span className="hidden md:inline">สาธารณะ</span>
-            </Link>
+            </NavLink>
 
             <form action={logoutAction}>
               <button
@@ -202,7 +202,10 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 w-full">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 w-full"
+      >
         {/* Subtitle */}
         <div className="mb-3 md:mb-4 flex items-center gap-2 text-xs md:text-sm text-brand-700">
           <Info size={14} className="shrink-0" />

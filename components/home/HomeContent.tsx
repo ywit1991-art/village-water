@@ -66,7 +66,10 @@ export default function HomeContent({
       {/* ============================ */}
       {/* HERO                          */}
       {/* ============================ */}
-      <section className="relative flex-1 max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-12 w-full flex items-center">
+      <section
+        id="main-content"
+        className="relative flex-1 max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-12 w-full flex items-center"
+      >
         <div className="flex flex-col items-center text-center w-full">
           {/* Logo */}
           <motion.div
