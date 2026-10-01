@@ -102,7 +102,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         </h2>
 
         <span className="text-[11px] text-slate-500 whitespace-nowrap">
-          {rows.length} ระบบ · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
+          {rows.length} ข้อมูล · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
           {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน ·{' '}
           {PRODUCTION_HOURS_PER_DAY} ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR}
         </span>
@@ -340,7 +340,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         <Info size={12} className="shrink-0 mt-0.5 text-slate-400" />
         <span>
           <strong>อ้างอิง:</strong> กรมทรัพยากรน้ำ ({WATER_PER_PERSON_PER_DAY}{' '}
-          ลิตร/คน/วัน) · คู่มือการออกแบบระบบประปาหมู่บ้าน (
+          ลิตร/คน/วัน) · คู่มือการออกแบบข้อมูลประปาหมู่บ้าน (
           {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน · {PRODUCTION_HOURS_PER_DAY}{' '}
           ชม./วัน) · Peak Day Factor ฤดูแล้ง ×{DRY_SEASON_FACTOR}{' '}
           (มาตรฐานการประปาส่วนภูมิภาค)

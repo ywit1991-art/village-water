@@ -145,7 +145,7 @@ export default function EditStaffModal({ staff, villages, systems }: Props) {
               {role === 'operator' && (
                 <div>
                   <label className="label">
-                    ระบบที่ดูแล ({selectedSystems.length} ระบบ)
+                    ข้อมูลที่ดูแล ({selectedSystems.length} ข้อมูล)
                   </label>
                   <input
                     type="hidden"
@@ -170,7 +170,7 @@ export default function EditStaffModal({ staff, villages, systems }: Props) {
                               className="accent-brand-500"
                             />
                             <span>
-                              ระบบที่ {sys.system_no} — {sys.system_name}
+                              ข้อมูลที่ {sys.system_no} — {sys.system_name}
                             </span>
                           </label>
                         ))}

@@ -12,7 +12,7 @@ import { canViewAudit } from '@/lib/auth/permissions'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const ACTION_LABELS: Record<string, string> = {
-  login: 'เข้าสู่หน้าเจ้าหน้าที่',
+  login: 'เข้าสู่ระบบ',
   logout: 'ออกจากระบบ',
   create_staff: 'สร้างเจ้าหน้าที่',
   update_staff: 'แก้ไขเจ้าหน้าที่',

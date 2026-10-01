@@ -165,7 +165,7 @@ export default function ReportView({
         {/* -------- 1. ข้อมูลทั่วไป -------- */}
         <Section num={1} title="ข้อมูลทั่วไป">
           <Row
-            label="ชื่อระบบประปา"
+            label="ชื่อข้อมูลประปา"
             value={fmt(s.water_system_name ?? sys?.system_name)}
           />
           <Row
@@ -264,7 +264,7 @@ export default function ReportView({
           <Row label="ประเภทแหล่งน้ำ" value={fmt(s.water_source_type)} />
           <Row label="ชื่อแหล่งน้ำ" value={fmt(s.water_source_name)} />
           <Row
-            label="ระยะห่างจากระบบผลิต"
+            label="ระยะห่างจากข้อมูลผลิต"
             value={
               s.water_source_distance != null
                 ? `${s.water_source_distance} ม.`
@@ -345,7 +345,7 @@ export default function ReportView({
 
         {/* -------- 6. ไฟฟ้า -------- */}
         <Section num={6} title="ข้อมูลไฟฟ้าและตู้ควบคุม">
-          <Row label="ระบบไฟฟ้า" value={fmt(s.electrical_phase)} />
+          <Row label="ข้อมูลไฟฟ้า" value={fmt(s.electrical_phase)} />
           <Row label="เลขมิเตอร์ไฟฟ้า" value={fmt(s.electrical_meter_no)} />
           <Row label="สภาพตู้ควบคุม" value={fmt(s.control_box_condition)} />
           <Row label="อื่น ๆ" value={fmt(s.control_box_other)} />
@@ -356,14 +356,14 @@ export default function ReportView({
           <Row label="ข้อสังเกต" value={fmt(s.electrical_notes)} />
         </Section>
 
-        {/* -------- 7. ระบบผลิต -------- */}
-        <Section num={7} title="ข้อมูลระบบผลิตน้ำประปา">
-          <Row label="ประเภทระบบผลิต" value={fmt(s.production_type)} />
+        {/* -------- 7. ข้อมูลผลิต -------- */}
+        <Section num={7} title="ข้อมูลข้อมูลผลิตน้ำประปา">
+          <Row label="ประเภทข้อมูลผลิต" value={fmt(s.production_type)} />
           <Row label="อื่น ๆ" value={fmt(s.production_other)} />
-          <Row label="ระบบกรองน้ำ" value={fmt(s.has_filter)} />
+          <Row label="ข้อมูลกรองน้ำ" value={fmt(s.has_filter)} />
           <Row label="ประเภท/วัสดุกรอง" value={fmt(s.filter_type)} />
-          <Row label="สภาพระบบกรอง" value={fmt(s.filter_condition)} />
-          <Row label="ระบบฆ่าเชื้อ/เติมคลอรีน" value={fmt(s.chlorination)} />
+          <Row label="สภาพข้อมูลกรอง" value={fmt(s.filter_condition)} />
+          <Row label="ข้อมูลฆ่าเชื้อ/เติมคลอรีน" value={fmt(s.chlorination)} />
         </Section>
 
         {/* -------- 8. ถังเก็บน้ำ -------- */}
@@ -476,7 +476,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 12. บำรุงรักษา (long) -------- */}
-        <Section num={12} title="การบำรุงรักษาระบบ" long>
+        <Section num={12} title="การบำรุงรักษาข้อมูล" long>
           <Row label="มีการบำรุงรักษา" value={fmt(s.has_maintenance)} />
           {s.maintenance_items &&
             Object.keys(s.maintenance_items).length > 0 && (
@@ -645,7 +645,7 @@ export default function ReportView({
         {/* -------- Footer -------- */}
         <footer className="mt-8 pt-3 border-t border-slate-300 text-center text-xs text-slate-500">
           <p>
-            เอกสารนี้พิมพ์จากระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
+            เอกสารนี้พิมพ์จากข้อมูลฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
           </p>
           <p className="mt-0.5">
             พิมพ์เมื่อ {new Date().toLocaleString('th-TH')}

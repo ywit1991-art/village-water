@@ -123,7 +123,7 @@ export async function createWaterSystemAction(
   formData: FormData,
 ): Promise<{ error?: string; id?: number }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const villageId = Number(formData.get('village_id'))
   const systemName = (formData.get('system_name') as string)?.trim()
@@ -188,7 +188,7 @@ export async function updateWaterSystemAction(
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const id = Number(formData.get('id'))
   const systemName = (formData.get('system_name') as string)?.trim()
@@ -420,7 +420,7 @@ export async function saveSurveyAction(
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const id = formData.get('id') as string
   const isNew = id === 'new'
@@ -447,7 +447,7 @@ export async function saveSurveyAction(
     return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลหมู่บ้านนี้' }
   }
   if (systemId && !canAccessSystem(session, systemId, villageId)) {
-    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลระบบนี้' }
+    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลข้อมูลนี้' }
   }
 
   const cleaned = cleanSurveyPayload(rawValues)

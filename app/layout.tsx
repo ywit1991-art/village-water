@@ -4,8 +4,8 @@ import { Toaster } from 'sonner'
 import { SkipLink } from '@/components/ui/skip-link'
 
 export const metadata: Metadata = {
-  title: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
-  description: 'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
+  title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
+  description: 'ข้อมูลฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
 }
 
 export default function RootLayout({

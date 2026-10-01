@@ -23,7 +23,7 @@ export default async function StaffPage() {
           </div>
           <h1 className="text-xl font-bold text-slate-900 mb-2">ไม่มีสิทธิ์เข้าถึง</h1>
           <p className="text-sm text-slate-500 mb-5">
-            หน้านี้สำหรับผู้ดูแลระบบเท่านั้น
+            หน้านี้สำหรับผู้ดูแลข้อมูลเท่านั้น
           </p>
           <Link href="/admin/dashboard" className="btn-primary">
             ← กลับหน้าเจ้าหน้าที่
@@ -93,7 +93,7 @@ export default async function StaffPage() {
           <StatCard
             icon={<Shield size={18} />}
             value={list.filter(s => s.role === 'super_admin').length}
-            label="ผู้ดูแลระบบ"
+            label="ผู้ดูแลข้อมูล"
             color="text-red-600 bg-red-50"
           />
           <StatCard
@@ -105,7 +105,7 @@ export default async function StaffPage() {
           <StatCard
             icon={<Home size={18} />}
             value={list.filter(s => s.role === 'village_head' || s.role === 'operator').length}
-            label="ผู้ใหญ่บ้าน/ประจำระบบ"
+            label="ผู้ใหญ่บ้าน/ประจำข้อมูล"
             color="text-emerald-600 bg-emerald-50"
           />
         </div>
@@ -149,7 +149,7 @@ export default async function StaffPage() {
                         {s.role === 'village_head' && v ? (
                           `หมู่ ${v.village_no} ${v.village_name}`
                         ) : s.role === 'operator' ? (
-                          `${sysIds.length} ระบบ`
+                          `${sysIds.length} ข้อมูล`
                         ) : (
                           <span className="text-slate-400">ทั้งตำบล</span>
                         )}

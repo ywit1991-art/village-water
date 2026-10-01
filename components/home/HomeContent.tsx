@@ -35,7 +35,7 @@ export default function HomeContent({
     },
     {
       value: totalSystems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       icon: Droplets,
       color: 'text-sky-600',
       bg: 'bg-sky-50',

@@ -118,7 +118,7 @@ export default function CreateStaffModal({ villages, systems }: Props) {
                 >
                   <option value="staff">{ROLE_LABELS.staff} — ดู/แก้ไขข้อมูลทั้งหมด</option>
                   <option value="village_head">{ROLE_LABELS.village_head} — เฉพาะหมู่ของตัวเอง</option>
-                  <option value="operator">{ROLE_LABELS.operator} — เฉพาะระบบที่ดูแล</option>
+                  <option value="operator">{ROLE_LABELS.operator} — เฉพาะข้อมูลที่ดูแล</option>
                   <option value="super_admin">{ROLE_LABELS.super_admin} — จัดการทุกอย่าง</option>
                 </select>
               </div>
@@ -138,11 +138,11 @@ export default function CreateStaffModal({ villages, systems }: Props) {
                 </div>
               )}
 
-              {/* เลือกระบบ (สำหรับ operator) */}
+              {/* เลือกข้อมูล (สำหรับ operator) */}
               {role === 'operator' && (
                 <div>
                   <label className="label">
-                    ข้อมูลประปาที่ดูแล * ({selectedSystems.length} ระบบ)
+                    ข้อมูลประปาที่ดูแล * ({selectedSystems.length} ข้อมูล)
                   </label>
                   <input
                     type="hidden"
@@ -172,7 +172,7 @@ export default function CreateStaffModal({ villages, systems }: Props) {
                                 className="accent-brand-500"
                               />
                               <span>
-                                ระบบที่ {sys.system_no} — {sys.system_name}
+                                ข้อมูลที่ {sys.system_no} — {sys.system_name}
                               </span>
                             </label>
                           ))}

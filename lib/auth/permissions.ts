@@ -1,10 +1,10 @@
 import type { SessionData, StaffRole } from './session'
 
 export const ROLE_LABELS: Record<StaffRole, string> = {
-  super_admin: 'ผู้ดูแลระบบ',
+  super_admin: 'ผู้ดูแลข้อมูล',
   staff: 'เจ้าหน้าที่',
   village_head: 'ผู้ใหญ่บ้าน',
-  operator: 'เจ้าหน้าที่ประจำระบบ',
+  operator: 'เจ้าหน้าที่ประจำข้อมูล',
 }
 
 export const ROLE_COLORS: Record<StaffRole, string> = {
@@ -56,13 +56,13 @@ export function canAccessSystem(
   return false
 }
 
-/** สร้างระบบใหม่ได้ไหม */
+/** สร้างข้อมูลใหม่ได้ไหม */
 export function canCreateSystem(session: SessionData | null): boolean {
   if (!session) return false
   return session.role === 'super_admin' || session.role === 'staff'
 }
 
-/** ลบระบบได้ไหม */
+/** ลบข้อมูลได้ไหม */
 export function canDeleteSystem(session: SessionData | null): boolean {
   if (!session) return false
   return session.role === 'super_admin' || session.role === 'staff'

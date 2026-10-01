@@ -73,7 +73,7 @@ export default function HomepageClient({ markers, totalVillages }: Props) {
     {
       icon: <Users size={20} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600 bg-sky-50',
     },
     {

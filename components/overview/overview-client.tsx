@@ -208,7 +208,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={20} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -251,7 +251,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
+                ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-100 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -314,12 +314,12 @@ export default function OverviewClient({ villages, systems }: Props) {
               <div
                 role="status"
                 aria-live="polite"
-                aria-label={`พบ ${filtered.length} ระบบ`}
+                aria-label={`พบ ${filtered.length} ข้อมูล`}
                 className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800"
               >
                 <TrendingUp size={14} aria-hidden="true" />
                 <span className="text-xs font-semibold whitespace-nowrap">
-                  พบ {filtered.length} ระบบ
+                  พบ {filtered.length} ข้อมูล
                 </span>
               </div>
             </div>
@@ -498,12 +498,12 @@ export default function OverviewClient({ villages, systems }: Props) {
               <div>
                 <h3 className="font-bold text-brand-900 flex items-center gap-2">
                   <MapPin size={18} className="text-sky-600" />
-                  แผนที่ระบบประปา
+                  แผนที่ข้อมูลประปา
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
                   <span className="font-semibold text-sky-700">
-                    {markers.length} ระบบ
+                    {markers.length} ข้อมูล
                   </span>
                 </p>
               </div>

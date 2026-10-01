@@ -90,7 +90,7 @@ export function HeroSection({ totalVillages, totalSystems }: Props) {
               <span className="text-2xl font-bold text-white tabular-nums">
                 {totalSystems}
               </span>
-              <span>ระบบประปา</span>
+              <span>ข้อมูลประปา</span>
             </div>
           </motion.div>
 
