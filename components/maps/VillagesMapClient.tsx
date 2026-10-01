@@ -15,7 +15,7 @@ const VillagesMapInner = dynamic(() => import('./villages-map-inner'), {
   ),
 })
 
-export type MarkerMode = 'status' | 'problems'
+export type MarkerMode = 'status' | 'problems' | 'sufficiency'
 
 export interface MarkerData {
   systemId: number
