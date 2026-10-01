@@ -131,13 +131,21 @@ export default function ReportView({
             <span className="hidden sm:inline">กลับแดชบอร์ด</span>
           </Link>
           <button
-            onClick={() => window.print()}
+            onClick={() => {
+              try {
+                window.print()
+              } catch (err) {
+                console.error('[Print] error:', err)
+                alert(
+                  'เบราว์เซอร์ไม่รองรับการพิมพ์\nกรุณาใช้เมนู ⋮ → แชร์ → พิมพ์ หรือเปิดในคอมพิวเตอร์',
+                )
+              }
+            }}
             aria-label="พิมพ์รายงาน"
-            className="inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-medium text-xs md:text-sm shadow-sm transition"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white shadow-sm transition"
+            title="พิมพ์รายงาน"
           >
-            <Printer size={16} />
-            <span className="hidden sm:inline">พิมพ์รายงาน / บันทึก PDF</span>
-            <span className="sm:hidden">พิมพ์</span>
+            <Printer size={18} />
           </button>
         </div>
       </div>

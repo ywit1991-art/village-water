@@ -36,10 +36,11 @@ export default function DeleteStaffButton({ staffId, staffName, staffCode }: Pro
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-red-500 hover:text-red-700"
+        aria-label="ลบเจ้าหน้าที่"
         title="ลบ"
+        className="inline-flex items-center justify-center text-red-500 hover:text-red-700 active:scale-95 transition px-2 md:px-0 py-1.5 rounded-lg hover:bg-red-50 md:hover:bg-transparent"
       >
-        <Trash2 size={14} />
+        <Trash2 size={16} className="md:w-3.5 md:h-3.5" />
       </button>
 
       {open && (

@@ -53,7 +53,7 @@ export default function AdminLogin() {
               pattern="[0-9]{10}"
               placeholder="XXXXXXXXXX"
               autoFocus
-              aria-label="เลข 10 หลัก"
+              aria-label="รหัสผ่าน"
               className="input font-mono tracking-widest text-center text-lg"
             />
           </div>

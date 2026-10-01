@@ -56,10 +56,12 @@ export default function EditStaffModal({ staff, villages, systems }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-800 text-xs font-medium"
+        aria-label="แก้ไขเจ้าหน้าที่"
         title="แก้ไข"
+        className="inline-flex items-center justify-center gap-1 text-brand-600 hover:text-brand-800 text-xs font-medium active:scale-95 transition px-2 md:px-0 py-1.5 rounded-lg hover:bg-brand-50 md:hover:bg-transparent"
       >
-        <Pencil size={12} /> แก้ไข
+        <Pencil size={16} className="md:w-3 md:h-3" />
+        <span className="hidden md:inline">แก้ไข</span>
       </button>
 
       {open && (

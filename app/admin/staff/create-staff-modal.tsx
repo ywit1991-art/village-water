@@ -50,9 +50,12 @@ export default function CreateStaffModal({ villages, systems }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="btn-primary text-sm"
+        aria-label="เพิ่มเจ้าหน้าที่"
+        title="เพิ่มเจ้าหน้าที่"
+        className="inline-flex items-center justify-center gap-1.5 px-3 md:px-4 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-medium text-sm transition"
       >
-        <Plus size={16} /> เพิ่มเจ้าหน้าที่
+        <Plus size={18} />
+        <span className="hidden md:inline">เพิ่มเจ้าหน้าที่</span>
       </button>
 
       {open && (

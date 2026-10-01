@@ -34,7 +34,7 @@ export async function loginAction(
   const code = (formData.get('code') as string)?.replace(/\D/g, '')
 
   if (!code || code.length !== 10) {
-    return { error: 'กรุณากรอกเลข 10 หลัก' }
+    return { error: 'กรุณากรอกรหัสผ่าน' }
   }
 
   const sb = adminSb()
