@@ -28,12 +28,10 @@ import {
   ROLE_LABELS,
 } from '@/lib/auth/permissions'
 import { RoleBadge } from '@/components/ui/role-badge'
+import { NavLink } from '@/components/ui/nav-link'
 import CreateSystemModal from './create-system-modal'
 import IdleGuard from './idle-guard'
 import DeleteSystemButton from './delete-system-button'
-import { NavLink } from '@/components/ui/nav-link'
-
-
 
 interface SystemRow {
   system: WaterSystem
@@ -43,7 +41,7 @@ interface SystemRow {
 
 const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
   super_admin: {
-    title: 'แผงควบคุมผู้ดูแลข้อมูล',
+    title: 'แผงควบคุมผู้ดูแลระบบ',
     subtitle: 'จัดการเจ้าหน้าที่ ดูประวัติ และดูแลข้อมูลทั้งหมด',
   },
   staff: {
@@ -55,8 +53,8 @@ const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'ดูแลข้อมูลประปาในหมู่บ้านของท่าน',
   },
   operator: {
-    title: 'แดชบอร์ดผู้ดูแลข้อมูลประปา',
-    subtitle: 'ดูแลเฉพาะข้อมูลประปาที่ท่านรับผิดชอบ',
+    title: 'แดชบอร์ดผู้ดูแลระบบประปา',
+    subtitle: 'ดูแลเฉพาะระบบประปาที่ท่านรับผิดชอบ',
   },
 }
 
@@ -91,7 +89,10 @@ export default async function DashboardPage() {
 
   const visibleSystemIds = new Set(filteredSystems.map(s => s.id))
   const filteredSurveys = rawSurveys.filter(
-    s => s.water_system_id && visibleSystemIds.has(s.water_system_id),
+    s =>
+      s.water_system_id &&
+      visibleSystemIds.has(s.water_system_id) &&
+      (s.status === 'submitted' || s.status === 'approved'),
   )
 
   const villageMap = new Map<number, Village>()
@@ -117,12 +118,6 @@ export default async function DashboardPage() {
     grouped.get(sys.village_id)!.push(row)
   })
 
-  const totalSurveys = filteredSurveys.length
-  const submittedCount = filteredSurveys.filter(
-    s => s.status === 'submitted',
-  ).length
-  const draftCount = filteredSurveys.filter(s => s.status === 'draft').length
-
   const header = ROLE_HEADERS[session.role] ?? ROLE_HEADERS.staff
   const showCreate = canCreateSystem(session)
   const showDelete = canDeleteSystem(session)
@@ -131,10 +126,8 @@ export default async function DashboardPage() {
     <>
       <IdleGuard timeout={60_000} warnBefore={15_000} />
 
-      {/* ============================== */}
-      {/* HEADER                          */}
-      {/* ============================== */}
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+      {/* HEADER */}
+      <header className="sticky top-0 z-[2000] bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-3 min-w-0">
             <div className="relative shrink-0">
@@ -206,13 +199,11 @@ export default async function DashboardPage() {
         id="main-content"
         className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 w-full"
       >
-        {/* Subtitle */}
         <div className="mb-3 md:mb-4 flex items-center gap-2 text-xs md:text-sm text-brand-700">
           <Info size={14} className="shrink-0" />
           <span>{header.subtitle}</span>
         </div>
 
-        {/* Scope Banner */}
         {session.role === 'village_head' && session.village_id && (
           <ScopeBanner
             icon={<Home size={18} />}
@@ -232,22 +223,20 @@ export default async function DashboardPage() {
           <ScopeBanner
             icon={<Droplets size={18} />}
             color="amber"
-            title="ข้อมูลที่คุณดูแล"
-            detail={`${filteredSystems.length} ข้อมูลประปา ใน ${grouped.size} หมู่บ้าน`}
+            title="ระบบที่คุณดูแล"
+            detail={`${filteredSystems.length} ระบบประปา ใน ${grouped.size} หมู่บ้าน`}
           />
         )}
 
-        {/* ============================== */}
-        {/* Stats — Responsive              */}
-        {/* ============================== */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
+        {/* Stats — 3 ใบ */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-6">
           <div className="card p-3 md:p-4">
             <p className="text-[11px] md:text-xs text-brand-500 truncate">
               {session.role === 'village_head'
                 ? 'หมู่บ้านของฉัน'
                 : session.role === 'operator'
-                  ? 'หมู่บ้านที่มีข้อมูล'
-                  : 'หมู่บ้านทั้งหมด'}
+                  ? 'หมู่บ้านที่มีระบบ'
+                  : 'หมู่บ้านที่มีข้อมูล'}
             </p>
             <p className="text-xl md:text-2xl font-bold text-brand-900">
               {grouped.size || filteredVillages.length}
@@ -261,18 +250,7 @@ export default async function DashboardPage() {
               {filteredSystems.length}
             </p>
           </div>
-          <div className="card p-3 md:p-4">
-            <p className="text-[11px] md:text-xs text-brand-500 truncate">
-              แบบสำรวจ
-            </p>
-            <p className="text-xl md:text-2xl font-bold text-brand-900">
-              {totalSurveys}{' '}
-              <span className="text-[10px] md:text-xs text-slate-400 font-normal">
-                ({submittedCount} ส่ง, {draftCount} ร่าง)
-              </span>
-            </p>
-          </div>
-          <div className="card p-3 md:p-4">
+          <div className="card p-3 md:p-4 col-span-2 md:col-span-1">
             <p className="text-[11px] md:text-xs text-brand-500 truncate">
               {session.role === 'super_admin'
                 ? 'บทบาท'
@@ -284,16 +262,14 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ============================== */}
-        {/* ตารางกลุ่มตามหมู่บ้าน             */}
-        {/* ============================== */}
+        {/* ตารางกลุ่มตามหมู่บ้าน */}
         <div className="space-y-3 md:space-y-4">
           {filteredVillages.length === 0 && (
             <div className="card p-8 md:p-10 text-center">
               <Shield size={32} className="mx-auto text-slate-300 mb-3" />
               <p className="text-sm text-slate-500">
                 {session.role === 'operator'
-                  ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา'
+                  ? 'คุณยังไม่ได้รับมอบหมายระบบประปา'
                   : 'ไม่พบข้อมูลหมู่บ้านที่คุณเข้าถึงได้'}
               </p>
             </div>
@@ -305,7 +281,6 @@ export default async function DashboardPage() {
 
             return (
               <div key={v.id} className="card overflow-hidden">
-                {/* Header หมู่บ้าน */}
                 <div className="px-3 md:px-4 py-2.5 md:py-3 bg-brand-50/60 border-b border-brand-100 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-[11px] md:text-xs text-brand-500">
@@ -324,9 +299,6 @@ export default async function DashboardPage() {
                   )}
                 </div>
 
-                {/* ==================== */}
-                {/* Mobile: Card list    */}
-                {/* ==================== */}
                 {rows.length === 0 ? (
                   <div className="p-6 md:p-8 text-center text-xs md:text-sm text-slate-400">
                     ยังไม่มีข้อมูลประปา
@@ -334,7 +306,9 @@ export default async function DashboardPage() {
                   </div>
                 ) : (
                   <>
-                    {/* Mobile Card Layout */}
+                    {/* ====================== */}
+                    {/* Mobile: Card Layout    */}
+                    {/* ====================== */}
                     <div className="md:hidden divide-y divide-brand-50">
                       {rows.map(({ system: sys, survey: s }) => {
                         const st =
@@ -345,7 +319,7 @@ export default async function DashboardPage() {
 
                         return (
                           <div key={sys.id} className="p-3 space-y-2">
-                            {/* Row 1: ข้อมูลที่ + ชื่อ */}
+                            {/* Row 1: ข้อมูลที่ + ชื่อ + สถานะ */}
                             <div className="flex items-start gap-2">
                               <span className="badge bg-brand-100 text-brand-700 shrink-0">
                                 {sys.system_no}
@@ -406,20 +380,19 @@ export default async function DashboardPage() {
                               )}
                             </div>
 
-                            {/* Row 3: ปุ่มจัดการ */}
-                            <div className="flex items-center gap-2">
+                            {/* Row 3: ปุ่ม icon */}
+                            <div className="flex items-center gap-1.5">
                               <Link
                                 href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
+                                aria-label={
+                                  s ? 'แก้ไขแบบฟอร์ม' : 'กรอกแบบฟอร์ม'
+                                }
+                                className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white transition"
                               >
                                 {s ? (
-                                  <>
-                                    <Pencil size={12} /> แก้ไข
-                                  </>
+                                  <Pencil size={18} />
                                 ) : (
-                                  <>
-                                    <PlusCircle size={12} /> กรอก
-                                  </>
+                                  <PlusCircle size={18} />
                                 )}
                               </Link>
 
@@ -429,9 +402,9 @@ export default async function DashboardPage() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   aria-label="เปิดรายงาน"
-                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-600 hover:bg-slate-700 active:scale-95 text-white text-xs font-medium transition"
+                                  className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-slate-600 hover:bg-slate-700 active:scale-95 text-white transition"
                                 >
-                                  <FileText size={12} /> รายงาน
+                                  <FileText size={18} />
                                 </Link>
                               )}
 
@@ -449,21 +422,31 @@ export default async function DashboardPage() {
                       })}
                     </div>
 
-                    {/* ==================== */}
-                    {/* Desktop: Table        */}
-                    {/* ==================== */}
+                    {/* ====================== */}
+                    {/* Desktop: Table         */}
+                    {/* ====================== */}
                     <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-white text-brand-700 border-b border-brand-50">
                           <tr>
-                            <th className="p-3 text-left w-24">ข้อมูลที่</th>
-                            <th className="p-3 text-left">ชื่อข้อมูล</th>
-                            <th className="p-3 text-left w-32">สถานะ</th>
-                            <th className="p-3 text-left w-40">
+                            <th className="p-3 text-left w-24" scope="col">
+                              ข้อมูลที่
+                            </th>
+                            <th className="p-3 text-left" scope="col">
+                              ชื่อข้อมูล
+                            </th>
+                            <th className="p-3 text-left w-32" scope="col">
+                              สถานะ
+                            </th>
+                            <th className="p-3 text-left w-40" scope="col">
                               วันที่อัปเดทข้อมูล
                             </th>
-                            <th className="p-3 text-left w-40">สภาพ</th>
-                            <th className="p-3 text-right w-72">จัดการ</th>
+                            <th className="p-3 text-left w-40" scope="col">
+                              สภาพ
+                            </th>
+                            <th className="p-3 text-right w-72" scope="col">
+                              จัดการ
+                            </th>
                           </tr>
                         </thead>
                         <tbody>

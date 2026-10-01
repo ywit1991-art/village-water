@@ -15,6 +15,8 @@ const VillagesMapInner = dynamic(() => import('./villages-map-inner'), {
   ),
 })
 
+export type MarkerMode = 'status' | 'problems'
+
 export interface MarkerData {
   systemId: number
   villageId: number
@@ -51,8 +53,28 @@ export interface MarkerData {
 interface Props {
   markers: MarkerData[]
   height?: string
+  markerMode?: MarkerMode
+  onMarkerModeChange?: (mode: MarkerMode) => void
+  onToggleFullscreen?: () => void
+  isFullscreen?: boolean
 }
 
-export default function VillagesMapClient({ markers, height }: Props) {
-  return <VillagesMapInner markers={markers} height={height} />
+export default function VillagesMapClient({
+  markers,
+  height,
+  markerMode = 'status',
+  onMarkerModeChange,
+  onToggleFullscreen,
+  isFullscreen,
+}: Props) {
+  return (
+    <VillagesMapInner
+      markers={markers}
+      height={height}
+      markerMode={markerMode}
+      onMarkerModeChange={onMarkerModeChange}
+      onToggleFullscreen={onToggleFullscreen}
+      isFullscreen={isFullscreen}
+    />
+  )
 }

@@ -1,197 +1,183 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Filter, MapPin, Users, Home, ClipboardList } from 'lucide-react'
-import VillagesMapClient, { type MarkerData } from './VillagesMapClient'
-
-const STATUS_OPTIONS = ['ดี', 'พอใช้', 'ต้องปรับปรุง', 'เร่งด่วน', 'ไม่มีข้อมูล']
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import {
+  Droplets,
+  Users,
+  MapPin,
+  ArrowRight,
+  Shield,
+} from 'lucide-react'
+import { AnimatedCounter } from '@/components/ui/animated-counter'
 
 interface Props {
-  markers: MarkerData[]
   totalVillages: number
+  totalSystems: number
+  totalHouseholds: number
 }
 
-export default function HomepageClient({ markers, totalVillages }: Props) {
-  const [villageFilter, setVillageFilter] = useState<number | 'all'>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-
-  // หมู่บ้านที่มีใน markers
-  const villages = useMemo(() => {
-    const map = new Map<number, { id: number; no: number; name: string }>()
-    markers.forEach(m => {
-      if (!map.has(m.villageId)) {
-        map.set(m.villageId, {
-          id: m.villageId,
-          no: m.villageNo,
-          name: m.villageName,
-        })
-      }
-    })
-    return Array.from(map.values()).sort((a, b) => a.no - b.no)
-  }, [markers])
-
-  // กรอง markers ตาม filter
-  const filtered = useMemo(() => {
-    return markers.filter(m => {
-      if (villageFilter !== 'all' && m.villageId !== villageFilter) return false
-      if (statusFilter !== 'all' && m.status !== statusFilter) return false
-      return true
-    })
-  }, [markers, villageFilter, statusFilter])
-
-  // Stats — คำนวณจาก filtered
-  const stats = useMemo(() => {
-    const uniqueVillages = new Set(filtered.map(m => m.villageId)).size
-    const totalSystems = filtered.length
-    const totalHouseholds = filtered.reduce(
-      (a, m) => a + (m.householdCount ?? 0),
-      0,
-    )
-    const totalSurveys = filtered.filter(m => m.status !== 'ไม่มีข้อมูล').length
-
-    return {
-      villages: uniqueVillages,
-      systems: totalSystems,
-      households: totalHouseholds,
-      surveys: totalSurveys,
-    }
-  }, [filtered])
-
-  const hasFilter = villageFilter !== 'all' || statusFilter !== 'all'
-
-  function clearFilters() {
-    setVillageFilter('all')
-    setStatusFilter('all')
-  }
-
-  const cards = [
+export default function HomeContent({
+  totalVillages,
+  totalSystems,
+  totalHouseholds,
+}: Props) {
+  const stats = [
     {
-      icon: <MapPin size={20} />,
-      value: stats.villages,
+      value: totalVillages,
       label: 'หมู่บ้าน',
-      color: 'text-brand-600 bg-brand-50',
+      icon: MapPin,
+      color: 'text-brand-600',
+      bg: 'bg-brand-50',
     },
     {
-      icon: <Users size={20} />,
-      value: stats.systems,
-      label: 'ข้อมูลประปา',
-      color: 'text-sky-600 bg-sky-50',
+      value: totalSystems,
+      label: 'ระบบประปา',
+      icon: Droplets,
+      color: 'text-sky-600',
+      bg: 'bg-sky-50',
     },
     {
-      icon: <Home size={20} />,
-      value: stats.households,
+      value: totalHouseholds,
       label: 'ครัวเรือน',
-      color: 'text-indigo-600 bg-indigo-50',
-    },
-    {
-      icon: <ClipboardList size={20} />,
-      value: stats.surveys,
-      label: 'แบบสำรวจ',
-      color: 'text-emerald-600 bg-emerald-50',
+      icon: Users,
+      color: 'text-indigo-600',
+      bg: 'bg-indigo-50',
     },
   ]
 
   return (
-    <>
-      {/* ===== STATS (อัปเดตตาม filter) ===== */}
-      <section className="max-w-7xl mx-auto px-4 -mt-6 relative z-10 w-full">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {cards.map((c, i) => (
-            <div key={i} className="card p-3">
-              <div className="flex items-center gap-2.5">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50/60 via-white to-brand-50/30 relative overflow-hidden">
+      {/* Decorative blobs */}
+      <div className="absolute top-0 -left-40 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl" />
+      <div className="absolute top-20 -right-40 w-96 h-96 rounded-full bg-indigo-200/30 blur-3xl" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-200/20 blur-3xl" />
+
+      {/* HERO */}
+      <section
+        id="main-content"
+        className="relative flex-1 max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-12 w-full flex items-center"
+      >
+        <div className="flex flex-col items-center text-center w-full">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            className="relative mb-8"
+          >
+            <div className="absolute inset-0 rounded-full bg-sky-300/40 blur-2xl scale-125 animate-pulse" />
+            <img
+              src="/logo.png"
+              alt="ตราเทศบาลตำบลท่าวังทอง"
+              className="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white"
+            />
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-4xl md:text-6xl font-extrabold text-brand-900 leading-tight tracking-tight"
+          >
+            ข้อมูลประปาหมู่บ้าน
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mt-4 text-base md:text-lg text-brand-600 font-medium"
+          >
+            เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
+          />
+
+          {/* Stats 3 ใบ */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl"
+          >
+            {stats.map((s, i) => {
+              const Icon = s.icon
+              return (
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${c.color}`}
+                  key={i}
+                  className="group bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ring-1 ring-slate-100"
                 >
-                  {c.icon}
-                </div>
-                <div>
-                  <div className="text-xl md:text-2xl font-bold text-brand-900 leading-tight">
-                    {c.value.toLocaleString()}
+                  <div
+                    className={`inline-flex w-12 h-12 rounded-xl items-center justify-center mb-3 transition-transform group-hover:scale-110 ${s.bg} ${s.color}`}
+                  >
+                    <Icon size={22} />
                   </div>
-                  <div className="text-[11px] text-brand-600">{c.label}</div>
+                  <div
+                    className={`text-3xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
+                  >
+                    <AnimatedCounter value={s.value} />
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1.5 font-medium">
+                    {s.label}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              )
+            })}
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.9 }}
+            className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto"
+          >
+            <Link
+              href="/overview"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-brand-600 text-white font-semibold shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
+            >
+              <MapPin size={18} />
+              ดูข้อมูลประปาหมู่บ้าน
+              <ArrowRight
+                size={16}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </Link>
+
+            <Link
+              href="/admin"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white text-brand-700 font-semibold ring-2 ring-brand-200 hover:ring-brand-400 hover:bg-brand-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
+            >
+              <Shield size={18} />
+              สำหรับเจ้าหน้าที่
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* ===== FILTERS (เหมือน overview) ===== */}
-      <section className="max-w-7xl mx-auto px-4 mt-4 w-full">
-        <div className="card p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-sm text-brand-600">
-              <Filter size={14} />
-              <span className="font-medium">กรองข้อมูล:</span>
-            </div>
-
-            {/* หมู่บ้าน */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500">หมู่บ้าน</label>
-              <select
-                value={villageFilter}
-                onChange={e =>
-                  setVillageFilter(
-                    e.target.value === 'all' ? 'all' : Number(e.target.value),
-                  )
-                }
-                className="input text-sm py-1.5 pr-8 min-w-[200px]"
-              >
-                <option value="all">ทั้งหมด ({villages.length} หมู่)</option>
-                {villages.map(v => (
-                  <option key={v.id} value={v.id}>
-                    หมู่ {v.no} {v.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* สถานะ */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-slate-500">สถานะ</label>
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="input text-sm py-1.5 pr-8 min-w-[160px]"
-              >
-                <option value="all">ทั้งหมด</option>
-                {STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* ล้างตัวกรอง */}
-            {hasFilter && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-brand-600 hover:underline ml-auto"
-              >
-                ล้างตัวกรอง
-              </button>
-            )}
-
-            <div
-              className={`text-sm text-brand-700 font-medium ${
-                hasFilter ? 'ml-4' : 'ml-auto'
-              }`}
-            >
-              พบ <span className="font-bold">{filtered.length}</span> ข้อมูล
-            </div>
+      {/* FOOTER */}
+      <footer className="relative mt-auto bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-6">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-4">
+          <img
+            src="/logo.png"
+            alt="ตราเทศบาล"
+            className="w-12 h-12 rounded-full ring-2 ring-white/20 shrink-0"
+          />
+          <div className="text-xs md:text-sm leading-snug">
+            <p className="font-medium text-white">
+              เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
+            </p>
+            <p className="text-brand-300 mt-0.5">
+              ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
+            </p>
           </div>
         </div>
-      </section>
-
-      {/* ===== MAP ===== */}
-      <section className="flex-1 max-w-7xl mx-auto px-4 py-6 w-full">
-        <MapSection markers={filtered} />
-      </section>
-    </>
+      </footer>
+    </div>
   )
-}
-
-function MapSection({ markers }: { markers: MarkerData[] }) {
-  return <VillagesMapClient markers={markers} />
 }

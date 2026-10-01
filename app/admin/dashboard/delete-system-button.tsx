@@ -42,11 +42,12 @@ export default function DeleteSystemButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs transition"
+        className="inline-flex items-center justify-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs active:scale-95 transition md:px-0 px-2 py-1.5 rounded-lg hover:bg-red-50"
         title="ลบข้อมูล"
+        aria-label={`ลบ ${systemName}`}
       >
-        <Trash2 size={14} />
-        ลบ
+        <Trash2 size={18} className="md:w-3.5 md:h-3.5" />
+        <span className="hidden md:inline">ลบ</span>
       </button>
 
       {open && (

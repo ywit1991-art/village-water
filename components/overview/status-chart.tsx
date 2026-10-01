@@ -121,14 +121,15 @@ export default function StatusChart({
                 initial={{ opacity: 0, x: 20 }}
                 animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
                 transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
-                whileHover={isClickable ? { scale: 1.02 } : {}}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${
+                whileHover={isClickable ? { scale: 1.02, x: -2 } : {}}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all border ${
                   isActive
-                    ? 'ring-2 ring-brand-400 bg-brand-50/80 shadow-sm'
+                    ? 'ring-2 ring-brand-400 bg-brand-50/80 shadow-sm border-transparent'
                     : isClickable
-                      ? 'hover:bg-brand-50/60 cursor-pointer'
-                      : 'cursor-default'
+                      ? 'border-transparent hover:bg-brand-50/60 hover:border-brand-200 cursor-pointer'
+                      : 'border-transparent opacity-50 cursor-not-allowed'
                 }`}
+                title={isClickable ? `คลิกเพื่อกรองเฉพาะ "${key}"` : `ไม่มีข้อมูลสถานะ "${key}"`}
               >
                 <span
                   className="w-4 h-4 rounded-full border-2 border-white shadow shrink-0"
@@ -151,7 +152,7 @@ export default function StatusChart({
 
       {onStatusClick && (
         <p className="text-[11px] text-slate-400 text-center mt-5">
-          💡 คลิกที่รายการเพื่อกรองข้อมูลบนแผนที่
+          💡 คลิกที่รายการเพื่อดูข้อมูลบนแผนที่
         </p>
       )}
     </div>

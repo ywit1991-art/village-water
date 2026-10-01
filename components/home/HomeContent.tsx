@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import {
   Droplets,
   Users,
-  ClipboardCheck,
   MapPin,
   ArrowRight,
   Shield,
@@ -16,14 +15,12 @@ interface Props {
   totalVillages: number
   totalSystems: number
   totalHouseholds: number
-  totalSurveys: number
 }
 
 export default function HomeContent({
   totalVillages,
   totalSystems,
   totalHouseholds,
-  totalSurveys,
 }: Props) {
   const stats = [
     {
@@ -35,7 +32,7 @@ export default function HomeContent({
     },
     {
       value: totalSystems,
-      label: 'ข้อมูลประปา',
+      label: 'ระบบประปา',
       icon: Droplets,
       color: 'text-sky-600',
       bg: 'bg-sky-50',
@@ -47,13 +44,6 @@ export default function HomeContent({
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
     },
-    {
-      value: totalSurveys,
-      label: 'แบบสำรวจ',
-      icon: ClipboardCheck,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-    },
   ]
 
   return (
@@ -63,30 +53,37 @@ export default function HomeContent({
       <div className="absolute top-20 -right-40 w-96 h-96 rounded-full bg-indigo-200/30 blur-3xl" />
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-200/20 blur-3xl" />
 
-      {/* ============================ */}
-      {/* HERO                          */}
-      {/* ============================ */}
+      {/* HERO */}
       <section
         id="main-content"
         className="relative flex-1 max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-12 w-full flex items-center"
       >
         <div className="flex flex-col items-center text-center w-full">
-          {/* Logo */}
+          {/* Logo — ลอยขึ้นลงตลอด */}
           <motion.div
             initial={{ opacity: 0, scale: 0.7, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+            }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
             className="relative mb-8"
           >
             <div className="absolute inset-0 rounded-full bg-sky-300/40 blur-2xl scale-125 animate-pulse" />
-            <img
+            <motion.img
               src="/logo.png"
               alt="ตราเทศบาลตำบลท่าวังทอง"
               className="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white"
+              animate={{ y: [0, -10, 0] }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
             />
           </motion.div>
 
-          {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -105,7 +102,6 @@ export default function HomeContent({
             เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
           </motion.p>
 
-          {/* Divider */}
           <motion.div
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
@@ -113,37 +109,49 @@ export default function HomeContent({
             className="mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
           />
 
-          {/* Stats Preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.65 }}
-            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full max-w-3xl"
-          >
+          {/* ============================================ */}
+          {/* Stats 3 ใบ — เรียงแนวนอน + ลอยขึ้นลงตลอด      */}
+          {/* ============================================ */}
+          <div className="mt-12 grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-2xl">
             {stats.map((s, i) => {
               const Icon = s.icon
               return (
-                <div
+                <motion.div
                   key={i}
-                  className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ring-1 ring-slate-100"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{
+                    opacity: 1,
+                    y: [0, -8, 0],
+                  }}
+                  transition={{
+                    opacity: { duration: 0.5, delay: 0.65 + i * 0.15 },
+                    y: {
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                      delay: i * 0.4,
+                    },
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  className="group bg-white/80 backdrop-blur-sm rounded-2xl p-3 sm:p-5 shadow-sm hover:shadow-xl ring-1 ring-slate-100 transition-shadow cursor-default"
                 >
                   <div
-                    className={`inline-flex w-10 h-10 rounded-xl items-center justify-center mb-2 transition-transform group-hover:scale-110 ${s.bg} ${s.color}`}
+                    className={`inline-flex w-10 h-10 sm:w-12 sm:h-12 rounded-xl items-center justify-center mb-2 sm:mb-3 transition-transform group-hover:scale-110 ${s.bg} ${s.color}`}
                   >
-                    <Icon size={20} />
+                    <Icon size={20} className="sm:w-[22px] sm:h-[22px]" />
                   </div>
                   <div
-                    className={`text-2xl md:text-3xl font-extrabold leading-none tabular-nums ${s.color}`}
+                    className={`text-xl sm:text-3xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
                   >
                     <AnimatedCounter value={s.value} />
                   </div>
-                  <div className="text-xs text-slate-500 mt-1 font-medium">
+                  <div className="text-[10px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 font-medium">
                     {s.label}
                   </div>
-                </div>
+                </motion.div>
               )
             })}
-          </motion.div>
+          </div>
 
           {/* CTA */}
           <motion.div
@@ -154,7 +162,7 @@ export default function HomeContent({
           >
             <Link
               href="/overview"
-              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-brand-600 text-white font-semibold shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-brand-600 text-white font-semibold shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
             >
               <MapPin size={18} />
               ดูข้อมูลประปาหมู่บ้าน
@@ -166,7 +174,7 @@ export default function HomeContent({
 
             <Link
               href="/admin"
-              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white text-brand-700 font-semibold ring-2 ring-brand-200 hover:ring-brand-400 hover:bg-brand-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white text-brand-700 font-semibold ring-2 ring-brand-200 hover:ring-brand-400 hover:bg-brand-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
             >
               <Shield size={18} />
               สำหรับเจ้าหน้าที่
@@ -175,9 +183,7 @@ export default function HomeContent({
         </div>
       </section>
 
-      {/* ============================ */}
-      {/* FOOTER                        */}
-      {/* ============================ */}
+      {/* FOOTER */}
       <footer className="relative mt-auto bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-6">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-4">
           <img

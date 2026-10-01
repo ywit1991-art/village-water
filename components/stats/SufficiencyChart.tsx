@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Droplets, Info } from 'lucide-react'
+import { Droplets, Info, HelpCircle } from 'lucide-react'
 import {
   calcSufficiency,
   SUFFICIENCY_COLORS,
@@ -28,8 +28,9 @@ interface Row {
   villageNo: number
   villageName: string
   householdCount: number
-  normal: SufficiencyResult
-  dry: SufficiencyResult
+  hasData: boolean
+  normal: SufficiencyResult | null
+  dry: SufficiencyResult | null
 }
 
 type SeasonFilter = 'both' | Season
@@ -41,17 +42,24 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
 
   const rows: Row[] = useMemo(() => {
     return markers
-      .filter(m => (m.householdCount ?? 0) > 0)
-      .map(m => ({
-        systemId: m.systemId,
-        systemName: m.systemName,
-        systemNo: m.systemNo,
-        villageNo: m.villageNo,
-        villageName: m.villageName,
-        householdCount: m.householdCount,
-        normal: calcSufficiency(m.householdCount, null, 'normal'),
-        dry: calcSufficiency(m.householdCount, null, 'dry'),
-      }))
+      .map(m => {
+        const hasData = (m.householdCount ?? 0) > 0
+        return {
+          systemId: m.systemId,
+          systemName: m.systemName,
+          systemNo: m.systemNo,
+          villageNo: m.villageNo,
+          villageName: m.villageName,
+          householdCount: m.householdCount,
+          hasData,
+          normal: hasData
+            ? calcSufficiency(m.householdCount, null, 'normal')
+            : null,
+          dry: hasData
+            ? calcSufficiency(m.householdCount, null, 'dry')
+            : null,
+        }
+      })
       .sort((a, b) => {
         if (a.villageNo !== b.villageNo) return a.villageNo - b.villageNo
         return a.systemNo - b.systemNo
@@ -75,22 +83,41 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
     )
   }
 
+  // นับตามฤดูแล้ง (worst case)
+  const rowsWithData = rows.filter(r => r.hasData && r.dry !== null)
+  const rowsNoData = rows.filter(r => !r.hasData)
+
   const summary = {
-    excellent: rows.filter(r => r.dry.level === 'excellent').length,
-    good: rows.filter(r => r.dry.level === 'good').length,
-    fair: rows.filter(r => r.dry.level === 'fair').length,
-    poor: rows.filter(r => r.dry.level === 'poor').length,
-    critical: rows.filter(r => r.dry.level === 'critical').length,
+    excellent: rowsWithData.filter(r => r.dry!.level === 'excellent').length,
+    good: rowsWithData.filter(r => r.dry!.level === 'good').length,
+    fair: rowsWithData.filter(r => r.dry!.level === 'fair').length,
+    poor: rowsWithData.filter(r => r.dry!.level === 'poor').length,
+    critical: rowsWithData.filter(r => r.dry!.level === 'critical').length,
+    noData: rowsNoData.length,
   }
 
-  // ⭐ แกน Y คงที่: 0, 250, 500, 750, 1000
+  // ⭐ แกน Y คงที่
   const yMax = 1000
   const yTicks = [1000, 750, 500, 250, 0]
-
   const refPct = (100 / yMax) * 100
 
   const minWidthPerSystem = seasonFilter === 'both' ? 56 : 40
   const chartMinWidth = Math.max(rows.length * minWidthPerSystem, 400)
+
+  // ⭐ Summary: แสดงเป็น "จำนวนระบบ" ไม่ใช่ %
+  const totalWithData = rowsWithData.length
+  const avgNormal = totalWithData > 0
+    ? rowsWithData.reduce((a, r) => a + r.normal!.ratio, 0) / totalWithData
+    : 0
+  const avgDry = totalWithData > 0
+    ? rowsWithData.reduce((a, r) => a + r.dry!.ratio, 0) / totalWithData
+    : 0
+  const minDry = totalWithData > 0
+    ? Math.min(...rowsWithData.map(r => r.dry!.ratio))
+    : 0
+  const maxDry = totalWithData > 0
+    ? Math.max(...rowsWithData.map(r => r.dry!.ratio))
+    : 0
 
   return (
     <div className="card p-6 flex flex-col">
@@ -102,7 +129,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         </h2>
 
         <span className="text-[11px] text-slate-500 whitespace-nowrap">
-          {rows.length} ข้อมูล · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
+          {rows.length} ระบบ · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
           {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน ·{' '}
           {PRODUCTION_HOURS_PER_DAY} ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR}
         </span>
@@ -176,6 +203,16 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
               )
             },
           )}
+          {summary.noData > 0 && (
+            <div className="flex items-center gap-1 text-xs">
+              <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
+              <span className="text-slate-500">❔</span>
+              <span className="font-bold text-slate-500 tabular-nums">
+                {summary.noData}
+              </span>
+              <span className="text-slate-400">ไม่มีข้อมูล</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -183,11 +220,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
       <div ref={chartRef} className="overflow-x-auto pb-2">
         <div style={{ minWidth: `${chartMinWidth}px` }} className="px-2">
           <div className="flex gap-2">
-            {/* Y-axis labels */}
-            <div
-              className="relative shrink-0 w-14"
-              style={{ height: '360px' }}
-            >
+            <div className="relative shrink-0 w-14" style={{ height: '360px' }}>
               {yTicks.map((val, i) => (
                 <div
                   key={val}
@@ -202,7 +235,6 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
               ))}
             </div>
 
-            {/* Bars container */}
             <div
               className="relative flex-1 min-w-0"
               style={{ height: '360px' }}
@@ -226,9 +258,36 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
 
               <div className="absolute inset-0 flex items-end gap-1">
                 {rows.map((row, idx) => {
-                  const normalPct = (row.normal.ratio / yMax) * 100
-                  const dryPct = (row.dry.ratio / yMax) * 100
-                  const dryColor = SUFFICIENCY_COLORS[row.dry.level].hex
+                  // ระบบที่ไม่มีข้อมูล → แสดงแท่งเทาสูงเต็ม
+                  if (!row.hasData) {
+                    return (
+                      <div
+                        key={row.systemId}
+                        className="flex-1 flex items-end justify-center min-w-0 h-full"
+                      >
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={inView ? { height: '100%' } : { height: 0 }}
+                          transition={{
+                            duration: 0.7,
+                            delay: 0.1 + idx * 0.04,
+                            ease: 'easeOut',
+                          }}
+                          className="w-3 md:w-4 rounded-t cursor-help"
+                          style={{
+                            background:
+                              'repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px)',
+                          }}
+                          title={`ม.${row.villageNo} ${row.systemName}
+❔ ไม่มีข้อมูลครัวเรือน`}
+                        />
+                      </div>
+                    )
+                  }
+
+                  const normalPct = (row.normal!.ratio / yMax) * 100
+                  const dryPct = (row.dry!.ratio / yMax) * 100
+                  const dryColor = SUFFICIENCY_COLORS[row.dry!.level].hex
                   const normalColor = '#0ea5e9'
 
                   return (
@@ -253,11 +312,11 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
                           style={{ background: normalColor }}
                           title={`ม.${row.villageNo} ${row.systemName}
 ── ฤดูปกติ ──
-ครัวเรือน: ${row.householdCount} หลัง (${row.normal.peopleCount} คน)
-ความต้องการ: ${row.normal.dailyDemand} ลบ.ม./วัน
-กำลังผลิตที่ต้องการ: ${row.normal.requiredProduction} ลบ.ม./ชม.
-กำลังผลิตที่มี: ${row.normal.actualProduction} ลบ.ม./ชม.
-ความเพียงพอ: ${row.normal.ratio}%`}
+ครัวเรือน: ${row.householdCount} หลัง (${row.normal!.peopleCount} คน)
+ความต้องการ: ${row.normal!.dailyDemand} ลบ.ม./วัน
+กำลังผลิตที่ต้องการ: ${row.normal!.requiredProduction} ลบ.ม./ชม.
+กำลังผลิตที่มี: ${row.normal!.actualProduction} ลบ.ม./ชม.
+ความเพียงพอ: ${row.normal!.ratio}%`}
                         />
                       )}
 
@@ -278,11 +337,11 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
                           style={{ background: dryColor }}
                           title={`ม.${row.villageNo} ${row.systemName}
 ── ฤดูแล้ง (×${DRY_SEASON_FACTOR}) ──
-ครัวเรือน: ${row.householdCount} หลัง (${row.dry.peopleCount} คน)
-ความต้องการ: ${row.dry.dailyDemand} ลบ.ม./วัน
-กำลังผลิตที่ต้องการ: ${row.dry.requiredProduction} ลบ.ม./ชม.
-กำลังผลิตที่มี: ${row.dry.actualProduction} ลบ.ม./ชม.
-ความเพียงพอ: ${row.dry.ratio}%`}
+ครัวเรือน: ${row.householdCount} หลัง (${row.dry!.peopleCount} คน)
+ความต้องการ: ${row.dry!.dailyDemand} ลบ.ม./วัน
+กำลังผลิตที่ต้องการ: ${row.dry!.requiredProduction} ลบ.ม./ชม.
+กำลังผลิตที่มี: ${row.dry!.actualProduction} ลบ.ม./ชม.
+ความเพียงพอ: ${row.dry!.ratio}%`}
                         />
                       )}
                     </div>
@@ -292,7 +351,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
             </div>
           </div>
 
-          {/* X-axis labels */}
+          {/* X-axis */}
           <div className="flex gap-1 ml-16 mt-2">
             {rows.map(row => (
               <div key={row.systemId} className="flex-1 min-w-0 text-center">
@@ -308,39 +367,12 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         </div>
       </div>
 
-      {/* ============ Summary cards ============ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-        <SummaryCard
-          label="ฤดูปกติ"
-          value={rows.reduce((a, r) => a + r.normal.ratio, 0) / rows.length}
-          color="sky"
-          unit="%"
-        />
-        <SummaryCard
-          label="ฤดูแล้ง"
-          value={rows.reduce((a, r) => a + r.dry.ratio, 0) / rows.length}
-          color="orange"
-          unit="%"
-        />
-        <SummaryCard
-          label="ต่ำสุด (ฤดูแล้ง)"
-          value={Math.min(...rows.map(r => r.dry.ratio))}
-          color="red"
-          unit="%"
-        />
-        <SummaryCard
-          label="สูงสุด (ฤดูแล้ง)"
-          value={Math.max(...rows.map(r => r.dry.ratio))}
-          color="emerald"
-          unit="%"
-        />
-      </div>
-
+      
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
         <Info size={12} className="shrink-0 mt-0.5 text-slate-400" />
         <span>
           <strong>อ้างอิง:</strong> กรมทรัพยากรน้ำ ({WATER_PER_PERSON_PER_DAY}{' '}
-          ลิตร/คน/วัน) · คู่มือการออกแบบข้อมูลประปาหมู่บ้าน (
+          ลิตร/คน/วัน) · คู่มือการออกแบบระบบประปาหมู่บ้าน (
           {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน · {PRODUCTION_HOURS_PER_DAY}{' '}
           ชม./วัน) · Peak Day Factor ฤดูแล้ง ×{DRY_SEASON_FACTOR}{' '}
           (มาตรฐานการประปาส่วนภูมิภาค)
@@ -353,13 +385,15 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
 function SummaryCard({
   label,
   value,
-  color,
   unit,
+  color,
+  decimals = 0,
 }: {
   label: string
   value: number
-  color: 'sky' | 'orange' | 'red' | 'emerald'
   unit?: string
+  color: 'sky' | 'orange' | 'red' | 'emerald'
+  decimals?: number
 }) {
   const colorMap = {
     sky: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
@@ -377,13 +411,22 @@ function SummaryCard({
   }
   const c = colorMap[color]
 
+  const formatted = value.toLocaleString('th-TH', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })
+
   return (
     <div className={`rounded-xl p-3 border ${c.bg} ${c.border}`}>
-      <p className={`text-[10px] font-medium ${c.text}`}>{label}</p>
-      <p className={`text-xl font-bold tabular-nums ${c.text} mt-0.5`}>
-        {Math.round(value)}
-        {unit}
+      <p className={`text-[10px] font-medium ${c.text} leading-tight`}>
+        {label}
       </p>
+      <p className={`text-2xl font-bold tabular-nums ${c.text} mt-1`}>
+        {formatted}
+      </p>
+      {unit && (
+        <p className={`text-[10px] ${c.text} opacity-70 mt-0.5`}>{unit}</p>
+      )}
     </div>
   )
 }

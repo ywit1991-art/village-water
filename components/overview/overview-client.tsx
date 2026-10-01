@@ -14,12 +14,14 @@ import {
   BarChart3,
   TrendingUp,
   ChevronDown,
+  AlertTriangle,
 } from 'lucide-react'
 import StatusChart from './status-chart'
 import VillageStatusChart from './village-status-chart'
 import SufficiencyChart from '@/components/stats/SufficiencyChart'
 import VillagesMapClient, {
   type MarkerData,
+  type MarkerMode,
 } from '@/components/maps/VillagesMapClient'
 import { AnimatedCounter } from '@/components/ui/animated-counter'
 import { NavLink } from '@/components/ui/nav-link'
@@ -52,6 +54,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     type: null,
     value: null,
   })
+  const [markerMode, setMarkerMode] = useState<MarkerMode>('status')
   const mapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -191,6 +194,16 @@ export default function OverviewClient({ villages, systems }: Props) {
   const hasFilter = villageFilter !== 'all' || statusFilter !== 'all'
   const hasAnyFilter = hasFilter || chartFilter.type !== null
 
+  // ⚡ นับจำนวนระบบที่มีปัญหา
+  const systemsWithProblems = markers.filter(
+    m => (m.problems?.length ?? 0) > 0,
+  ).length
+
+  const totalProblems = markers.reduce(
+    (sum, m) => sum + (m.problems?.length ?? 0),
+    0,
+  )
+
   function clearAllFilters() {
     setVillageFilter('all')
     setStatusFilter('all')
@@ -208,7 +221,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={20} />,
       value: stats.systems,
-      label: 'ข้อมูลประปา',
+      label: 'ระบบประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -226,19 +239,12 @@ export default function OverviewClient({ villages, systems }: Props) {
       color: 'text-amber-600',
       bg: 'bg-amber-50',
     },
-    {
-      icon: <ClipboardList size={20} />,
-      value: stats.surveys,
-      label: 'แบบสำรวจ',
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-    },
   ]
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-50/30">
       {/* HEADER */}
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+      <header className="sticky top-0 z-[2000] bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative shrink-0">
@@ -407,7 +413,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-brand-50">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-brand-50">
             {cards.map((c, i) => (
               <div
                 key={i}
@@ -460,6 +466,31 @@ export default function OverviewClient({ villages, systems }: Props) {
             </button>
           </div>
 
+          {/* ข้อความอธิบาย (แสดงเมื่อดูแผนที่) */}
+          {viewMode === 'map' && (
+            <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 min-w-0">
+              <span className="font-semibold text-brand-900 whitespace-nowrap">
+                แผนที่ระบบประปา
+              </span>
+              <span className="text-slate-300">·</span>
+              {markerMode === 'status' ? (
+                <span className="truncate">
+                  💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
+                  <span className="font-semibold text-sky-700">
+                    {markers.length} ระบบ
+                  </span>
+                </span>
+              ) : (
+                <span className="truncate text-amber-700">
+                  ⚠️ เฉพาะระบบที่มีปัญหา ·{' '}
+                  <span className="font-semibold">
+                    {systemsWithProblems} ระบบ ({totalProblems} ปัญหา)
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+
           {viewMode === 'stats' && (
             <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200 shadow-sm">
               <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
@@ -491,40 +522,13 @@ export default function OverviewClient({ villages, systems }: Props) {
           )}
         </div>
 
+
         {/* VIEW: แผนที่ */}
         {viewMode === 'map' && (
           <div className="card overflow-hidden flex flex-col shadow-md">
-            <div className="flex items-center justify-between p-4 border-b border-brand-50 bg-gradient-to-r from-sky-50/60 to-white">
-              <div>
-                <h3 className="font-bold text-brand-900 flex items-center gap-2">
-                  <MapPin size={18} className="text-sky-600" />
-                  แผนที่ข้อมูลประปา
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
-                  <span className="font-semibold text-sky-700">
-                    {markers.length} ข้อมูล
-                  </span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-sky-50 hover:border-sky-300 text-slate-700 hover:text-sky-700 flex items-center justify-center transition shrink-0 active:scale-95"
-                title={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
-                aria-label={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
-              >
-                {isFullscreen ? (
-                  <Minimize2 size={16} />
-                ) : (
-                  <Maximize2 size={16} />
-                )}
-              </button>
-            </div>
-
             <div
               ref={mapRef}
-              className="flex-1 bg-white"
+              className="relative flex-1 bg-white"
               style={
                 isFullscreen
                   ? { height: '100vh', width: '100vw' }
@@ -534,7 +538,20 @@ export default function OverviewClient({ villages, systems }: Props) {
               <VillagesMapClient
                 markers={markers}
                 height={isFullscreen ? 'h-screen' : 'h-[700px]'}
+                markerMode={markerMode}
+                onMarkerModeChange={setMarkerMode}
+                onToggleFullscreen={toggleFullscreen}
+                isFullscreen={isFullscreen}
               />
+
+              {/* ข้อความอธิบาย (mobile) — ล่างซ้าย */}
+              <div className="absolute bottom-3 left-3 right-3 z-[500] md:hidden pointer-events-none">
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-md border border-slate-200 text-[11px] text-slate-600 text-center">
+                  {markerMode === 'status'
+                    ? `📍 ${markers.length} ระบบ · เลื่อนเมาส์ชี้ที่หมุด`
+                    : `⚠️ ${systemsWithProblems} ระบบ · ${totalProblems} ปัญหา`}
+                </div>
+              </div>
             </div>
           </div>
         )}

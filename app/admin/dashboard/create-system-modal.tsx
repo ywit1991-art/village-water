@@ -33,9 +33,11 @@ export default function CreateSystemModal({ villageId, villageName }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-brand-600 hover:text-brand-800 font-medium text-sm"
+        aria-label="เพิ่มข้อมูลประปา"
+        className="inline-flex items-center justify-center gap-1 text-brand-600 hover:text-brand-800 font-medium text-sm active:scale-95 transition md:px-0 px-2 py-1.5"
       >
-        <Plus size={14} /> เพิ่มข้อมูล
+        <Plus size={18} className="md:w-3.5 md:h-3.5" />
+        <span className="hidden md:inline">เพิ่มข้อมูล</span>
       </button>
 
       {open && (

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import {
   X,
@@ -11,20 +10,37 @@ import {
   EyeOff,
   MapPin,
   Navigation,
+  Maximize2,
+  Minimize2,
+  Flag,
+  Droplet,
 } from 'lucide-react'
 import LeafletBase from './LeafletBase'
-import { createWaterMarkerIcon } from '@/lib/map-icons'
+import {
+  createWaterMarkerIcon,
+  createProblemMarkerIcon,
+  createSufficiencyMarkerIcon,
+} from '@/lib/map-icons'
+import {
+  calcSufficiency,
+  SUFFICIENCY_COLORS,
+  DRY_SEASON_FACTOR,
+} from '@/lib/water-sufficiency'
 import { STATUS_COLORS, STATUS_EMOJI } from '@/lib/constants'
-import type { MarkerData } from './VillagesMapClient'
+import type { MarkerData, MarkerMode } from './VillagesMapClient'
 import { maskPhone } from '@/lib/utils/phone'
 import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
-
+import { Marker, Popup, useMap } from 'react-leaflet'
 
 interface Props {
   markers: MarkerData[]
   height?: string
+  markerMode?: MarkerMode
+  onMarkerModeChange?: (mode: MarkerMode) => void
+  onToggleFullscreen?: () => void
+  isFullscreen?: boolean
 }
 
 const HOVER_DELAY_MS = 800
@@ -105,6 +121,10 @@ function openDirections(lat: number, lng: number) {
 export default function VillagesMapInner({
   markers,
   height = 'h-[500px]',
+  markerMode = 'status',
+  onMarkerModeChange,
+  onToggleFullscreen,
+  isFullscreen = false,
 }: Props) {
   const [selected, setSelected] = useState<MarkerData | null>(null)
   const [boundary, setBoundary] = useState<
@@ -115,6 +135,40 @@ export default function VillagesMapInner({
     null,
   )
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ⚡ นับจำนวนระบบที่มีปัญหา
+  const systemsWithProblems = markers.filter(
+    m => (m.problems?.length ?? 0) > 0,
+  ).length
+
+  // ⚡ นับจำนวนระบบที่น้ำไม่เพียงพอ (poor + critical)
+  const systemsInsufficient = useMemo(() => {
+    let count = 0
+    markers.forEach(m => {
+      if ((m.householdCount ?? 0) > 0) {
+        const calc = calcSufficiency(m.householdCount, null, 'dry')
+        if (calc.level === 'poor' || calc.level === 'critical') count++
+      }
+    })
+    return count
+  }, [markers])
+
+  // ⚡ สร้าง map เก็บ ratio ของแต่ละ systemId
+  const sufficiencyMap = useMemo(() => {
+    const map = new Map<
+      number,
+      { ratio: number | null; hasData: boolean }
+    >()
+    markers.forEach(m => {
+      if ((m.householdCount ?? 0) > 0) {
+        const calc = calcSufficiency(m.householdCount, null, 'dry')
+        map.set(m.systemId, { ratio: calc.ratio, hasData: true })
+      } else {
+        map.set(m.systemId, { ratio: null, hasData: false })
+      }
+    })
+    return map
+  }, [markers])
 
   // โหลด GeoJSON boundary
   useEffect(() => {
@@ -167,30 +221,49 @@ export default function VillagesMapInner({
     setStreetViewMarker(m)
   }
 
+  // ⚡ กรอง markers ตาม markerMode
+  const visibleMarkers = useMemo(() => {
+    if (markerMode === 'problems') {
+      return markers.filter(m => (m.problems?.length ?? 0) > 0)
+    }
+    // 'status' และ 'sufficiency' → แสดงทุก marker
+    return markers
+  }, [markers, markerMode])
+
   // ⚡ Memoize allPoints — ไม่ให้ array อ้างอิงใหม่ทุก render
   const allPoints = useMemo(
-    () => markers.map(m => [m.lat, m.lng] as [number, number]),
-    [markers],
+    () => visibleMarkers.map(m => [m.lat, m.lng] as [number, number]),
+    [visibleMarkers],
   )
 
-  if (markers.length === 0) {
+  if (visibleMarkers.length === 0) {
     return (
       <div
         className={`${height} rounded-2xl border border-brand-100 bg-brand-50/40 flex items-center justify-center`}
       >
-        <div className="text-center">
+        <div className="text-center px-4">
+          <div className="text-5xl mb-3">
+            {markerMode === 'problems' ? '✨' : '🔍'}
+          </div>
           <p className="text-base font-medium text-brand-600">
-            ไม่พบข้อมูลประปาตามเงื่อนไข
+            {markerMode === 'problems'
+              ? 'ไม่พบจุดที่ต้องแก้ไข'
+              : 'ไม่พบข้อมูลประปาตามเงื่อนไข'}
           </p>
           <p className="text-sm text-slate-400 mt-1">
-            ลองเปลี่ยนตัวกรองหรือเลือก "ทั้งหมด"
+            {markerMode === 'problems'
+              ? 'ระบบประปาทั้งหมดอยู่ในสภาพที่ดี'
+              : 'ลองเปลี่ยนตัวกรองหรือเลือก "ทั้งหมด"'}
           </p>
         </div>
       </div>
     )
   }
 
-  const center: [number, number] = [markers[0].lat, markers[0].lng]
+  const center: [number, number] = [
+    visibleMarkers[0].lat,
+    visibleMarkers[0].lng,
+  ]
 
   return (
     <>
@@ -202,44 +275,157 @@ export default function VillagesMapInner({
           {boundary && (
             <ThawangthongBoundary boundary={boundary} visible={showHatch} />
           )}
-          {markers.map(m => (
-            <Marker
-              key={m.systemId}
-              position={[m.lat, m.lng]}
-              icon={createWaterMarkerIcon(m.status, m.userCount)}
-              eventHandlers={{
-                click: () => {
-                  cancelHover()
-                  setSelected(m)
-                },
-                mouseover: () => startHover(m),
-                mouseout: cancelHover,
-              }}
-            />
-          ))}
+          {visibleMarkers.map(m => {
+            let icon: L.DivIcon
+            if (markerMode === 'problems') {
+              icon = createProblemMarkerIcon(m.problems?.length ?? 0)
+            } else if (markerMode === 'sufficiency') {
+              const suff = sufficiencyMap.get(m.systemId)
+              icon = createSufficiencyMarkerIcon(
+                suff?.ratio ?? null,
+                suff?.hasData ?? false,
+              )
+            } else {
+              icon = createWaterMarkerIcon(m.status, m.userCount)
+            }
+
+            return (
+              <Marker
+                key={m.systemId}
+                position={[m.lat, m.lng]}
+                icon={icon}
+                eventHandlers={{
+                  click: () => {
+                    cancelHover()
+                    setSelected(m)
+                  },
+                  mouseover: () => startHover(m),
+                  mouseout: cancelHover,
+                }}
+              />
+            )
+          })}
         </LeafletBase>
 
-        {/* ปุ่ม Toggle Hatch */}
-        <button
-          type="button"
-          onClick={() => setShowHatch(s => !s)}
-          className="absolute top-3 right-3 z-[1000] inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-brand-700 hover:text-brand-900 text-xs font-medium transition active:scale-95"
-          title={showHatch ? 'ปิดลายทแยง' : 'เปิดลายทแยง'}
-          aria-label={showHatch ? 'ปิดลายทแยง' : 'เปิดลายทแยง'}
-          aria-pressed={showHatch}
-        >
-          {showHatch ? (
+        {/* ============ Overlay Controls — การ์ดเดียว มุมขวาบน ============ */}
+        <div className="absolute top-3 right-3 z-[1000] flex flex-wrap items-center gap-1 bg-white/95 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-slate-200 max-w-[calc(100%-1.5rem)]">
+          {/* Toggle สถานะ */}
+          {onMarkerModeChange && (
             <>
-              <EyeOff size={14} />
-              <span className="hidden sm:inline">ซ่อนลายทแยง</span>
-            </>
-          ) : (
-            <>
-              <Eye size={14} />
-              <span className="hidden sm:inline">แสดงลายทแยง</span>
+              <button
+                type="button"
+                onClick={() => onMarkerModeChange('status')}
+                aria-label="แสดงตามสถานะ"
+                aria-pressed={markerMode === 'status'}
+                title="แสดงตามสถานะ"
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                  markerMode === 'status'
+                    ? 'bg-brand-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <MapPin size={14} />
+                <span className="hidden sm:inline">สถานะ</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onMarkerModeChange('problems')}
+                aria-label="แสดงจุดที่พบปัญหา"
+                aria-pressed={markerMode === 'problems'}
+                title="แสดงจุดที่พบปัญหา"
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                  markerMode === 'problems'
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Flag size={14} />
+                <span className="hidden sm:inline">จุดที่พบปัญหา</span>
+                {systemsWithProblems > 0 && (
+                  <span
+                    className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold ${
+                      markerMode === 'problems'
+                        ? 'bg-white text-amber-600'
+                        : 'bg-amber-500 text-white'
+                    }`}
+                  >
+                    {systemsWithProblems}
+                  </span>
+                )}
+              </button>
+
+              {/* ⭐ ปุ่มใหม่: ความเพียงพอของน้ำ */}
+              <button
+                type="button"
+                onClick={() => onMarkerModeChange('sufficiency')}
+                aria-label="แสดงความเพียงพอของน้ำ"
+                aria-pressed={markerMode === 'sufficiency'}
+                title="แสดงความเพียงพอของน้ำ (น้ำเงินเข้ม = เพียงพอมาก, ฟ้าอ่อน = เพียงพอน้อย)"
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                  markerMode === 'sufficiency'
+                    ? 'bg-sky-700 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Droplet size={14} />
+                <span className="hidden sm:inline">ความเพียงพอ</span>
+                {systemsInsufficient > 0 && (
+                  <span
+                    className={`inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold ${
+                      markerMode === 'sufficiency'
+                        ? 'bg-white text-sky-700'
+                        : 'bg-sky-700 text-white'
+                    }`}
+                  >
+                    {systemsInsufficient}
+                  </span>
+                )}
+              </button>
+
+              <div className="w-px h-5 bg-slate-200 mx-0.5" />
             </>
           )}
-        </button>
+
+          {/* Toggle Hatch */}
+          <button
+            type="button"
+            onClick={() => setShowHatch(s => !s)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+              showHatch
+                ? 'text-brand-700 hover:bg-brand-50'
+                : 'text-slate-400 hover:bg-slate-100'
+            }`}
+            title={showHatch ? 'ซ่อนลายทแยง' : 'แสดงลายทแยง'}
+            aria-label={showHatch ? 'ซ่อนลายทแยง' : 'แสดงลายทแยง'}
+            aria-pressed={showHatch}
+          >
+            {showHatch ? <Eye size={14} /> : <EyeOff size={14} />}
+            <span className="hidden sm:inline">
+              {showHatch ? 'ซ่อนลายทแยง' : 'แสดงลายทแยง'}
+            </span>
+          </button>
+
+          {/* Fullscreen */}
+          {onToggleFullscreen && (
+            <>
+              <div className="w-px h-5 bg-slate-200 mx-0.5" />
+              <button
+                type="button"
+                onClick={onToggleFullscreen}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-700 hover:bg-sky-50 hover:text-sky-700 transition active:scale-95"
+                title={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+                aria-label={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 size={16} />
+                ) : (
+                  <Maximize2 size={16} />
+                )}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {selected && (
@@ -282,6 +468,15 @@ function DetailModal({
   const improvements = m.improvements ?? []
   const photos = m.photos ?? []
   const productionTypes = m.productionTypes ?? []
+
+  // ⭐ คำนวณความเพียงพอของน้ำ
+  const hasHouseholdData = (m.householdCount ?? 0) > 0
+  const suffNormal = hasHouseholdData
+    ? calcSufficiency(m.householdCount, null, 'normal')
+    : null
+  const suffDry = hasHouseholdData
+    ? calcSufficiency(m.householdCount, null, 'dry')
+    : null
 
   return (
     <div
@@ -401,6 +596,50 @@ function DetailModal({
 </div>
 
           <div className="px-8 py-6 space-y-6">
+            {/* ⭐ ความเพียงพอของน้ำ */}
+            <Section title="ความเพียงพอของน้ำ" accent="brand">
+              {hasHouseholdData && suffNormal && suffDry ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* ฤดูปกติ */}
+                    <SufficiencyBox
+                      season="normal"
+                      result={suffNormal}
+                    />
+                    {/* ฤดูแล้ง */}
+                    <SufficiencyBox
+                      season="dry"
+                      result={suffDry}
+                    />
+                  </div>
+
+                  {/* Reference */}
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
+                    <span className="text-base">📖</span>
+                    <span>
+                      อัตราการใช้น้ำ 50 ลิตร/คน/วัน · 5 คน/ครัวเรือน ·{' '}
+                      14 ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR} ·
+                      อ้างอิง: กรมทรัพยากรน้ำ
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                  <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 text-2xl">
+                    ❔
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-amber-800">
+                      ไม่มีข้อมูลครัวเรือน
+                    </p>
+                    <p className="text-xs text-amber-600 mt-0.5">
+                      ต้องกรอกจำนวนครัวเรือนในแบบสำรวจก่อน
+                    </p>
+                  </div>
+                </div>
+              )}
+            </Section>
+
             {m.operatorName && (
               <Section title="ช่างประปา">
                 <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
@@ -679,6 +918,114 @@ function Section({
         <h3 className={`text-base font-bold ${textMap[accent]}`}>{title}</h3>
       </div>
       {children}
+    </div>
+  )
+}
+
+/* ============================================================ */
+/* SUB COMPONENT: Sufficiency Box                                */
+/* ============================================================ */
+function SufficiencyBox({
+  season,
+  result,
+}: {
+  season: 'normal' | 'dry'
+  result: {
+    ratio: number
+    level: string
+    householdCount: number
+    peopleCount: number
+    dailyDemand: number
+    requiredProduction: number
+    actualProduction: number
+    isEstimated: boolean
+  }
+}) {
+  const colors = SUFFICIENCY_COLORS[result.level as keyof typeof SUFFICIENCY_COLORS]
+  const isDry = season === 'dry'
+
+  return (
+    <div
+      className="rounded-2xl p-4 border-2"
+      style={{
+        background: `${colors.hex}10`,
+        borderColor: `${colors.hex}40`,
+      }}
+    >
+      {/* Header: Season + Ratio */}
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+          {isDry ? '☀️ ฤดูแล้ง' : '🌤️ ฤดูปกติ'}
+        </span>
+        <span
+          className="text-2xl font-extrabold tabular-nums leading-none"
+          style={{ color: colors.hex }}
+        >
+          {result.ratio}%
+        </span>
+      </div>
+
+      {/* Status badge */}
+      <div
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mb-3"
+        style={{
+          background: `${colors.hex}25`,
+          color: colors.hex,
+        }}
+      >
+        {colors.emoji} {colors.label}
+      </div>
+
+      {/* Details */}
+      <div className="space-y-1.5 text-[11px]">
+        <Row
+          label="ครัวเรือน"
+          value={`${result.householdCount} หลัง`}
+          small
+        />
+        <Row
+          label="ปริมาณคน"
+          value={`${result.peopleCount} คน`}
+          small
+        />
+        <Row
+          label="ความต้องการ"
+          value={`${result.requiredProduction} ลบ.ม./ชม.`}
+          small
+        />
+        <Row
+          label="กำลังผลิตที่มี"
+          value={`${result.actualProduction} ลบ.ม./ชม.${
+            result.isEstimated ? ' (ประมาณ)' : ''
+          }`}
+          small
+        />
+      </div>
+    </div>
+  )
+}
+
+function Row({
+  label,
+  value,
+  small,
+}: {
+  label: string
+  value: string
+  small?: boolean
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className={small ? 'text-[10px] text-slate-500' : 'text-slate-500'}>
+        {label}
+      </span>
+      <span
+        className={`font-semibold text-slate-800 tabular-nums ${
+          small ? 'text-[10px]' : ''
+        }`}
+      >
+        {value}
+      </span>
     </div>
   )
 }
