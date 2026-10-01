@@ -29,14 +29,19 @@ export interface MarkerData {
   householdCount: number
   tankCapacity: number | null
   waterRate: number | null
-  waterRateType: string | null      // 👈 เพิ่ม
-  waterRateTiers: { from: number; to: number | null; 
-  rate: number }[] | null  // 👈 เพิ่มproductionTypes: string[]
+  waterRateType: string | null
+  waterRateTiers: Array<{
+    from: number
+    to: number | null
+    rate: number
+    label?: string
+  }> | null
+  productionTypes: string[]
   sufficiency: string | null
   operatorName: string | null
   operatorPhone: string | null
-  surveyDate: string | null      
-  updatedAt: string | null 
+  surveyDate: string | null
+  updatedAt: string | null
   committee: CommitteeMember[]
   problems: string[]
   improvements: string[]

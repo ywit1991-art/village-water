@@ -6,7 +6,7 @@ import { CK } from '@/lib/constants'
 import { Plus, Trash2 } from 'lucide-react'
 
 export function Section11() {
-  const { register, control, watch } = useFormContext()
+  const { register, control, watch, getValues } = useFormContext()
 
   const rateType = watch('water_rate_type') ?? 'flat'
 
@@ -16,8 +16,12 @@ export function Section11() {
   })
 
   function addTier() {
-    const prev = tiers.fields[tiers.fields.length - 1]
-    const prevTo = prev ? Number(prev.to ?? 0) : 0
+    const currentTiers = (getValues('water_rate_tiers') ?? []) as Array<{
+      from?: number
+      to?: number | null
+    }>
+    const prev = currentTiers[currentTiers.length - 1]
+    const prevTo = prev?.to ? Number(prev.to) : 0
     tiers.append({
       from: prevTo === 0 ? 0 : prevTo + 1,
       to: null,
