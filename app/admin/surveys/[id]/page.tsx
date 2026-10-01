@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { saveSurveyAction } from '../../actions'
+import { fireConfetti } from '@/lib/confetti'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 import { Section1 } from '@/components/forms/sections/Section1'
 import { Section2 } from '@/components/forms/sections/Section2'
@@ -76,9 +78,6 @@ export default function SurveyFormPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // ==========================================
-  // โหลดข้อมูล
-  // ==========================================
   useEffect(() => {
     async function load() {
       const sb = createClient()
@@ -93,7 +92,6 @@ export default function SurveyFormPage() {
       }
 
       if (!isNew && id) {
-        // ===== โหมดแก้ไข =====
         const { data: s, error } = await sb
           .from('surveys')
           .select('*')
@@ -141,7 +139,6 @@ export default function SurveyFormPage() {
           methods.reset(merged)
         }
       } else if (isNew && systemId) {
-        // ===== โหมดสร้างใหม่ — pre-fill จาก water_system =====
         const { data: sys } = await sb
           .from('water_systems')
           .select('*')
@@ -170,9 +167,6 @@ export default function SurveyFormPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, villageId, isNew, systemId])
 
-  // ==========================================
-  // บันทึก — เรียก Server Action
-  // ==========================================
   async function save(status: 'draft' | 'submitted') {
     if (saving) return
     setSaving(true)
@@ -196,22 +190,16 @@ export default function SurveyFormPage() {
       }
 
       toast.success(
-        status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ',
-      )
-      toast.success(
         status === 'draft' ? 'บันทึกร่างแล้ว' : 'ส่งข้อมูลสำเร็จ 🎉',
       )
 
-      // 🎉 ยิง confetti ตอนส่งสำเร็จ (ไม่ใช่ draft)
       if (status === 'submitted') {
         fireConfetti('success')
-        // รอ confetti นิดนึงก่อน redirect
         await new Promise(r => setTimeout(r, 800))
       }
 
       router.push('/admin/dashboard')
-      router.refresh()      
-
+      router.refresh()
     } catch (err) {
       console.error('[save]', err)
       toast.error('เกิดข้อผิดพลาดในการบันทึก')
@@ -237,7 +225,7 @@ export default function SurveyFormPage() {
           <p className="text-xs text-brand-500">
             {village && `หมู่ ${village.village_no}`}
           </p>
-          <h1 className="font-bold text-brand-900">
+          <h1 className="font-bold text-brand-900 text-sm md:text-base">
             {isNew ? 'บันทึกแบบสำรวจใหม่' : 'แก้ไขแบบสำรวจ'} —{' '}
             {village?.village_name}
           </h1>
@@ -246,9 +234,39 @@ export default function SurveyFormPage() {
 
       <FormProvider {...methods}>
         <form
-          className="max-w-4xl mx-auto px-4 py-6 space-y-6"
+          className="max-w-4xl mx-auto px-4 py-6 space-y-4 md:space-y-6"
           onSubmit={methods.handleSubmit(() => save('submitted'))}
         >
+          {/* Mobile: ปุ่มขยาย/ย่อทั้งหมด */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .querySelectorAll<HTMLDetailsElement>(
+                    'details.form-section',
+                  )
+                  .forEach(d => (d.open = true))
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-brand-200 text-brand-700 text-xs font-medium hover:bg-brand-50 active:scale-95 transition"
+            >
+              <ChevronDown size={14} /> ขยายทั้งหมด
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .querySelectorAll<HTMLDetailsElement>(
+                    'details.form-section',
+                  )
+                  .forEach(d => (d.open = false))
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-brand-200 text-brand-700 text-xs font-medium hover:bg-brand-50 active:scale-95 transition"
+            >
+              <ChevronUp size={14} /> ย่อทั้งหมด
+            </button>
+          </div>
+
           <Section1 />
           <Section2 />
           <Section3 />
@@ -267,7 +285,7 @@ export default function SurveyFormPage() {
           <Section16 />
           <Section17 />
 
-          <div className="card p-4 flex flex-wrap items-center gap-3 sticky bottom-4 z-20">
+          <div className="card p-4 flex flex-wrap items-center gap-3 sticky bottom-4 z-20 shadow-lg">
             <button
               type="button"
               onClick={() => save('draft')}

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* ============================================================ */
-/* Theme — กำหนดสี brand + ฟอนต์                                */
+/* Theme — สี brand + ฟอนต์                                       */
 /* ============================================================ */
 @theme {
   --color-brand-50: #f0f9ff;
@@ -19,6 +19,9 @@
   --font-report: 'Sarabun', 'TH Sarabun New', 'Tahoma', sans-serif;
 }
 
+/* ============================================================ */
+/* Base                                                          */
+/* ============================================================ */
 html,
 body {
   font-family: 'Noto Sans Thai', 'Tahoma', sans-serif;
@@ -58,10 +61,13 @@ body {
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.1s ease;
   }
   .btn-primary:hover:not(:disabled) {
     background-color: #0284c7;
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.95);
   }
   .btn-primary:disabled {
     opacity: 0.5;
@@ -84,10 +90,13 @@ body {
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.1s ease;
   }
   .btn-ghost:hover:not(:disabled) {
     background-color: #f0f9ff;
+  }
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.95);
   }
   .btn-ghost:disabled {
     opacity: 0.5;
@@ -136,6 +145,25 @@ body {
 }
 
 /* ============================================================ */
+/* Utilities                                                     */
+/* ============================================================ */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+/* Focus ring — Accessibility */
+*:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================================ */
 /* Leaflet                                                       */
 /* ============================================================ */
 .leaflet-container {
@@ -148,7 +176,25 @@ body {
 }
 
 /* ============================================================ */
-/* Report — ใช้ Sarabun เท่านั้น (override ทุก element)          */
+/* Form Section — Collapsible on mobile                          */
+/* ============================================================ */
+details.form-section > summary {
+  list-style: none;
+}
+details.form-section > summary::-webkit-details-marker,
+details.form-section > summary::marker {
+  display: none;
+}
+
+/* Desktop: บังคับให้เนื้อหาแสดงเสมอ */
+@media (min-width: 768px) {
+  details.form-section > div {
+    display: block !important;
+  }
+}
+
+/* ============================================================ */
+/* Report — Sarabun + Print                                      */
 /* ============================================================ */
 .report-page,
 .report-page * {
@@ -156,38 +202,10 @@ body {
 }
 
 .report-page {
-  font-size: 10pt;
-  line-height: 1;
+  font-size: 14pt;
+  line-height: 1.5;
   color: #0f172a;
   background: #ffffff;
-}
-
-.report-page table {
-  font-size: 10pt;
-  width: 100%;
-  table-layout: fixed;           /* ⬅️ บังคับความกว้างคอลัมน์ */
-  border-collapse: collapse;
-  border: 1px solid #cbd5e1;     /* ⬅️ เพิ่มเส้นรอบนอกให้ครบ */
-}
-
-.report-page th,
-.report-page td {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #cbd5e1;     /* ⬅️ บังคับเส้นขอบทุกด้าน */
-  word-wrap: break-word;          /* ⬅️ กันข้อความล้น */
-  overflow-wrap: break-word;
-}
-
-/* คอลัมน์สุดท้าย — กันเส้นขวาหาย */
-.report-page th:last-child,
-.report-page td:last-child {
-  border-right: 1px solid #cbd5e1 !important;
-  padding-right: 0.5rem;
-}
-
-/* หัวข้อ section เล็กลงเล็กน้อย */
-.report-page h2 {
-  font-size: 12pt;
 }
 
 .report-page h1,
@@ -202,6 +220,7 @@ body {
   min-width: 9rem;
   flex-shrink: 0;
 }
+
 .report-field-value {
   color: #0f172a;
   font-weight: 500;
@@ -209,8 +228,6 @@ body {
   white-space: pre-wrap;
 }
 
-/* Section — บังคับให้อยู่หน้าเดียวกันทั้งหมด */
-/* Section ปกติ — ห้ามขาดหน้า */
 .report-section {
   margin-bottom: 1rem;
   orphans: 4;
@@ -219,13 +236,11 @@ body {
   page-break-inside: avoid;
 }
 
-/* Section ยาว — ยอมให้ตัดข้ามหน้า */
 .report-section.long-section {
   break-inside: auto;
   page-break-inside: auto;
 }
 
-/* หัวข้อเกาะเนื้อหา */
 .report-section > h2 {
   break-after: avoid-page;
   break-inside: avoid;
@@ -233,20 +248,129 @@ body {
   page-break-inside: avoid;
 }
 
-/* Section 17 — ไม่บังคับขึ้นหน้าใหม่ ให้ flow ตามเนื้อหา */
-.report-section[data-section="17"] {
-  margin-top: 1rem;
+.report-section > h2 + * {
+  break-before: avoid-page;
+  page-break-before: avoid;
 }
 
-/* Signature block ห้ามขาด */
+.report-section table {
+  font-size: 11pt;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border: 1px solid #cbd5e1;
+  break-inside: auto;
+}
+
+.report-page th,
+.report-page td {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.report-page th:last-child,
+.report-page td:last-child {
+  border-right: 1px solid #cbd5e1 !important;
+  padding-right: 0.5rem;
+}
+
+.report-section tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-section thead {
+  display: table-header-group;
+}
+
+.report-section img {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Signature block — ห้ามขาด */
 .signature-block {
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
+/* ============================================================ */
+/* Report — Mobile Responsive                                    */
+/* ============================================================ */
+@media (max-width: 767px) {
+  .report-page {
+    font-size: 11pt;
+    line-height: 1.5;
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+    max-width: 100% !important;
+    border-radius: 12px;
+  }
+
+  .report-page h1 {
+    font-size: 14pt;
+  }
+
+  .report-page h2 {
+    font-size: 11pt;
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .report-page table {
+    font-size: 9.5pt;
+  }
+
+  .report-page th,
+  .report-page td {
+    padding: 0.25rem 0.4rem !important;
+  }
+
+  .report-field-label {
+    min-width: 6.5rem !important;
+    font-size: 9.5pt;
+  }
+
+  .report-field-value {
+    font-size: 9.5pt;
+  }
+
+  .report-section {
+    margin-bottom: 1rem !important;
+  }
+
+  .report-section > h2 {
+    border-left-width: 3px !important;
+  }
+
+  /* ลายเซ็น: เรียงแนวตั้งบนมือถือ */
+  .signature-block {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  .signature-block > div {
+    text-align: center;
+    padding: 0.75rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  /* รูปภาพ: 2 คอลัมน์บนมือถือ */
+  .report-page .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ============================================================ */
+/* Print                                                         */
+/* ============================================================ */
 @page {
   size: A4;
-  margin: 1.5cm 1.2cm 1.8cm 1.2cm;
+  margin: 1.5cm 1.2cm 2.2cm 1.2cm;
 }
 
 @media print {
@@ -265,34 +389,6 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
-  }
-
-  /* ⬇️ Footer อยู่ที่ขอบล่างของ printable area — ไม่ทับเนื้อหา */
-  .print-footer {
-    display: block !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 8pt;
-    line-height: 1.2;
-    color: #94a3b8;
-    background: #ffffff;
-    padding: 2px 0 4px 0;
-    border-top: 0.5px solid #e2e8f0;
-    z-index: 9999;
-  }
-  
-    /* ใส่เลขหน้า + จำนวนหน้ารวม — ใช้ counter ที่ browser รองรับ */
-  .report-page {
-    counter-reset: page;
-  }
-
-
-  /* เพิ่ม CSS page counter ผ่าน pseudo element (Firefox รองรับ) */
-  .print-footer::after {
-    content: '';
   }
 
   a[href]::after {
