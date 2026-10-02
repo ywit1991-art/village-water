@@ -149,6 +149,15 @@ export default function OverviewClient({ villages, systems }: Props) {
         (u): u is string => typeof u === 'string' && u.length > 0,
       )
 
+
+
+      // ⭐ คำนวณ HP รวมจาก pumps
+      const totalHP = (s.survey?.pumps ?? []).reduce((sum, p) => {
+        const hp = parseFloat(String(p?.hp ?? 0))
+        return sum + (isNaN(hp) ? 0 : hp)
+      }, 0)
+
+
       result.push({
         systemId: s.system.id,
         villageId: s.system.village_id,
@@ -166,6 +175,11 @@ export default function OverviewClient({ villages, systems }: Props) {
         householdCount:
           s.survey?.household_count ?? s.system.household_count ?? 0,
         tankCapacity: s.survey?.tank_capacity ?? s.system.tank_capacity ?? null,
+        productionCapacity:
+          s.survey?.production_capacity ??
+          s.system.production_capacity ??
+          null,
+        totalHP,                          // ⭐ เพิ่ม
         waterRate: s.survey?.water_rate ?? s.system.water_rate ?? null,
         waterRateType: s.survey?.water_rate_type ?? null,
         waterRateTiers: Array.isArray(s.survey?.water_rate_tiers)
@@ -469,16 +483,10 @@ export default function OverviewClient({ villages, systems }: Props) {
           {/* ข้อความอธิบาย (แสดงเมื่อดูแผนที่) */}
           {viewMode === 'map' && (
             <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 min-w-0">
-              <span className="font-semibold text-brand-900 whitespace-nowrap">
-                แผนที่ระบบประปา
-              </span>
               <span className="text-slate-300">·</span>
               {markerMode === 'status' ? (
                 <span className="truncate">
                   💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
-                  <span className="font-semibold text-sky-700">
-                    {markers.length} ระบบ
-                  </span>
                 </span>
               ) : (
                 <span className="truncate text-amber-700">

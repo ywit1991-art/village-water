@@ -67,6 +67,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
 
     document.addEventListener('keydown', handleKeyDown)
 
+    // ⭐ ใช้ scrollbar-gutter ใน CSS แทน — ไม่ต้องชดเชยใน JS
     const oldOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 

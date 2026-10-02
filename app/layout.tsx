@@ -4,8 +4,39 @@ import { Toaster } from 'sonner'
 import { SkipLink } from '@/components/ui/skip-link'
 
 export const metadata: Metadata = {
-  title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
-  description: 'ข้อมูลฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง',
+  title: {
+    default: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    template: '%s | ประปาหมู่บ้าน ทต.ท่าวังทอง',
+  },
+  description:
+    'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา',
+  keywords: [
+    'ประปาหมู่บ้าน',
+    'ท่าวังทอง',
+    'พะเยา',
+    'เทศบาล',
+    'ระบบฐานข้อมูล',
+    'น้ำประปา',
+  ],
+  authors: [{ name: 'เทศบาลตำบลท่าวังทอง' }],
+  creator: 'เทศบาลตำบลท่าวังทอง',
+  openGraph: {
+    type: 'website',
+    locale: 'th_TH',
+    siteName: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    title: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    description:
+      'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
+    images: ['/logo.png'],
+  },
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({

@@ -90,7 +90,9 @@ export interface Survey {
   pump_types: string[]
   pump_count: number | null
   pumps: Pump[]
+  production_capacity: number | null    // ⭐ เพิ่ม
 
+  
   electrical_phase: string | null
   electrical_meter_no: string | null
   control_box_condition: string[]
@@ -109,6 +111,7 @@ export interface Survey {
   tank_other: string | null
   tank_count: number | null
   tank_capacity: number | null
+  production_capacity: number | null    // ⭐ เพิ่ม
   tank_condition: string[]
   tank_surrounding: string[]
   tank_notes: string | null
@@ -185,6 +188,7 @@ export interface WaterSystem {
   water_source_type: string | null
   water_rate: number | null
   tank_capacity: number | null
+  production_capacity: number | null    // ⭐ เพิ่ม
   tank_count: number | null
   water_source_sufficiency: string | null
   pipe_total_length: number | null

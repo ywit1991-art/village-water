@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Droplets, Info, HelpCircle } from 'lucide-react'
+import { Droplets, Info, ArrowUp } from 'lucide-react'
 import {
   calcSufficiency,
   SUFFICIENCY_COLORS,
@@ -10,8 +10,6 @@ import {
   WATER_PER_PERSON_PER_DAY,
   PEOPLE_PER_HOUSEHOLD,
   PRODUCTION_HOURS_PER_DAY,
-  type Season,
-  type SufficiencyResult,
 } from '@/lib/water-sufficiency'
 import type { MarkerData } from '@/components/maps/VillagesMapClient'
 import type { ReactNode } from 'react'
@@ -21,43 +19,28 @@ interface Props {
   rightSlot?: ReactNode
 }
 
-interface Row {
-  systemId: number
-  systemName: string
-  systemNo: number
-  villageNo: number
-  villageName: string
-  householdCount: number
-  hasData: boolean
-  normal: SufficiencyResult | null
-  dry: SufficiencyResult | null
-}
-
-type SeasonFilter = 'both' | Season
-
 export default function SufficiencyChart({ markers, rightSlot }: Props) {
-  const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>('both')
   const chartRef = useRef<HTMLDivElement>(null)
   const inView = useInView(chartRef, { once: true, margin: '-50px' })
 
-  const rows: Row[] = useMemo(() => {
+  const rows = useMemo(() => {
     return markers
+      .filter(m => (m.householdCount ?? 0) > 0)
       .map(m => {
-        const hasData = (m.householdCount ?? 0) > 0
+        const s = calcSufficiency(
+          m.householdCount,
+          m.productionCapacity ?? null,
+          m.tankCapacity,
+          'dry',
+          m.totalHP ?? 0,
+        )
         return {
           systemId: m.systemId,
           systemName: m.systemName,
           systemNo: m.systemNo,
           villageNo: m.villageNo,
           villageName: m.villageName,
-          householdCount: m.householdCount,
-          hasData,
-          normal: hasData
-            ? calcSufficiency(m.householdCount, null, 'normal')
-            : null,
-          dry: hasData
-            ? calcSufficiency(m.householdCount, null, 'dry')
-            : null,
+          ...s,
         }
       })
       .sort((a, b) => {
@@ -72,7 +55,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-bold text-brand-900 flex items-center gap-2">
             <Droplets size={18} className="text-brand-600" />
-            ความเพียงพอของน้ำ
+            ความเพียงพอของน้ำ (ฤดูแล้ง)
           </h2>
           {rightSlot}
         </div>
@@ -83,350 +66,266 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
     )
   }
 
-  // นับตามฤดูแล้ง (worst case)
-  const rowsWithData = rows.filter(r => r.hasData && r.dry !== null)
-  const rowsNoData = rows.filter(r => !r.hasData)
-
   const summary = {
-    excellent: rowsWithData.filter(r => r.dry!.level === 'excellent').length,
-    good: rowsWithData.filter(r => r.dry!.level === 'good').length,
-    fair: rowsWithData.filter(r => r.dry!.level === 'fair').length,
-    poor: rowsWithData.filter(r => r.dry!.level === 'poor').length,
-    critical: rowsWithData.filter(r => r.dry!.level === 'critical').length,
-    noData: rowsNoData.length,
+    good: rows.filter(r => r.level === 'good').length,
+    fair: rows.filter(r => r.level === 'fair').length,
+    poor: rows.filter(r => r.level === 'poor').length,
+    critical: rows.filter(r => r.level === 'critical').length,
   }
 
-  // ⭐ แกน Y คงที่
-  const yMax = 1000
-  const yTicks = [1000, 750, 500, 250, 0]
-  const refPct = (100 / yMax) * 100
+  const yMax = 100
+  const yTicks = [100, 75, 50, 25, 0]
 
-  const minWidthPerSystem = seasonFilter === 'both' ? 56 : 40
-  const chartMinWidth = Math.max(rows.length * minWidthPerSystem, 400)
-
-  // ⭐ Summary: แสดงเป็น "จำนวนระบบ" ไม่ใช่ %
-  const totalWithData = rowsWithData.length
-  const avgNormal = totalWithData > 0
-    ? rowsWithData.reduce((a, r) => a + r.normal!.ratio, 0) / totalWithData
-    : 0
-  const avgDry = totalWithData > 0
-    ? rowsWithData.reduce((a, r) => a + r.dry!.ratio, 0) / totalWithData
-    : 0
-  const minDry = totalWithData > 0
-    ? Math.min(...rowsWithData.map(r => r.dry!.ratio))
-    : 0
-  const maxDry = totalWithData > 0
-    ? Math.max(...rowsWithData.map(r => r.dry!.ratio))
-    : 0
+  const chartMinWidth = rows.length < 5 ? 0 : Math.max(rows.length * 60, 500)
 
   return (
     <div className="card p-6 flex flex-col">
-      {/* ============ Header ============ */}
-      <div className="flex items-center gap-3 flex-wrap pb-3 mb-4 border-b border-slate-100">
+      {/* Header */}
+      <div className="flex items-center gap-3 flex-wrap pb-3 mb-6 border-b border-slate-100">
         <h2 className="text-lg font-bold text-brand-900 flex items-center gap-2 shrink-0">
           <Droplets size={18} className="text-brand-600" />
-          ความเพียงพอของน้ำ
+          ความเพียงพอของน้ำ (ฤดูแล้ง)
         </h2>
 
         <span className="text-[11px] text-slate-500 whitespace-nowrap">
           {rows.length} ระบบ · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน ·{' '}
-          {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน ·{' '}
-          {PRODUCTION_HOURS_PER_DAY} ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR}
+          {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน · {PRODUCTION_HOURS_PER_DAY}{' '}
+          ชม./วัน · ฤดูแล้ง ×{DRY_SEASON_FACTOR}
         </span>
 
         <span className="text-slate-300 hidden md:inline">|</span>
 
-        <div className="inline-flex items-center gap-1.5">
-          <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap">
-            แสดง:
-          </span>
-          <div className="inline-flex bg-slate-100 rounded-lg p-0.5">
-            {(
-              [
-                { key: 'both', label: 'ทั้ง 2 ฤดู' },
-                { key: 'normal', label: '🌤️ ปกติ' },
-                { key: 'dry', label: '☀️ ฤดูแล้ง' },
-              ] as const
-            ).map(t => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setSeasonFilter(t.key)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition whitespace-nowrap ${
-                  seasonFilter === t.key
-                    ? 'bg-white text-brand-700 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+        {/* Legend — ผลิต/ต้องการ */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="w-3 h-3 rounded-sm bg-blue-600 shrink-0" />
+            <span className="text-slate-600 whitespace-nowrap">ผลิต</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="w-3 h-3 rounded-sm bg-teal-400 shrink-0" />
+            <span className="text-slate-600 whitespace-nowrap">ต้องการ</span>
           </div>
         </div>
 
-        <span className="text-slate-300 hidden md:inline">|</span>
-
-        <div className="flex items-center gap-3">
-          {seasonFilter !== 'dry' && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="w-3 h-3 rounded-sm bg-sky-500 shrink-0" />
-              <span className="text-slate-600 whitespace-nowrap">ฤดูปกติ</span>
-            </div>
-          )}
-          {seasonFilter !== 'normal' && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="w-3 h-3 rounded-sm bg-orange-500 shrink-0" />
-              <span className="text-slate-600 whitespace-nowrap">
-                ฤดูแล้ง (×{DRY_SEASON_FACTOR})
-              </span>
-            </div>
-          )}
-        </div>
-
+        {/* Legend — ระดับ */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 ml-auto">
-          {(['critical', 'poor', 'fair', 'good', 'excellent'] as const).map(
-            k => {
-              const c = SUFFICIENCY_COLORS[k]
-              const count = summary[k]
-              if (count === 0) return null
-              return (
-                <div key={k} className="flex items-center gap-1 text-xs">
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: c.hex }}
-                  />
-                  <span className="text-slate-500">{c.emoji}</span>
-                  <span className="font-bold text-brand-900 tabular-nums">
-                    {count}
-                  </span>
-                </div>
-              )
-            },
-          )}
-          {summary.noData > 0 && (
-            <div className="flex items-center gap-1 text-xs">
-              <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
-              <span className="text-slate-500">❔</span>
-              <span className="font-bold text-slate-500 tabular-nums">
-                {summary.noData}
-              </span>
-              <span className="text-slate-400">ไม่มีข้อมูล</span>
-            </div>
-          )}
+          {(
+            [
+              { key: 'good', range: '≥ 90%', color: '#1e40af' },
+              { key: 'fair', range: '70-89%', color: '#3b82f6' },
+              { key: 'poor', range: '50-69%', color: '#0ea5e9' },
+              { key: 'critical', range: '< 50%', color: '#94a3b8' },
+            ] as const
+          ).map(item => {
+            const count = summary[item.key]
+            if (count === 0) return null
+            return (
+              <div
+                key={item.key}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border border-slate-200"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ background: item.color }}
+                />
+                <span
+                  className="text-xs font-bold tabular-nums"
+                  style={{ color: item.color }}
+                >
+                  {item.range}
+                </span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs font-bold text-slate-700 tabular-nums">
+                  {count}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* ============ Chart ============ */}
-      <div ref={chartRef} className="overflow-x-auto pb-2">
-        <div style={{ minWidth: `${chartMinWidth}px` }} className="px-2">
-          <div className="flex gap-2">
-            <div className="relative shrink-0 w-14" style={{ height: '360px' }}>
-              {yTicks.map((val, i) => (
-                <div
-                  key={val}
-                  className="absolute right-1 text-[10px] text-slate-400 tabular-nums leading-none"
-                  style={{
-                    top: `${(i / (yTicks.length - 1)) * 100}%`,
-                    transform: 'translateY(-50%)',
-                  }}
-                >
-                  {val}%
-                </div>
-              ))}
-            </div>
+      {/* Chart */}
+      <div className="relative">
+        <div className="text-[10px] text-slate-500 font-semibold pl-16 mb-1">
+          ลบ.ม./วัน
+        </div>
 
-            <div
-              className="relative flex-1 min-w-0"
-              style={{ height: '360px' }}
-            >
-              {yTicks.map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute left-0 right-0 border-t border-dashed border-slate-100"
-                  style={{ top: `${(i / (yTicks.length - 1)) * 100}%` }}
-                />
-              ))}
-
+        <div ref={chartRef} className="overflow-x-auto pb-2">
+          <div
+            style={
+              chartMinWidth > 0 ? { minWidth: `${chartMinWidth}px` } : undefined
+            }
+            className="px-2"
+          >
+            <div className="flex gap-2">
+              {/* Y-axis */}
               <div
-                className="absolute left-0 right-0 border-t-2 border-dashed border-red-300 z-10"
-                style={{ top: `${100 - refPct}%` }}
+                className="relative shrink-0 w-14"
+                style={{ height: '360px' }}
               >
-                <span className="absolute right-0 -top-4 text-[10px] text-red-500 font-semibold bg-white px-1 rounded">
-                  100%
-                </span>
-              </div>
-
-              <div className="absolute inset-0 flex items-end gap-1">
-                {rows.map((row, idx) => {
-                  // ระบบที่ไม่มีข้อมูล → แสดงแท่งเทาสูงเต็ม
-                  if (!row.hasData) {
-                    return (
-                      <div
-                        key={row.systemId}
-                        className="flex-1 flex items-end justify-center min-w-0 h-full"
-                      >
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={inView ? { height: '100%' } : { height: 0 }}
-                          transition={{
-                            duration: 0.7,
-                            delay: 0.1 + idx * 0.04,
-                            ease: 'easeOut',
-                          }}
-                          className="w-3 md:w-4 rounded-t cursor-help"
-                          style={{
-                            background:
-                              'repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px)',
-                          }}
-                          title={`ม.${row.villageNo} ${row.systemName}
-❔ ไม่มีข้อมูลครัวเรือน`}
-                        />
-                      </div>
-                    )
-                  }
-
-                  const normalPct = (row.normal!.ratio / yMax) * 100
-                  const dryPct = (row.dry!.ratio / yMax) * 100
-                  const dryColor = SUFFICIENCY_COLORS[row.dry!.level].hex
-                  const normalColor = '#0ea5e9'
-
+                {yTicks.map((val, i) => {
+                  const isFirst = i === 0
+                  const isLast = i === yTicks.length - 1
                   return (
                     <div
-                      key={row.systemId}
-                      className="flex-1 flex items-end justify-center gap-0.5 min-w-0 h-full"
+                      key={i}
+                      className="absolute right-1 text-[10px] text-slate-400 tabular-nums leading-none"
+                      style={{
+                        top: isFirst
+                          ? '0%'
+                          : isLast
+                            ? '100%'
+                            : `${(i / (yTicks.length - 1)) * 100}%`,
+                        transform: isFirst
+                          ? 'translateY(0)'
+                          : isLast
+                            ? 'translateY(-100%)'
+                            : 'translateY(-50%)',
+                      }}
                     >
-                      {seasonFilter !== 'dry' && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={
-                            inView
-                              ? { height: `${Math.min(normalPct, 100)}%` }
-                              : { height: 0 }
-                          }
-                          transition={{
-                            duration: 0.7,
-                            delay: 0.1 + idx * 0.04,
-                            ease: 'easeOut',
-                          }}
-                          className="w-3 md:w-4 rounded-t cursor-pointer hover:brightness-110"
-                          style={{ background: normalColor }}
-                          title={`ม.${row.villageNo} ${row.systemName}
-── ฤดูปกติ ──
-ครัวเรือน: ${row.householdCount} หลัง (${row.normal!.peopleCount} คน)
-ความต้องการ: ${row.normal!.dailyDemand} ลบ.ม./วัน
-กำลังผลิตที่ต้องการ: ${row.normal!.requiredProduction} ลบ.ม./ชม.
-กำลังผลิตที่มี: ${row.normal!.actualProduction} ลบ.ม./ชม.
-ความเพียงพอ: ${row.normal!.ratio}%`}
-                        />
-                      )}
-
-                      {seasonFilter !== 'normal' && (
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={
-                            inView
-                              ? { height: `${Math.min(dryPct, 100)}%` }
-                              : { height: 0 }
-                          }
-                          transition={{
-                            duration: 0.7,
-                            delay: 0.2 + idx * 0.04,
-                            ease: 'easeOut',
-                          }}
-                          className="w-3 md:w-4 rounded-t cursor-pointer hover:brightness-110"
-                          style={{ background: dryColor }}
-                          title={`ม.${row.villageNo} ${row.systemName}
-── ฤดูแล้ง (×${DRY_SEASON_FACTOR}) ──
-ครัวเรือน: ${row.householdCount} หลัง (${row.dry!.peopleCount} คน)
-ความต้องการ: ${row.dry!.dailyDemand} ลบ.ม./วัน
-กำลังผลิตที่ต้องการ: ${row.dry!.requiredProduction} ลบ.ม./ชม.
-กำลังผลิตที่มี: ${row.dry!.actualProduction} ลบ.ม./ชม.
-ความเพียงพอ: ${row.dry!.ratio}%`}
-                        />
-                      )}
+                      {val}
                     </div>
                   )
                 })}
               </div>
-            </div>
-          </div>
 
-          {/* X-axis */}
-          <div className="flex gap-1 ml-16 mt-2">
-            {rows.map(row => (
-              <div key={row.systemId} className="flex-1 min-w-0 text-center">
-                <p className="text-[10px] font-semibold text-brand-700 truncate leading-tight">
-                  ม.{row.villageNo}
-                </p>
-                <p className="text-[9px] text-slate-500 truncate leading-tight">
-                  {row.systemName}
-                </p>
+              {/* Chart area */}
+              <div
+                className="relative flex-1 min-w-0"
+                style={{ height: '360px' }}
+              >
+                {/* Grid */}
+                {yTicks.map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute left-0 right-0 border-t border-dashed border-slate-100"
+                    style={{ top: `${(i / (yTicks.length - 1)) * 100}%` }}
+                  />
+                ))}
+
+                {/* Bars */}
+                <div className="absolute inset-0 flex items-end justify-center">
+                  {rows.map((row, idx) => {
+                    const prodCapped = row.dailyProduction > yMax
+                    const demandCapped = row.peakDayDemand > yMax
+                    const prodPct = Math.min(
+                      (row.dailyProduction / yMax) * 100,
+                      100,
+                    )
+                    const demandPct = Math.min(
+                      (row.peakDayDemand / yMax) * 100,
+                      100,
+                    )
+
+                    return (
+                      <div
+                        key={row.systemId}
+                        className="flex-1 min-w-0 max-w-[180px] h-full flex items-end justify-center gap-0.5 px-1 relative"
+                      >
+                        {/* Production bar */}
+                        <div className="relative flex flex-col items-center justify-end h-full">
+                          {prodCapped && (
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 text-[9px] font-bold text-blue-700 tabular-nums whitespace-nowrap">
+                              <ArrowUp size={9} />
+                              {Math.round(row.dailyProduction)}
+                            </div>
+                          )}
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={
+                              inView
+                                ? { height: `${prodPct}%` }
+                                : { height: 0 }
+                            }
+                            transition={{
+                              duration: 0.7,
+                              delay: 0.1 + idx * 0.04,
+                              ease: 'easeOut',
+                            }}
+                            className="w-3 md:w-4 rounded-t bg-blue-600 cursor-pointer hover:brightness-110 transition-all"
+                            title={`ม.${row.villageNo} ${row.systemName}
+━━━ ผลิต ━━━
+กำลังผลิต: ${row.actualProduction} ลบ.ม./ชม.
+ผลิต/วัน: ${row.dailyProduction} ลบ.ม.
+เปรียบเทียบ PDD: ${row.productionRatio}%`}
+                          />
+                        </div>
+
+                        {/* Demand bar */}
+                        <div className="relative flex flex-col items-center justify-end h-full">
+                          {demandCapped && (
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-0.5 text-[9px] font-bold text-teal-700 tabular-nums whitespace-nowrap">
+                              <ArrowUp size={9} />
+                              {Math.round(row.peakDayDemand)}
+                            </div>
+                          )}
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={
+                              inView
+                                ? { height: `${demandPct}%` }
+                                : { height: 0 }
+                            }
+                            transition={{
+                              duration: 0.7,
+                              delay: 0.2 + idx * 0.04,
+                              ease: 'easeOut',
+                            }}
+                            className="w-3 md:w-4 rounded-t bg-teal-400 cursor-pointer hover:brightness-110 transition-all"
+                            title={`ม.${row.villageNo} ${row.systemName}
+━━━ ต้องการ (ฤดูแล้ง) ━━━
+ครัวเรือน: ${row.householdCount} หลัง (${row.peopleCount} คน)
+อัตราใช้: ${row.litersPerPerson} ลิตร/คน/วัน
+ADD: ${row.dailyDemand} ลบ.ม./วัน
+PDD: ${row.peakDayDemand} ลบ.ม./วัน`}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* X-axis */}
+            <div className="flex justify-center ml-14 mt-2">
+              {rows.map(row => (
+                <div
+                  key={row.systemId}
+                  className="flex-1 min-w-0 max-w-[180px] text-center px-1"
+                >
+                  <p className="text-[10px] font-semibold text-brand-700 truncate leading-tight">
+                    ม.{row.villageNo}
+                  </p>
+                  <p className="text-[9px] text-slate-500 truncate leading-tight">
+                    {row.systemName}
+                  </p>
+                  <p
+                    className="text-[10px] font-bold tabular-nums leading-tight mt-0.5"
+                    style={{
+                      color: SUFFICIENCY_COLORS[row.level].hex,
+                    }}
+                  >
+                    {row.ratio}%
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      
+      {/* Reference */}
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
         <Info size={12} className="shrink-0 mt-0.5 text-slate-400" />
         <span>
-          <strong>อ้างอิง:</strong> กรมทรัพยากรน้ำ ({WATER_PER_PERSON_PER_DAY}{' '}
-          ลิตร/คน/วัน) · คู่มือการออกแบบระบบประปาหมู่บ้าน (
-          {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน · {PRODUCTION_HOURS_PER_DAY}{' '}
-          ชม./วัน) · Peak Day Factor ฤดูแล้ง ×{DRY_SEASON_FACTOR}{' '}
-          (มาตรฐานการประปาส่วนภูมิภาค)
+          <strong>สูตร:</strong> ผลิต/วัน = กำลังผลิต ×{' '}
+          {PRODUCTION_HOURS_PER_DAY} ชม. · ความต้องการ (PDD) = ครัวเรือน ×{' '}
+          {PEOPLE_PER_HOUSEHOLD} คน × {WATER_PER_PERSON_PER_DAY} ลิตร ×{' '}
+          {DRY_SEASON_FACTOR} (ฤดูแล้ง) · อ้างอิง: กรมทรัพยากรน้ำ +
+          มาตรฐานการประปาส่วนภูมิภาค
         </span>
       </div>
-    </div>
-  )
-}
-
-function SummaryCard({
-  label,
-  value,
-  unit,
-  color,
-  decimals = 0,
-}: {
-  label: string
-  value: number
-  unit?: string
-  color: 'sky' | 'orange' | 'red' | 'emerald'
-  decimals?: number
-}) {
-  const colorMap = {
-    sky: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
-    orange: {
-      bg: 'bg-orange-50',
-      text: 'text-orange-700',
-      border: 'border-orange-200',
-    },
-    red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-    emerald: {
-      bg: 'bg-emerald-50',
-      text: 'text-emerald-700',
-      border: 'border-emerald-200',
-    },
-  }
-  const c = colorMap[color]
-
-  const formatted = value.toLocaleString('th-TH', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })
-
-  return (
-    <div className={`rounded-xl p-3 border ${c.bg} ${c.border}`}>
-      <p className={`text-[10px] font-medium ${c.text} leading-tight`}>
-        {label}
-      </p>
-      <p className={`text-2xl font-bold tabular-nums ${c.text} mt-1`}>
-        {formatted}
-      </p>
-      {unit && (
-        <p className={`text-[10px] ${c.text} opacity-70 mt-0.5`}>{unit}</p>
-      )}
     </div>
   )
 }

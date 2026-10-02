@@ -1,15 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Droplets,
   Users,
   MapPin,
   ArrowRight,
   Shield,
+  Calculator,
+  ChevronDown,
 } from 'lucide-react'
 import { AnimatedCounter } from '@/components/ui/animated-counter'
+import { CalcShowcase } from './CalcShowcase'
 
 interface Props {
   totalVillages: number
@@ -22,6 +26,8 @@ export default function HomeContent({
   totalSystems,
   totalHouseholds,
 }: Props) {
+  const [showCalc, setShowCalc] = useState(false)
+
   const stats = [
     {
       value: totalVillages,
@@ -56,31 +62,20 @@ export default function HomeContent({
       {/* HERO */}
       <section
         id="main-content"
-        className="relative flex-1 max-w-7xl mx-auto px-4 pt-16 md:pt-24 pb-12 w-full flex items-center"
+        className="relative max-w-7xl mx-auto px-4 pt-12 md:pt-20 pb-8 md:pb-12 w-full"
       >
         <div className="flex flex-col items-center text-center w-full">
-          {/* Logo — ลอยขึ้นลงตลอด */}
           <motion.div
             initial={{ opacity: 0, scale: 0.7, y: 20 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: 0,
-            }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="relative mb-8"
+            className="relative mb-6 md:mb-8"
           >
             <div className="absolute inset-0 rounded-full bg-sky-300/40 blur-2xl scale-125 animate-pulse" />
-            <motion.img
+            <img
               src="/logo.png"
               alt="ตราเทศบาลตำบลท่าวังทอง"
-              className="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white"
-              animate={{ y: [0, -10, 0] }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
+              className="relative w-28 h-28 md:w-40 md:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white"
             />
           </motion.div>
 
@@ -88,7 +83,7 @@ export default function HomeContent({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-4xl md:text-6xl font-extrabold text-brand-900 leading-tight tracking-tight"
+            className="text-3xl md:text-6xl font-extrabold text-brand-900 leading-tight tracking-tight"
           >
             ข้อมูลประปาหมู่บ้าน
           </motion.h1>
@@ -97,7 +92,7 @@ export default function HomeContent({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="mt-4 text-base md:text-lg text-brand-600 font-medium"
+            className="mt-3 md:mt-4 text-sm md:text-lg text-brand-600 font-medium px-4"
           >
             เทศบาลตำบลท่าวังทอง · อำเภอเมืองพะเยา · จังหวัดพะเยา
           </motion.p>
@@ -106,60 +101,66 @@ export default function HomeContent({
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
+            className="mt-5 md:mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
           />
 
-          {/* ============================================ */}
-          {/* Stats 3 ใบ — เรียงแนวนอน + ลอยขึ้นลงตลอด      */}
-          {/* ============================================ */}
-          <div className="mt-12 grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-2xl">
+          {/* Stats 3 ใบ */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="mt-10 md:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 w-full max-w-2xl"
+          >
             {stats.map((s, i) => {
               const Icon = s.icon
               return (
-                <motion.div
+                <div
                   key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{
-                    opacity: 1,
-                    y: [0, -8, 0],
-                  }}
-                  transition={{
-                    opacity: { duration: 0.5, delay: 0.65 + i * 0.15 },
-                    y: {
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                      delay: i * 0.4,
-                    },
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  className="group bg-white/80 backdrop-blur-sm rounded-2xl p-3 sm:p-5 shadow-sm hover:shadow-xl ring-1 ring-slate-100 transition-shadow cursor-default"
+                  className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ring-1 ring-slate-100"
                 >
                   <div
-                    className={`inline-flex w-10 h-10 sm:w-12 sm:h-12 rounded-xl items-center justify-center mb-2 sm:mb-3 transition-transform group-hover:scale-110 ${s.bg} ${s.color}`}
+                    className={`inline-flex w-10 h-10 md:w-12 md:h-12 rounded-xl items-center justify-center mb-3 transition-transform group-hover:scale-110 ${s.bg} ${s.color}`}
                   >
-                    <Icon size={20} className="sm:w-[22px] sm:h-[22px]" />
+                    <Icon size={20} className="md:w-[22px] md:h-[22px]" />
                   </div>
                   <div
-                    className={`text-xl sm:text-3xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
+                    className={`text-2xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
                   >
                     <AnimatedCounter value={s.value} />
                   </div>
-                  <div className="text-[10px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 font-medium">
+                  <div className="text-xs text-slate-500 mt-1.5 font-medium">
                     {s.label}
                   </div>
-                </motion.div>
+                </div>
               )
             })}
-          </div>
+          </motion.div>
 
-          {/* CTA */}
+          {/* CTA buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.9 }}
-            className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto"
+            className="mt-10 md:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto"
           >
+            {/* ⭐ ปุ่มตัวอย่างการคำนวณ */}
+            <button
+              type="button"
+              onClick={() => setShowCalc(o => !o)}
+              aria-expanded={showCalc}
+              aria-controls="calc-showcase"
+              className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white text-brand-700 font-semibold ring-2 ring-brand-200 hover:ring-brand-400 hover:bg-brand-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
+            >
+              <Calculator size={18} />
+              ตัวอย่างการคำนวณ
+              <ChevronDown
+                size={16}
+                className={`transition-transform duration-300 ${
+                  showCalc ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
             <Link
               href="/overview"
               className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 to-brand-600 text-white font-semibold shadow-lg shadow-sky-500/30 hover:shadow-xl hover:shadow-sky-500/40 hover:-translate-y-0.5 active:scale-95 transition-all w-full sm:w-auto justify-center"
@@ -182,6 +183,25 @@ export default function HomeContent({
           </motion.div>
         </div>
       </section>
+
+      {/* 📐 EXPANDABLE: CalcShowcase */}
+      <AnimatePresence initial={false}>
+        {showCalc && (
+          <motion.div
+            id="calc-showcase"
+            key="calc"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            className="overflow-hidden relative"
+          >
+            <div className="border-t border-brand-100 bg-white/50">
+              <CalcShowcase />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FOOTER */}
       <footer className="relative mt-auto bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-6">
