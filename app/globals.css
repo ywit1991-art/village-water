@@ -359,9 +359,6 @@ details.form-section > summary::marker {
   .signature-block > div {
     text-align: center;
     padding: 0.75rem;
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    background: #f8fafc;
   }
 
   /* รูปภาพ: 2 คอลัมน์บนมือถือ */

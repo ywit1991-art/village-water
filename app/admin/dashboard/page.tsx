@@ -53,8 +53,8 @@ const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'ดูแลข้อมูลประปาในหมู่บ้านของท่าน',
   },
   operator: {
-    title: 'แดชบอร์ดผู้ดูแลระบบประปา',
-    subtitle: 'ดูแลเฉพาะระบบประปาที่ท่านรับผิดชอบ',
+    title: 'แดชบอร์ดผู้ดูแลข้อมูลประปา',
+    subtitle: 'ดูแลเฉพาะข้อมูลประปาที่ท่านรับผิดชอบ',
   },
 }
 
@@ -224,7 +224,7 @@ export default async function DashboardPage() {
             icon={<Droplets size={18} />}
             color="amber"
             title="ระบบที่คุณดูแล"
-            detail={`${filteredSystems.length} ระบบประปา ใน ${grouped.size} หมู่บ้าน`}
+            detail={`${filteredSystems.length} ข้อมูลประปา ใน ${grouped.size} หมู่บ้าน`}
           />
         )}
 
@@ -269,7 +269,7 @@ export default async function DashboardPage() {
               <Shield size={32} className="mx-auto text-slate-300 mb-3" />
               <p className="text-sm text-slate-500">
                 {session.role === 'operator'
-                  ? 'คุณยังไม่ได้รับมอบหมายระบบประปา'
+                  ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา'
                   : 'ไม่พบข้อมูลหมู่บ้านที่คุณเข้าถึงได้'}
               </p>
             </div>

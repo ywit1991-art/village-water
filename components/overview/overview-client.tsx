@@ -231,7 +231,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={20} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'ข้อมูลประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -273,7 +273,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
+                ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา

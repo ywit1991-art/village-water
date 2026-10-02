@@ -5,7 +5,7 @@ import { SkipLink } from '@/components/ui/skip-link'
 
 export const metadata: Metadata = {
   title: {
-    default: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    default: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
     template: '%s | ประปาหมู่บ้าน ทต.ท่าวังทอง',
   },
   description:
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'th_TH',
-    siteName: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
-    title: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    siteName: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
     description:
       'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
     images: ['/logo.png'],

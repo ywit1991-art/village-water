@@ -166,7 +166,8 @@ export default function ReportView({
             เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            แบบรายงานผล ณ วันที่ {dateFmt(s.survey_date)}
+            แบบรายงานผล ณ วันที่{' '}
+            {dateFmt(s.updated_at ?? s.survey_date ?? s.created_at)}
           </p>
         </header>
 

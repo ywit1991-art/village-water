@@ -8,10 +8,12 @@ import {
   Database,
   BookOpen,
   Home,
-  Package,
-  Info,
   TrendingUp,
 } from 'lucide-react'
+import {
+  SUFFICIENCY_COLORS,
+  type SufficiencyLevel,
+} from '@/lib/water-sufficiency'
 
 const STEPS = [
   {
@@ -36,14 +38,14 @@ const STEPS = [
     title: 'กำลังผลิตที่ต้องการ',
     formula: 'ความต้องการ ÷ 14 ชม.',
     example: '37.5 ÷ 14 = 2.68 ลบ.ม./ชม.',
-    source: 'ระบบประปาหมู่บ้าน 14 ชม./วัน',
+    source: 'ข้อมูลประปาหมู่บ้าน 14 ชม./วัน',
   },
   {
     icon: Database,
     color: 'amber',
     title: 'เปรียบเทียบกับจริง',
     formula: 'ผลิตจริง ÷ ต้องการ × 100',
-    example: '7 ÷ 2.68 = 261%',
+    example: '3.5 ÷ 2.68 = 130%',
     source: 'ข้อมูลปั๊มที่กรอก',
   },
   {
@@ -89,7 +91,38 @@ const COLOR_MAP = {
   },
 } as const
 
+// ⭐ helper: หา level จาก ratio
+function getLevel(ratio: number): SufficiencyLevel {
+  if (ratio >= 90) return 'good'
+  if (ratio >= 70) return 'fair'
+  if (ratio >= 50) return 'poor'
+  return 'critical'
+}
+
 export function CalcShowcase() {
+  // ⭐ ตัวอย่างการคำนวณ
+  const example = {
+    households: 100,
+    people: 500,
+    pdd: 37.5,
+    hp: 5,
+    production: 3.6, // 5 HP × 0.72
+    dailyProduction: 50.4, // 3.6 × 14
+    tankActual: 12,
+    tankRequired: 12.5, // 37.5 × 1/3
+  }
+
+  // คำนวณ ratio
+  const productionRatio = Math.round(
+    (example.dailyProduction / example.pdd) * 100,
+  ) // = 134%
+  const storageRatio = Math.round(
+    (example.tankActual / example.tankRequired) * 100,
+  ) // = 96%
+  const overallRatio = Math.min(productionRatio, storageRatio) // = 96%
+  const overallLevel = getLevel(overallRatio)
+  const overallColor = SUFFICIENCY_COLORS[overallLevel]
+
   return (
     <section className="relative max-w-7xl mx-auto px-4 py-12 w-full">
       {/* Header */}
@@ -104,8 +137,7 @@ export function CalcShowcase() {
           เราคำนวณความเพียงพอของน้ำอย่างไร?
         </h2>
         <p className="text-sm md:text-base text-slate-500 mt-2 max-w-2xl mx-auto leading-relaxed">
-          ระบบประเมินว่าแต่ละจุดประปามีน้ำเพียงพอต่อการใช้งานหรือไม่
-          โดยอ้างอิงจากทฤษฎีและมาตรฐานของหน่วยงานภาครัฐ
+          ระบบประเมินว่าแต่ละจุดประปามีน้ำเพียงพอต่อการใช้งานหรือไม่โดยอ้างอิงจากมาตรฐานของหน่วยงานภาครัฐ
         </p>
       </motion.div>
 
@@ -182,7 +214,7 @@ export function CalcShowcase() {
                 ตัวอย่างการคำนวณจริง
               </h3>
               <p className="text-xs text-brand-100">
-                100 ครัวเรือน · ระบบประปาบาดาล · ปั๊ม 5 แรงม้า
+                100 ครัวเรือน · ปั๊ม 5 แรงม้า · ถังเก็บ 12 ลบ.ม.
               </p>
             </div>
           </div>
@@ -202,7 +234,7 @@ export function CalcShowcase() {
                 <InputRow label="อัตราการใช้น้ำ" value="50 ลิตร/คน/วัน" />
                 <InputRow label="Peak Factor (ฤดูแล้ง)" value="× 1.5" />
                 <InputRow label="ชั่วโมงทำงานระบบ" value="14 ชม./วัน" />
-                <InputRow label="กำลังผลิตปั๊ม" value="5 แรงม้า ≈ 2.5 ลบ.ม./ชม." highlight />
+                <InputRow label="กำลังผลิตปั๊ม" value="5 แรงม้า" highlight />
                 <InputRow label="ความจุถังเก็บ" value="12 ลบ.ม." highlight />
               </div>
             </div>
@@ -220,7 +252,7 @@ export function CalcShowcase() {
                   value="500 คน"
                 />
                 <OutputRow
-                  label="ความต้องการน้ำ (PDD)"
+                  label="ความต้องการ (PDD)"
                   formula="500 × 50 × 1.5 ÷ 1000"
                   value="37.5 ลบ.ม./วัน"
                 />
@@ -230,47 +262,60 @@ export function CalcShowcase() {
                   value="2.68 ลบ.ม./ชม."
                 />
                 <OutputRow
-                  label="กำลังผลิตจริงต่อวัน"
-                  formula="2.5 × 14"
-                  value="35 ลบ.ม./วัน"
+                  label="กำลังผลิตจริง (สุทธิ)"
+                  formula="5 × 0.72"
+                  value="3.6 ลบ.ม./ชม."
                   highlight
-                  highlightColor="text-amber-600"
+                  highlightColor="text-blue-700"
                 />
                 <OutputRow
-                  label="ถังเก็บที่ต้องการ (1/3 PDD)"
+                  label="ผลิตได้/วัน"
+                  formula="3.6 × 14"
+                  value="50.4 ลบ.ม."
+                />
+                <OutputRow
+                  label="ถังเก็บที่ต้องการ"
                   formula="37.5 × 1/3"
                   value="12.5 ลบ.ม."
                 />
               </div>
 
-              {/* Ratio */}
+              {/* Ratio Rows */}
               <div className="mt-4 space-y-2">
                 <RatioRow
                   label="อัตราส่วนกำลังผลิต"
-                  formula="35 ÷ 37.5 × 100"
-                  value="93%"
-                  status="พอใช้"
-                  color="yellow"
+                  formula="50.4 ÷ 37.5 × 100"
+                  ratio={productionRatio}
                 />
                 <RatioRow
                   label="อัตราส่วนถังเก็บ"
                   formula="12 ÷ 12.5 × 100"
-                  value="96%"
-                  status="พอใช้"
-                  color="yellow"
+                  ratio={storageRatio}
                 />
               </div>
 
               {/* Final Result */}
-              <div className="mt-4 p-3 rounded-xl bg-yellow-50 border-2 border-yellow-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">⚠️</span>
+              <div
+                className="mt-4 p-4 rounded-xl border-2"
+                style={{
+                  background: `${overallColor.hex}10`,
+                  borderColor: `${overallColor.hex}50`,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{overallColor.emoji}</span>
                   <div className="flex-1">
-                    <p className="text-xs font-medium text-yellow-700">
-                      สรุปผล
+                    <p
+                      className="text-xs font-medium"
+                      style={{ color: overallColor.hex }}
+                    >
+                      สรุปผล (ตัวที่แย่สุด)
                     </p>
-                    <p className="text-base font-bold text-yellow-800">
-                      พอใช้ · 93%
+                    <p
+                      className="text-lg font-bold"
+                      style={{ color: overallColor.hex }}
+                    >
+                      {overallColor.label} · {overallRatio}%
                     </p>
                   </div>
                 </div>
@@ -315,7 +360,7 @@ export function CalcShowcase() {
                 <span className="text-brand-500 shrink-0">•</span>
                 <span>
                   <strong>จำนวนคนต่อครัวเรือน 5 คน</strong> —
-                  คู่มือออกแบบระบบประปาหมู่บ้าน กรมทรัพยากรน้ำ
+                  คู่มือออกแบบข้อมูลประปาหมู่บ้าน กรมทรัพยากรน้ำ
                 </span>
               </li>
               <li className="flex gap-2">
@@ -329,65 +374,78 @@ export function CalcShowcase() {
                 <span className="text-brand-500 shrink-0">•</span>
                 <span>
                   <strong>ถังเก็บน้ำ ≥ 1/3 ของ PDD</strong> — มาตรฐานขั้นต่ำ
-                  ระบบประปาหมู่บ้าน
+                  ข้อมูลประปาหมู่บ้าน
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-brand-500 shrink-0">•</span>
+                <span>
+                  <strong>สูตรปั๊ม: HP × 0.9 × 0.8 = HP × 0.72</strong> —
+                  คู่มือปั๊มน้ำบาดาล การประปาส่วนภูมิภาค (หักการสูญเสียในท่อ 20%)
                 </span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-6 pt-4 border-t border-brand-100">
-          <p className="text-xs font-semibold text-brand-700 mb-3">
+        {/* ⭐ Legend — 4 การ์ดเต็มความกว้าง */}
+        <div className="mt-6 pt-5 border-t border-brand-100">
+          <p className="text-sm font-semibold text-brand-700 mb-4">
             เกณฑ์การประเมินความเพียงพอ:
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-            {[
-              {
-                emoji: '💧',
-                label: 'เพียงพอ',
-                range: '≥ 900%',
-                color:
-                  'bg-blue-50 text-blue-900 border-blue-300',
-                dotColor: '#0c2b90',
-              },
-              {
-                emoji: '💧',
-                label: 'พอใช้',
-                range: '70-89%',
-                color:
-                  'bg-blue-50 text-blue-800 border-blue-200',
-                dotColor: '#3b82f6',
-              },
-              {
-                emoji: '💧',
-                label: 'ไม่เพียงพอ',
-                range: '50-69%',
-                color:
-                  'bg-sky-50 text-sky-800 border-sky-300',
-                dotColor: '#bae6fd',
-              },
-              {
-                emoji: '💧',
-                label: 'วิกฤต',
-                range: '< 50%',
-                color:
-                  'bg-slate-100 text-slate-700 border-slate-300',
-                dotColor: '#94a3b8',
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`rounded-lg border ${item.color} px-3 py-2 text-center`}
-              >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+            {(
+              [
+                { level: 'good', range: '≥ 90%', desc: 'น้ำเพียงพอต่อความต้องการ' },
+                {
+                  level: 'fair',
+                  range: '70-89%',
+                  desc: 'น้ำเพียงพอมีสำรองจ่าย',
+                },
+                {
+                  level: 'poor',
+                  range: '50-69%',
+                  desc: 'ใช้น้ำอย่างประหยัด',
+                },
+                {
+                  level: 'critical',
+                  range: '< 50%',
+                  desc: 'ต้องดำเนินการแก้ไข',
+                },
+              ] as const
+            ).map(item => {
+              const c = SUFFICIENCY_COLORS[item.level]
+              return (
                 <div
-                  className="w-6 h-6 rounded-full mx-auto mb-1 border-2 border-white shadow-sm"
-                  style={{ background: item.dotColor }}
-                />
-                <p className="text-[11px] font-semibold mt-1">{item.label}</p>
-                <p className="text-[10px] opacity-80">{item.range}</p>
-              </div>
-            ))}
+                  key={item.level}
+                  className="rounded-xl border-2 p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  style={{
+                    background: `${c.hex}10`,
+                    borderColor: `${c.hex}40`,
+                  }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-full mx-auto mb-3 ring-4 ring-white shadow"
+                    style={{ background: c.hex }}
+                  />
+                  <p
+                    className="text-base font-bold leading-tight"
+                    style={{ color: c.hex }}
+                  >
+                    {c.label}
+                  </p>
+                  <p
+                    className="text-sm font-semibold mt-1 tabular-nums"
+                    style={{ color: c.hex }}
+                  >
+                    {item.range}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                    {item.desc}
+                  </p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </motion.div>
@@ -454,36 +512,48 @@ function OutputRow({
   )
 }
 
+// ⭐ RatioRow — คำนวณ status อัตโนมัติจาก ratio
 function RatioRow({
   label,
   formula,
-  value,
-  status,
-  color,
+  ratio,
 }: {
   label: string
   formula: string
-  value: string
-  status: string
-  color: 'green' | 'yellow' | 'orange' | 'red'
+  ratio: number
 }) {
-  const colorMap = {
-    green: 'bg-green-100 text-green-800 border-green-200',
-    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    orange: 'bg-orange-100 text-orange-800 border-orange-200',
-    red: 'bg-red-100 text-red-800 border-red-200',
-  }
+  const level = getLevel(ratio)
+  const c = SUFFICIENCY_COLORS[level]
+
   return (
     <div
-      className={`flex items-center justify-between gap-2 text-xs py-2 px-3 rounded-lg border ${colorMap[color]}`}
+      className="flex items-center justify-between gap-2 text-xs py-2.5 px-3 rounded-lg border-2"
+      style={{
+        background: `${c.hex}10`,
+        borderColor: `${c.hex}40`,
+      }}
     >
       <div className="min-w-0 flex-1">
-        <p className="font-medium truncate">{label}</p>
-        <p className="text-[10px] opacity-70 font-mono truncate">{formula}</p>
+        <p className="font-semibold truncate" style={{ color: c.hex }}>
+          {label}
+        </p>
+        <p
+          className="text-[10px] font-mono truncate opacity-70"
+          style={{ color: c.hex }}
+        >
+          {formula}
+        </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="font-bold tabular-nums text-base">{value}</p>
-        <p className="text-[10px] opacity-80">{status}</p>
+        <p
+          className="font-bold tabular-nums text-base leading-tight"
+          style={{ color: c.hex }}
+        >
+          {ratio}%
+        </p>
+        <p className="text-[10px] font-semibold" style={{ color: c.hex }}>
+          {c.label}
+        </p>
       </div>
     </div>
   )
