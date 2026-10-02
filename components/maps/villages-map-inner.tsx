@@ -32,11 +32,14 @@ import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
 
+type MarkerMode = 'status' | 'problem' | 'sufficiency'
+
 interface Props {
   markers: MarkerData[]
   height?: string
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
+  markerMode?: MarkerMode
 }
 
 const HOVER_DELAY_MS = 800
@@ -107,13 +110,14 @@ export default function VillagesMapInner({
   height = 'h-[500px]',
   isFullscreen = false,
   onToggleFullscreen,
+  markerMode: initialMarkerMode = 'sufficiency',
 }: Props) {
   const [selected, setSelected] = useState<MarkerData | null>(null)
   const [boundary, setBoundary] = useState<
     GeoJSON.FeatureCollection | GeoJSON.Feature | null
   >(null)
   const [showHatch, setShowHatch] = useState(true)
-  const [markerMode, setMarkerMode] = useState<MarkerMode>('sufficiency')
+  const [markerMode, setMarkerMode] = useState<MarkerMode>(initialMarkerMode)
   const [streetViewMarker, setStreetViewMarker] = useState<MarkerData | null>(
     null,
   )
@@ -215,7 +219,6 @@ export default function VillagesMapInner({
                 m.productionCapacity ?? null,
                 m.tankCapacity,
                 'dry',
-                m.totalHP ?? 0,
                 m.totalHP ?? 0,
             )
               icon = createSufficiencyMarkerIcon(suff.level, m.userCount)

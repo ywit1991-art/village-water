@@ -29,7 +29,7 @@ export interface MarkerData {
   householdCount: number
   tankCapacity: number | null
   productionCapacity: number | null
-  totalHP: number                 // ⭐ เพิ่ม
+  totalHP: number
   waterRate: number | null
   waterRateType: string | null
   waterRateTiers: Array<{
@@ -50,11 +50,14 @@ export interface MarkerData {
   photos: string[]
 }
 
+type MarkerMode = 'status' | 'problem' | 'sufficiency'
+
 interface Props {
   markers: MarkerData[]
   height?: string
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
+  markerMode?: MarkerMode
 }
 
 export default function VillagesMapClient({
@@ -62,6 +65,7 @@ export default function VillagesMapClient({
   height,
   isFullscreen,
   onToggleFullscreen,
+  markerMode,
 }: Props) {
   return (
     <VillagesMapInner
@@ -69,6 +73,7 @@ export default function VillagesMapClient({
       height={height}
       isFullscreen={isFullscreen}
       onToggleFullscreen={onToggleFullscreen}
+      markerMode={markerMode}
     />
   )
 }

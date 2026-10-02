@@ -111,7 +111,6 @@ export interface Survey {
   tank_other: string | null
   tank_count: number | null
   tank_capacity: number | null
-  production_capacity: number | null    // ⭐ เพิ่ม
   tank_condition: string[]
   tank_surrounding: string[]
   tank_notes: string | null
