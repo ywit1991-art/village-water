@@ -199,8 +199,8 @@ export default function HomeContent({
             className="mt-5 md:mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
           />
 
-          {/* ⭐ Stats Cards — ลอยขึ้นลงสลับกัน */}
-          <div className="mt-10 md:mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 w-full max-w-2xl">
+          {/* ⭐ Stats Cards — เรียงแนวนอน 3 คอลัมน์ */}
+          <div className="mt-10 md:mt-12 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-3xl">
             {stats.map((s, i) => {
               const Icon = s.icon
               return (
@@ -212,7 +212,6 @@ export default function HomeContent({
                   whileHover={{ y: -8, scale: 1.03 }}
                   className="relative"
                 >
-                  {/* ⭐ ลอยขึ้นลง ตลอดเวลา */}
                   <motion.div
                     animate={{
                       y: [0, -8, 0],
@@ -223,7 +222,7 @@ export default function HomeContent({
                       ease: 'easeInOut',
                       delay: i * 0.3,
                     }}
-                    className="group bg-white/80 backdrop-blur-sm rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-lg transition-all duration-300 ring-1 ring-slate-100 cursor-default"
+                    className="group bg-white/80 backdrop-blur-sm rounded-2xl p-2.5 sm:p-4 md:p-5 shadow-sm hover:shadow-lg transition-all duration-300 ring-1 ring-slate-100 cursor-default h-full text-center"
                   >
                     <motion.div
                       animate={{
@@ -235,16 +234,19 @@ export default function HomeContent({
                         ease: 'easeInOut',
                         delay: i * 0.4,
                       }}
-                      className={`inline-flex w-10 h-10 md:w-12 md:h-12 rounded-xl items-center justify-center mb-3 ${s.bg} ${s.color}`}
+                      className={`inline-flex w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl items-center justify-center mb-2 sm:mb-3 ${s.bg} ${s.color}`}
                     >
-                      <Icon size={20} className="md:w-[22px] md:h-[22px]" />
+                      <Icon
+                        size={18}
+                        className="sm:w-5 sm:h-5 md:w-[22px] md:h-[22px]"
+                      />
                     </motion.div>
                     <div
-                      className={`text-2xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
+                      className={`text-lg sm:text-2xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
                     >
                       <AnimatedCounter value={s.value} />
                     </div>
-                    <div className="text-xs text-slate-500 mt-1.5 font-medium">
+                    <div className="text-[10px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 font-medium">
                       {s.label}
                     </div>
                   </motion.div>
