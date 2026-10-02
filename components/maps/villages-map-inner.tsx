@@ -26,13 +26,11 @@ import {
   calcSufficiency,
   SUFFICIENCY_COLORS,
 } from '@/lib/water-sufficiency'
-import type { MarkerData } from './VillagesMapClient'
+import type { MarkerData, MarkerMode } from './VillagesMapClient'
 import { maskPhone } from '@/lib/utils/phone'
 import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
-
-type MarkerMode = 'status' | 'problem' | 'sufficiency'
 
 interface Props {
   markers: MarkerData[]
@@ -40,11 +38,10 @@ interface Props {
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
   markerMode?: MarkerMode
+  onMarkerModeChange?: (mode: MarkerMode) => void
 }
 
 const HOVER_DELAY_MS = 800
-
-type MarkerMode = 'status' | 'problem' | 'sufficiency'
 
 /** Auto fit bounds */
 function AutoFitBounds({ points }: { points: [number, number][] }) {
@@ -110,18 +107,28 @@ export default function VillagesMapInner({
   height = 'h-[500px]',
   isFullscreen = false,
   onToggleFullscreen,
-  markerMode: initialMarkerMode = 'sufficiency',
+  markerMode: externalMode,
+  onMarkerModeChange,
 }: Props) {
   const [selected, setSelected] = useState<MarkerData | null>(null)
   const [boundary, setBoundary] = useState<
     GeoJSON.FeatureCollection | GeoJSON.Feature | null
   >(null)
   const [showHatch, setShowHatch] = useState(true)
-  const [markerMode, setMarkerMode] = useState<MarkerMode>(initialMarkerMode)
+  const [internalMode, setInternalMode] = useState<MarkerMode>(
+    externalMode ?? 'sufficiency',
+  )
   const [streetViewMarker, setStreetViewMarker] = useState<MarkerData | null>(
     null,
   )
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const markerMode = externalMode ?? internalMode
+
+  function setMarkerMode(mode: MarkerMode) {
+    setInternalMode(mode)
+    onMarkerModeChange?.(mode)
+  }
 
   useEffect(() => {
     fetch('/data/thawangthong.geojson')
@@ -162,7 +169,6 @@ export default function VillagesMapInner({
     [markers],
   )
 
-  // ⭐ นับ "จุดที่พบปัญหา"
   const problemCount = useMemo(() => {
     return markers.filter(m => {
       const hasProblems = (m.problems ?? []).length > 0
@@ -172,7 +178,6 @@ export default function VillagesMapInner({
     }).length
   }, [markers])
 
-  // ⭐ กรอง markers ตาม mode
   const visibleMarkers = useMemo(() => {
     if (markerMode !== 'problem') return markers
     return markers.filter(m => {
@@ -220,7 +225,7 @@ export default function VillagesMapInner({
                 m.tankCapacity,
                 'dry',
                 m.totalHP ?? 0,
-            )
+              )
               icon = createSufficiencyMarkerIcon(suff.level, m.userCount)
             } else {
               icon = createWaterMarkerIcon(m.status, m.userCount)
@@ -244,12 +249,9 @@ export default function VillagesMapInner({
           })}
         </LeafletBase>
 
-        {/* ============================ */}
-        {/* Controls (top-right)         */}
-        {/* สถานะ | จุดที่พบปัญหา | ความเพียงพอ | ซ่อนลายทแยง | ขยายเต็ม */}
-        {/* ============================ */}
+        {/* Controls */}
         <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 flex-wrap justify-end max-w-[calc(100%-1.5rem)]">
-          {/* 1. Marker mode toggle group */}
+          {/* Marker mode toggle group */}
           <div className="inline-flex items-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-brand-100 overflow-hidden">
             <button
               type="button"
@@ -311,7 +313,7 @@ export default function VillagesMapInner({
             </button>
           </div>
 
-          {/* 2. Hatch toggle */}
+          {/* Hatch toggle */}
           <button
             type="button"
             onClick={() => setShowHatch(s => !s)}
@@ -333,7 +335,7 @@ export default function VillagesMapInner({
             )}
           </button>
 
-          {/* 3. Fullscreen — ต่อท้าย */}
+          {/* Fullscreen */}
           {onToggleFullscreen && (
             <button
               type="button"
@@ -392,6 +394,7 @@ function DetailModal({
     m.productionCapacity ?? null,
     m.tankCapacity,
     'dry',
+    m.totalHP ?? 0,
   )
   const suffColor = SUFFICIENCY_COLORS[suff.level]
 

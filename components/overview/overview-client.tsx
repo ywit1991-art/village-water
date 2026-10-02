@@ -8,13 +8,11 @@ import {
   Droplets,
   Home,
   Package,
-  ClipboardList,
   Maximize2,
   Minimize2,
   BarChart3,
   TrendingUp,
   ChevronDown,
-  AlertTriangle,
 } from 'lucide-react'
 import StatusChart from './status-chart'
 import VillageStatusChart from './village-status-chart'
@@ -46,31 +44,44 @@ interface Props {
 export default function OverviewClient({ villages, systems }: Props) {
   const [villageFilter, setVillageFilter] = useState<number | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [mapFullscreen, setMapFullscreen] = useState(false)
+  const [statsFullscreen, setStatsFullscreen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [chartMode, setChartMode] = useState<ChartMode>('status')
+  const [markerMode, setMarkerMode] = useState<MarkerMode>('sufficiency')
   const [chartFilter, setChartFilter] = useState<ChartFilter>({
     type: null,
     value: null,
   })
-  const [markerMode, setMarkerMode] = useState<MarkerMode>('status')
   const mapRef = useRef<HTMLDivElement>(null)
+  const statsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function onFsChange() {
-      setIsFullscreen(!!document.fullscreenElement)
+      const el = document.fullscreenElement
+      setMapFullscreen(el === mapRef.current)
+      setStatsFullscreen(el === statsRef.current)
     }
     document.addEventListener('fullscreenchange', onFsChange)
     return () => document.removeEventListener('fullscreenchange', onFsChange)
   }, [])
 
-  function toggleFullscreen() {
+  function toggleMapFullscreen() {
     if (!mapRef.current) return
     if (document.fullscreenElement) {
       document.exitFullscreen()
     } else {
       mapRef.current.requestFullscreen()
+    }
+  }
+
+  function toggleStatsFullscreen() {
+    if (!statsRef.current) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      statsRef.current.requestFullscreen()
     }
   }
 
@@ -106,13 +117,11 @@ export default function OverviewClient({ villages, systems }: Props) {
       (a, s) => a + (s.survey?.tank_capacity ?? s.system.tank_capacity ?? 0),
       0,
     )
-    const totalSurveys = filtered.filter(s => s.survey != null).length
     return {
       villages: uniqueVillages,
       systems: totalSystems,
       households: totalHouseholds,
       capacity: totalCapacity,
-      surveys: totalSurveys,
     }
   }, [filtered])
 
@@ -136,6 +145,12 @@ export default function OverviewClient({ villages, systems }: Props) {
       const lng = s.survey?.lng ?? s.system.lng
       if (!lat || !lng) continue
 
+      // คำนวณ HP รวม
+      const totalHP = (s.survey?.pumps ?? []).reduce((sum, p) => {
+        const hp = parseFloat(String(p?.hp ?? 0))
+        return sum + (isNaN(hp) ? 0 : hp)
+      }, 0)
+
       const productionTypes = (s.survey?.production_type ?? []).filter(
         (t): t is string => typeof t === 'string' && t.length > 0,
       )
@@ -148,15 +163,6 @@ export default function OverviewClient({ villages, systems }: Props) {
       const photos = (s.survey?.photos ?? []).filter(
         (u): u is string => typeof u === 'string' && u.length > 0,
       )
-
-
-
-      // ⭐ คำนวณ HP รวมจาก pumps
-      const totalHP = (s.survey?.pumps ?? []).reduce((sum, p) => {
-        const hp = parseFloat(String(p?.hp ?? 0))
-        return sum + (isNaN(hp) ? 0 : hp)
-      }, 0)
-
 
       result.push({
         systemId: s.system.id,
@@ -179,7 +185,7 @@ export default function OverviewClient({ villages, systems }: Props) {
           s.survey?.production_capacity ??
           s.system.production_capacity ??
           null,
-        totalHP,                          // ⭐ เพิ่ม
+        totalHP,
         waterRate: s.survey?.water_rate ?? s.system.water_rate ?? null,
         waterRateType: s.survey?.water_rate_type ?? null,
         waterRateTiers: Array.isArray(s.survey?.water_rate_tiers)
@@ -207,16 +213,6 @@ export default function OverviewClient({ villages, systems }: Props) {
 
   const hasFilter = villageFilter !== 'all' || statusFilter !== 'all'
   const hasAnyFilter = hasFilter || chartFilter.type !== null
-
-  // ⚡ นับจำนวนระบบที่มีปัญหา
-  const systemsWithProblems = markers.filter(
-    m => (m.problems?.length ?? 0) > 0,
-  ).length
-
-  const totalProblems = markers.reduce(
-    (sum, m) => sum + (m.problems?.length ?? 0),
-    0,
-  )
 
   function clearAllFilters() {
     setVillageFilter('all')
@@ -256,10 +252,16 @@ export default function OverviewClient({ villages, systems }: Props) {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-50/30">
-      {/* HEADER */}
-      <header className="sticky top-0 z-[2000] bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
+      <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl pointer-events-none" />
+      <div className="absolute top-40 -right-40 w-96 h-96 rounded-full bg-brand-200/30 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-100/20 blur-3xl pointer-events-none" />
+
+      <header className="sticky top-0 z-30 bg-gradient-to-br from-brand-700 via-brand-500 to-brand-400 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
+        <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative shrink-0">
               <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
@@ -271,9 +273,9 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ข้อมูลประปาหมู่บ้าน
+                ระบบประปาหมู่บ้าน
               </h1>
-              <p className="text-[11px] text-brand-100 hidden md:block">
+              <p className="text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
               </p>
             </div>
@@ -282,13 +284,13 @@ export default function OverviewClient({ villages, systems }: Props) {
             <NavLink
               href="/"
               exact
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/15 active:scale-95 transition"
             >
               หน้าหลัก
             </NavLink>
             <NavLink
               href="/admin"
-              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition"
+              className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/15 active:scale-95 transition"
             >
               👤 เจ้าหน้าที่
             </NavLink>
@@ -298,7 +300,7 @@ export default function OverviewClient({ villages, systems }: Props) {
 
       <main
         id="main-content"
-        className="max-w-7xl mx-auto px-4 py-6 w-full space-y-5"
+        className="relative z-10 max-w-7xl mx-auto px-4 py-6 w-full space-y-5"
       >
         {/* FILTER + STATS */}
         <div className="card overflow-hidden shadow-md">
@@ -334,12 +336,12 @@ export default function OverviewClient({ villages, systems }: Props) {
               <div
                 role="status"
                 aria-live="polite"
-                aria-label={`พบ ${filtered.length} ข้อมูล`}
+                aria-label={`พบ ${filtered.length} ระบบ`}
                 className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800"
               >
                 <TrendingUp size={14} aria-hidden="true" />
                 <span className="text-xs font-semibold whitespace-nowrap">
-                  พบ {filtered.length} ข้อมูล
+                  พบ {filtered.length} ระบบ
                 </span>
               </div>
             </div>
@@ -348,7 +350,6 @@ export default function OverviewClient({ villages, systems }: Props) {
               className={`mt-3 ${filtersOpen ? 'block' : 'hidden'} md:block`}
             >
               <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                {/* หมู่บ้าน */}
                 <div className="flex items-center gap-2 shrink-0">
                   <label className="text-xs text-slate-500 whitespace-nowrap shrink-0">
                     หมู่บ้าน
@@ -377,7 +378,6 @@ export default function OverviewClient({ villages, systems }: Props) {
                   </select>
                 </div>
 
-                {/* สถานะ */}
                 <div className="flex items-center gap-2 shrink-0">
                   <label className="text-xs text-slate-500 whitespace-nowrap shrink-0">
                     สถานะ
@@ -451,7 +451,7 @@ export default function OverviewClient({ villages, systems }: Props) {
           </div>
         </div>
 
-        {/* MAIN TABS + SUB-TOGGLE */}
+        {/* MAIN TABS */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
             <button
@@ -480,93 +480,85 @@ export default function OverviewClient({ villages, systems }: Props) {
             </button>
           </div>
 
-          {/* ข้อความอธิบาย (แสดงเมื่อดูแผนที่) */}
-          {viewMode === 'map' && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 min-w-0">
-              <span className="text-slate-300">·</span>
-              {markerMode === 'status' ? (
-                <span className="truncate">
-                  💡 เลื่อนเมาส์ชี้ที่หมุดเพื่อดูรายละเอียด ·{' '}
-                </span>
-              ) : (
-                <span className="truncate text-amber-700">
-                  ⚠️ เฉพาะระบบที่มีปัญหา ·{' '}
-                  <span className="font-semibold">
-                    {systemsWithProblems} ระบบ ({totalProblems} ปัญหา)
-                  </span>
-                </span>
-              )}
-            </div>
-          )}
-
           {viewMode === 'stats' && (
-            <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200 shadow-sm">
-              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
-                ดูสถิติ:
-              </span>
-              <div className="inline-flex bg-slate-100 rounded-lg p-0.5">
-                {(
-                  [
-                    { key: 'status', label: '🍩 สถานะ' },
-                    { key: 'village', label: '📊 หมู่บ้าน' },
-                    { key: 'sufficiency', label: '💧 ความเพียงพอ' },
-                  ] as const
-                ).map(t => (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => setChartMode(t.key)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-                      chartMode === t.key
-                        ? 'bg-white text-brand-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+            <>
+              <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200 shadow-sm">
+                <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                  ดูสถิติ:
+                </span>
+                <div className="inline-flex bg-slate-100 rounded-lg p-0.5">
+                  {(
+                    [
+                      { key: 'status', label: '🍩 สถานะ' },
+                      { key: 'village', label: '📊 หมู่บ้าน' },
+                      { key: 'sufficiency', label: '💧 ความเพียงพอ' },
+                    ] as const
+                  ).map(t => (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setChartMode(t.key)}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
+                        chartMode === t.key
+                          ? 'bg-white text-brand-700 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+
+              <button
+                type="button"
+                onClick={toggleStatsFullscreen}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-brand-50 hover:border-brand-300 text-slate-700 hover:text-brand-700 transition shrink-0 active:scale-95"
+                title={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+                aria-label={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+              >
+                {statsFullscreen ? (
+                  <Minimize2 size={16} />
+                ) : (
+                  <Maximize2 size={16} />
+                )}
+              </button>
+            </>
           )}
         </div>
 
-
         {/* VIEW: แผนที่ */}
         {viewMode === 'map' && (
-          <div className="card overflow-hidden flex flex-col shadow-md">
-            <div
-              ref={mapRef}
-              className="relative flex-1 bg-white"
-              style={
-                isFullscreen
-                  ? { height: '100vh', width: '100vw' }
-                  : undefined
-              }
-            >
-              <VillagesMapClient
-                markers={markers}
-                height={isFullscreen ? 'h-screen' : 'h-[700px]'}
-                markerMode={markerMode}
-                onMarkerModeChange={setMarkerMode}
-                onToggleFullscreen={toggleFullscreen}
-                isFullscreen={isFullscreen}
-              />
-
-              {/* ข้อความอธิบาย (mobile) — ล่างซ้าย */}
-              <div className="absolute bottom-3 left-3 right-3 z-[500] md:hidden pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-md border border-slate-200 text-[11px] text-slate-600 text-center">
-                  {markerMode === 'status'
-                    ? `📍 ${markers.length} ระบบ · เลื่อนเมาส์ชี้ที่หมุด`
-                    : `⚠️ ${systemsWithProblems} ระบบ · ${totalProblems} ปัญหา`}
-                </div>
-              </div>
-            </div>
+          <div
+            ref={mapRef}
+            className="card overflow-hidden shadow-md"
+            style={
+              mapFullscreen
+                ? { height: '100vh', width: '100vw' }
+                : undefined
+            }
+          >
+            <VillagesMapClient
+              markers={markers}
+              height={mapFullscreen ? 'h-screen' : 'h-[700px]'}
+              isFullscreen={mapFullscreen}
+              onToggleFullscreen={toggleMapFullscreen}
+              markerMode={markerMode}
+              onMarkerModeChange={setMarkerMode}
+            />
           </div>
         )}
 
         {/* VIEW: สถิติ */}
         {viewMode === 'stats' && (
-          <div>
+          <div
+            ref={statsRef}
+            className={
+              statsFullscreen
+                ? 'bg-slate-50 h-screen w-screen overflow-auto p-4 md:p-6'
+                : ''
+            }
+          >
             {chartMode === 'status' && (
               <StatusChart
                 statusCount={statusCount}
@@ -612,8 +604,7 @@ export default function OverviewClient({ villages, systems }: Props) {
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-brand-900 text-brand-100 py-4 mt-auto">
+      <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-4 mt-auto">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
           <img
             src="/logo.png"
