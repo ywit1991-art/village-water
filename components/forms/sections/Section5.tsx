@@ -4,19 +4,32 @@ import { useFormContext, useFieldArray } from 'react-hook-form'
 import { FormSection, CheckboxGroup } from '../FormSection'
 import { Plus, Trash2, Info } from 'lucide-react'
 import { CK } from '@/lib/constants'
+import {
+  PUMP_FLOW_PER_HP,
+  PUMP_EFFICIENCY,
+  PUMP_NET_PER_HP,
+} from '@/lib/water-sufficiency'
 
 export function Section5() {
-  const { register, control, watch } = useFormContext()
+  const { register, control, watch, setValue } = useFormContext()
   const { fields, append, remove } = useFieldArray({ control, name: 'pumps' })
 
   const pumps = (watch('pumps') as any[]) ?? []
 
-  // คำนวณกำลังผลิตประมาณจาก HP รวม
+  // ⭐ คำนวณกำลังผลิตประมาณจาก HP รวม (ใช้สูตรเดียวกับระบบ)
   const totalHP = pumps.reduce((sum, p) => {
     const hp = parseFloat(String(p?.hp ?? 0))
     return sum + (isNaN(hp) ? 0 : hp)
   }, 0)
-  const estimatedCapacity = Math.round(totalHP * 0.5 * 100) / 100
+  const estimatedCapacity = Math.round(totalHP * PUMP_NET_PER_HP * 100) / 100
+
+  function useEstimate() {
+    // ⭐ ใช้ setValue ของ React Hook Form แทน DOM manipulation
+    setValue('production_capacity', estimatedCapacity, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
 
   return (
     <FormSection number={5} title="ข้อมูลสูบน้ำ">
@@ -68,11 +81,14 @@ export function Section5() {
               />
               <input
                 placeholder="ขนาด (แรงม้า)"
+                type="number"
+                step="any"
                 {...register(`pumps.${i}.hp`)}
                 className="input"
               />
               <input
                 placeholder="อายุ (ปี)"
+                type="number"
                 {...register(`pumps.${i}.age`)}
                 className="input"
               />
@@ -125,13 +141,16 @@ export function Section5() {
               step="any"
               {...register('production_capacity', { valueAsNumber: true })}
               className="input"
-              placeholder="เช่น 7"
+              placeholder="เช่น 3.6"
             />
             <p className="text-xs text-slate-500 mt-1.5 flex items-start gap-1">
               <Info size={12} className="shrink-0 mt-0.5" />
               <span>
                 ดูได้จากสเปกปั๊ม หรือคำนวณจาก{' '}
-                <strong>แรงม้ารวม × 0.5</strong>
+                <strong>
+                  แรงม้ารวม × {PUMP_FLOW_PER_HP} × {PUMP_EFFICIENCY} ={' '}
+                  {PUMP_NET_PER_HP}
+                </strong>
               </span>
             </p>
           </div>
@@ -148,20 +167,15 @@ export function Section5() {
                 <span className="text-sm text-brand-600">ลบ.ม./ชม.</span>
                 <button
                   type="button"
-                  onClick={() => {
-                    const input = document.querySelector<HTMLInputElement>(
-                      'input[name="production_capacity"]',
-                    )
-                    if (input) {
-                      input.value = String(estimatedCapacity)
-                      input.dispatchEvent(new Event('input', { bubbles: true }))
-                    }
-                  }}
-                  className="ml-auto text-xs px-2.5 py-1 rounded bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-medium transition"
+                  onClick={useEstimate}
+                  className="ml-auto text-xs px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-medium transition"
                 >
                   ใช้ค่านี้
                 </button>
               </div>
+              <p className="text-[10px] text-brand-600 mt-1">
+                สูตร: {totalHP} × {PUMP_NET_PER_HP} = {estimatedCapacity} ลบ.ม./ชม.
+              </p>
             </div>
           )}
         </div>

@@ -32,7 +32,7 @@ import { NavLink } from '@/components/ui/nav-link'
 import CreateSystemModal from './create-system-modal'
 import IdleGuard from './idle-guard'
 import DeleteSystemButton from './delete-system-button'
-
+import EditSystemModal from './edit-system-modal'
 interface SystemRow {
   system: WaterSystem
   village: Village
@@ -382,12 +382,13 @@ export default async function DashboardPage() {
 
                             {/* Row 3: ปุ่ม icon */}
                             <div className="flex items-center gap-1.5">
+                              {/* ⭐ ปุ่มแก้ไขชื่อ */}
+                              <EditSystemModal system={sys} />
+
                               <Link
                                 href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                aria-label={
-                                  s ? 'แก้ไขแบบฟอร์ม' : 'กรอกแบบฟอร์ม'
-                                }
-                                className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white transition"
+                                aria-label={s ? 'แก้ไขแบบฟอร์ม' : 'กรอกแบบฟอร์ม'}
+                                className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
                               >
                                 {s ? (
                                   <Pencil size={18} />
@@ -523,6 +524,9 @@ export default async function DashboardPage() {
                                 </td>
                                 <td className="p-3 text-right whitespace-nowrap">
                                   <div className="inline-flex items-center gap-2">
+                                    {/* ⭐ ปุ่มแก้ไขชื่อ/พิกัด */}
+                                    <EditSystemModal system={sys} />
+
                                     <Link
                                       href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
