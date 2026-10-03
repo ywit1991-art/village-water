@@ -32,7 +32,7 @@ import { NavLink } from '@/components/ui/nav-link'
 import CreateSystemModal from './create-system-modal'
 import IdleGuard from './idle-guard'
 import DeleteSystemButton from './delete-system-button'
-import EditSystemModal from './edit-system-modal'
+
 interface SystemRow {
   system: WaterSystem
   village: Village
@@ -53,8 +53,8 @@ const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
     subtitle: 'ดูแลข้อมูลประปาในหมู่บ้านของท่าน',
   },
   operator: {
-    title: 'แดชบอร์ดผู้ดูแลข้อมูลประปา',
-    subtitle: 'ดูแลเฉพาะข้อมูลประปาที่ท่านรับผิดชอบ',
+    title: 'แดชบอร์ดผู้ดูแลระบบประปา',
+    subtitle: 'ดูแลเฉพาะระบบประปาที่ท่านรับผิดชอบ',
   },
 }
 
@@ -127,7 +127,7 @@ export default async function DashboardPage() {
       <IdleGuard timeout={60_000} warnBefore={15_000} />
 
       {/* HEADER */}
-      <header className="sticky top-0 z-[2000] bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
+      <header className="sticky top-0 z-30 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <Link href="/" className="flex items-center gap-3 min-w-0">
             <div className="relative shrink-0">
@@ -224,11 +224,11 @@ export default async function DashboardPage() {
             icon={<Droplets size={18} />}
             color="amber"
             title="ระบบที่คุณดูแล"
-            detail={`${filteredSystems.length} ข้อมูลประปา ใน ${grouped.size} หมู่บ้าน`}
+            detail={`${filteredSystems.length} ระบบประปา ใน ${grouped.size} หมู่บ้าน`}
           />
         )}
 
-        {/* Stats — 3 ใบ */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-6">
           <div className="card p-3 md:p-4">
             <p className="text-[11px] md:text-xs text-brand-500 truncate">
@@ -269,7 +269,7 @@ export default async function DashboardPage() {
               <Shield size={32} className="mx-auto text-slate-300 mb-3" />
               <p className="text-sm text-slate-500">
                 {session.role === 'operator'
-                  ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา'
+                  ? 'คุณยังไม่ได้รับมอบหมายระบบประปา'
                   : 'ไม่พบข้อมูลหมู่บ้านที่คุณเข้าถึงได้'}
               </p>
             </div>
@@ -306,9 +306,7 @@ export default async function DashboardPage() {
                   </div>
                 ) : (
                   <>
-                    {/* ====================== */}
-                    {/* Mobile: Card Layout    */}
-                    {/* ====================== */}
+                    {/* Mobile: Card Layout */}
                     <div className="md:hidden divide-y divide-brand-50">
                       {rows.map(({ system: sys, survey: s }) => {
                         const st =
@@ -382,13 +380,12 @@ export default async function DashboardPage() {
 
                             {/* Row 3: ปุ่ม icon */}
                             <div className="flex items-center gap-1.5">
-                              {/* ⭐ ปุ่มแก้ไขชื่อ */}
-                              <EditSystemModal system={sys} />
-
                               <Link
                                 href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
-                                aria-label={s ? 'แก้ไขแบบฟอร์ม' : 'กรอกแบบฟอร์ม'}
-                                className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
+                                aria-label={
+                                  s ? 'แก้ไขแบบฟอร์ม' : 'กรอกแบบฟอร์ม'
+                                }
+                                className="flex-1 inline-flex items-center justify-center px-3 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white transition"
                               >
                                 {s ? (
                                   <Pencil size={18} />
@@ -423,9 +420,7 @@ export default async function DashboardPage() {
                       })}
                     </div>
 
-                    {/* ====================== */}
-                    {/* Desktop: Table         */}
-                    {/* ====================== */}
+                    {/* Desktop: Table */}
                     <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-white text-brand-700 border-b border-brand-50">
@@ -524,9 +519,6 @@ export default async function DashboardPage() {
                                 </td>
                                 <td className="p-3 text-right whitespace-nowrap">
                                   <div className="inline-flex items-center gap-2">
-                                    {/* ⭐ ปุ่มแก้ไขชื่อ/พิกัด */}
-                                    <EditSystemModal system={sys} />
-
                                     <Link
                                       href={`/admin/surveys/${s?.id ?? 'new'}?village=${v.id}&system=${sys.id}`}
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-medium transition"
@@ -582,9 +574,6 @@ export default async function DashboardPage() {
   )
 }
 
-// ========================================
-// Sub-component: Scope Banner
-// ========================================
 function ScopeBanner({
   icon,
   title,

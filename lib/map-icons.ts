@@ -13,7 +13,6 @@ const STATUS_EMOJI: Record<string, string> = {
   'ไม่มีข้อมูล': '❔',
 }
 
-/** Marker ตามสถานะเดิม */
 export function createWaterMarkerIcon(
   condition: string | null,
   userCount: number = 0,
@@ -49,7 +48,6 @@ export function createWaterMarkerIcon(
   })
 }
 
-/** Marker ตามระดับความเพียงพอ — สีน้ำเงิน-ฟ้า-เทา */
 export function createSufficiencyMarkerIcon(
   level: SufficiencyLevel,
   userCount: number = 0,
@@ -57,23 +55,26 @@ export function createSufficiencyMarkerIcon(
   const c = SUFFICIENCY_COLORS[level]
   const size = getMarkerSize(userCount)
 
+  // no-data — ใช้เส้นประเพื่อแสดงว่าไม่มีข้อมูล
+  const isNoData = level === 'no-data'
+
   const html = `
     <div style="
       width: ${size}px;
       height: ${size}px;
       border-radius: 9999px;
-      background: ${c.hex};
-      border: 3px solid white;
-      box-shadow: 0 3px 8px ${c.hex}80;
+      background: ${isNoData ? '#f1f5f9' : c.hex};
+      border: 3px ${isNoData ? 'dashed #94a3b8' : 'solid white'};
+      box-shadow: 0 3px 8px ${isNoData ? 'rgba(0,0,0,0.15)' : `${c.hex}80`};
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: ${Math.round(size * 0.5)}px;
       line-height: 1;
       user-select: none;
-      color: white;
+      color: ${isNoData ? '#94a3b8' : 'white'};
       font-weight: bold;
-    ">${size > 40 ? c.emoji : ''}</div>
+    ">${size > 36 ? (isNoData ? '❔' : c.emoji) : ''}</div>
   `
 
   return L.divIcon({

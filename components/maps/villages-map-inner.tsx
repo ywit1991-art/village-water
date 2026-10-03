@@ -404,6 +404,8 @@ function DetailModal({
   const photos = m.photos ?? []
   const productionTypes = m.productionTypes ?? []
 
+  const isNoData = suff.level === 'no-data'
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60"
@@ -494,8 +496,9 @@ function DetailModal({
               label="น้ำดิบ"
               small
             />
+            {/* ⭐ ความเพียงพอ */}
             <StatBox
-              value={`${suff.ratio}%`}
+              value={isNoData ? '—' : `${suff.ratio}%`}
               label={suffColor.label}
               small
               color={suffColor.hex}
@@ -520,6 +523,22 @@ function DetailModal({
               small
             />
           </div>
+
+          {/* ⭐ แสดงแจ้งเตือนถ้าไม่มีข้อมูล */}
+          {isNoData && (
+            <div className="px-4 md:px-8 pt-5">
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-xl shrink-0">
+                  ❔
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-700 text-sm md:text-base">
+                    ยังไม่มีข้อมูลสำหรับประเมิน
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="px-4 md:px-8 py-5 md:py-6 space-y-5 md:space-y-6">
             {m.operatorName && (

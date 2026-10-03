@@ -67,6 +67,7 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
   }
 
   const summary = {
+    'no-data': rows.filter(r => r.level === 'no-data').length,
     good: rows.filter(r => r.level === 'good').length,
     fair: rows.filter(r => r.level === 'fair').length,
     poor: rows.filter(r => r.level === 'poor').length,
@@ -107,10 +108,11 @@ export default function SufficiencyChart({ markers, rightSlot }: Props) {
           </div>
         </div>
 
-        {/* Legend — ระดับ */}
+        {/* Legend — ระดับ (5 badges) */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 ml-auto">
           {(
             [
+              { key: 'no-data', range: 'ไม่มีข้อมูล', color: '#cbd5e1' },
               { key: 'good', range: '≥ 90%', color: '#1e40af' },
               { key: 'fair', range: '70-89%', color: '#3b82f6' },
               { key: 'poor', range: '50-69%', color: '#0ea5e9' },
@@ -306,7 +308,7 @@ PDD: ${row.peakDayDemand} ลบ.ม./วัน`}
                       color: SUFFICIENCY_COLORS[row.level].hex,
                     }}
                   >
-                    {row.ratio}%
+                    {row.level === 'no-data' ? '—' : `${row.ratio}%`}
                   </p>
                 </div>
               ))}

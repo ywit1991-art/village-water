@@ -77,7 +77,6 @@ export async function loginAction(
     path: '/',
   })
 
-  // 📝 Audit Log
   await logAudit({
     session: sessionData,
     action: 'login',
@@ -122,7 +121,6 @@ export async function createWaterSystemAction(
   const lat = formData.get('lat') ? Number(formData.get('lat')) : null
   const lng = formData.get('lng') ? Number(formData.get('lng')) : null
 
-  // 🔒 Validation
   if (!villageId) return { error: 'ไม่พบหมู่บ้าน' }
   if (!systemName) return { error: 'กรุณากรอกชื่อข้อมูล' }
   if (systemName.length > 200) {
@@ -135,7 +133,6 @@ export async function createWaterSystemAction(
     return { error: 'ลองจิจูดไม่ถูกต้อง (-180 ถึง 180)' }
   }
 
-  // 🔒 ตรวจสอบสิทธิ์
   if (!canAccessVillage(session, villageId)) {
     return { error: 'คุณไม่มีสิทธิ์เพิ่มข้อมูลในหมู่บ้านนี้' }
   }
@@ -168,7 +165,6 @@ export async function createWaterSystemAction(
     return { error: error?.message ?? 'สร้างไม่สำเร็จ' }
   }
 
-  // 📝 Audit Log
   await logAudit({
     session,
     action: 'create_system',
@@ -197,17 +193,10 @@ export async function updateWaterSystemAction(
   const lat = formData.get('lat') ? Number(formData.get('lat')) : null
   const lng = formData.get('lng') ? Number(formData.get('lng')) : null
 
-  // 🔒 Validation
   if (!id) return { error: 'ไม่พบ id' }
   if (!systemName) return { error: 'กรุณากรอกชื่อข้อมูล' }
   if (systemName.length > 200) {
     return { error: 'ชื่อข้อมูลยาวเกินไป (สูงสุด 200 ตัวอักษร)' }
-  }
-  if (lat !== null && (isNaN(lat) || lat < -90 || lat > 90)) {
-    return { error: 'ละติจูดไม่ถูกต้อง' }
-  }
-  if (lng !== null && (isNaN(lng) || lng < -180 || lng > 180)) {
-    return { error: 'ลองจิจูดไม่ถูกต้อง' }
   }
 
   const sb = adminSb()
@@ -247,7 +236,6 @@ export async function deleteWaterSystemAction(id: number) {
   const session = await getSession()
   if (!session) return
 
-  // 🔒 ตรวจสิทธิ์ — เฉพาะ staff/super_admin
   if (session.role !== 'super_admin' && session.role !== 'staff') {
     return
   }
@@ -297,7 +285,6 @@ export async function createStaffAction(
     ? systemIdsRaw.split(',').map(Number).filter(n => !isNaN(n))
     : []
 
-  // 🔒 Validation
   if (!code || code.length !== 10) return { error: 'เลขต้องเป็น 10 หลัก' }
   if (!/^\d{10}$/.test(code)) return { error: 'เลขต้องเป็นตัวเลข 10 หลัก' }
   if (!fullName) return { error: 'กรุณากรอกชื่อ' }
@@ -375,7 +362,6 @@ export async function updateStaffAction(
     ? systemIdsRaw.split(',').map(Number).filter(n => !isNaN(n))
     : []
 
-  // 🔒 Validation
   if (!id) return { error: 'ไม่พบ id' }
   if (!fullName) return { error: 'กรุณากรอกชื่อ' }
   if (!['super_admin', 'staff', 'village_head', 'operator'].includes(role)) {
@@ -477,7 +463,6 @@ export async function saveSurveyAction(
     ? Number(formData.get('water_system_id'))
     : null
 
-  // 🔒 Validation
   if (!['draft', 'submitted'].includes(status)) {
     return { error: 'สถานะไม่ถูกต้อง' }
   }
@@ -507,7 +492,6 @@ export async function saveSurveyAction(
 
   const cleaned = cleanSurveyPayload(rawValues)
 
-  // ⭐ Validation water_rate_tiers
   if (
     cleaned.water_rate_type === 'tiered' &&
     Array.isArray(cleaned.water_rate_tiers) &&
@@ -539,15 +523,42 @@ export async function saveSurveyAction(
     if (error) return { error: 'บันทึกไม่สำเร็จ: ' + error.message }
   }
 
-  // ⭐ Sync production_capacity → water_systems
-  if (systemId && status === 'submitted') {
-    await sb
-      .from('water_systems')
-      .update({
-        production_capacity: cleaned.production_capacity ?? null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', systemId)
+  // ⭐ Sync ข้อมูลกลับไป water_systems (ทั้งชื่อ + กำลังผลิต)
+  if (systemId) {
+    const sysUpdate: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    }
+
+    // Sync ชื่อระบบประปา (ถ้ามีการแก้ในฟอร์ม)
+    const newName = cleaned.water_system_name
+    if (
+      newName &&
+      typeof newName === 'string' &&
+      newName.trim().length > 0
+    ) {
+      sysUpdate.system_name = newName.trim()
+    }
+
+    // Sync กำลังผลิต (เฉพาะเมื่อส่งข้อมูล)
+    if (status === 'submitted' && cleaned.production_capacity != null) {
+      sysUpdate.production_capacity = cleaned.production_capacity
+    }
+
+    // Sync ข้อมูลอื่นๆ ที่อาจมี
+    if (cleaned.water_rate != null) {
+      sysUpdate.water_rate = cleaned.water_rate
+    }
+    if (cleaned.tank_capacity != null) {
+      sysUpdate.tank_capacity = cleaned.tank_capacity
+    }
+    if (cleaned.household_count != null) {
+      sysUpdate.household_count = cleaned.household_count
+    }
+    if (cleaned.user_count != null) {
+      sysUpdate.user_count = cleaned.user_count
+    }
+
+    await sb.from('water_systems').update(sysUpdate).eq('id', systemId)
   }
 
   await logAudit({
@@ -562,6 +573,7 @@ export async function saveSurveyAction(
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/surveys')
   revalidatePath('/overview')
+  revalidatePath('/')
   return { ok: true }
 }
 
@@ -586,7 +598,6 @@ function validateTiers(
     }
   }
 
-  // ตรวจ overlap
   for (let i = 0; i < tiers.length - 1; i++) {
     const cur = tiers[i]
     const next = tiers[i + 1]
@@ -652,7 +663,6 @@ function cleanSurveyPayload(obj: Record<string, any>): Record<string, any> {
   for (const [key, value] of Object.entries(obj)) {
     if (key === 'id' || key === 'created_at' || key === 'updated_at') continue
 
-    // ⭐ water_rate_tiers — จัดการพิเศษ
     if (key === 'water_rate_tiers') {
       if (!Array.isArray(value)) {
         out[key] = []
