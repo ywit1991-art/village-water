@@ -207,7 +207,7 @@ details.form-section > summary::marker {
 }
 
 .report-page {
-  font-size: 14pt;
+  font-size: 11pt;
   line-height: 1.5;
   color: #0f172a;
   background: #ffffff;
@@ -259,7 +259,7 @@ details.form-section > summary::marker {
 }
 
 .report-section table {
-  font-size: 11pt;
+  font-size: 10pt;
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
@@ -306,7 +306,7 @@ details.form-section > summary::marker {
 /* ============================================================ */
 @media (max-width: 767px) {
   .report-page {
-    font-size: 11pt;
+    font-size: 10pt;
     line-height: 1.5;
     padding: 1rem !important;
     margin: 0.5rem !important;

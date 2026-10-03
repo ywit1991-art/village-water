@@ -2,6 +2,7 @@
 
 import { Printer, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { ClientDate } from '@/components/ui/client-date'
 import type {
   Survey,
   Village,
@@ -43,36 +44,55 @@ function dateFmt(v: string | null | undefined): string {
   }
 }
 
-// ========================================
-// Sub-components
-// ========================================
 function Section({
   num,
   title,
   children,
   long = false,
+  cols = 1,
 }: {
   num: number
   title: string
   children: React.ReactNode
   long?: boolean
+  cols?: 1 | 2
 }) {
   return (
     <section
       className={`report-section ${long ? 'long-section' : ''}`}
       data-section={num}
     >
-      <h2 className="text-base font-bold text-slate-900 bg-slate-100 border-l-4 border-slate-800 px-3 py-1.5 mb-3">
+      <h2 className="text-sm font-bold text-slate-900 bg-slate-100 border-l-4 border-slate-800 px-3 py-1.5 mb-3">
         {num}. {title}
       </h2>
-      <div className="space-y-1.5 pl-1">{children}</div>
+      <div
+        className={
+          cols === 2
+            ? 'grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-x-8 gap-y-1 pl-1'
+            : 'space-y-1.5 pl-1'
+        }
+      >
+        {children}
+      </div>
     </section>
   )
 }
 
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
+function Row({
+  label,
+  value,
+  span = false,
+}: {
+  label: string
+  value: React.ReactNode
+  span?: boolean
+}) {
   return (
-    <div className="flex gap-2 leading-relaxed">
+    <div
+      className={`flex gap-2 leading-relaxed ${
+        span ? 'md:col-span-2 print:col-span-2' : ''
+      }`}
+    >
       <span className="report-field-label">{label}:</span>
       <span className="report-field-value">{value}</span>
     </div>
@@ -269,7 +289,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 4. แหล่งน้ำดิบ -------- */}
-        <Section num={4} title="ข้อมูลแหล่งน้ำดิบ">
+        <Section num={4} title="ข้อมูลแหล่งน้ำดิบ" cols={2}>
           <Row label="ประเภทแหล่งน้ำ" value={fmt(s.water_source_type)} />
           <Row label="ชื่อแหล่งน้ำ" value={fmt(s.water_source_name)} />
           <Row
@@ -353,7 +373,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 6. ไฟฟ้า -------- */}
-        <Section num={6} title="ข้อมูลไฟฟ้าและตู้ควบคุม">
+        <Section num={6} title="ข้อมูลไฟฟ้าและตู้ควบคุม"cols={2}>
           <Row label="ข้อมูลไฟฟ้า" value={fmt(s.electrical_phase)} />
           <Row label="เลขมิเตอร์ไฟฟ้า" value={fmt(s.electrical_meter_no)} />
           <Row label="สภาพตู้ควบคุม" value={fmt(s.control_box_condition)} />
@@ -366,7 +386,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 7. ข้อมูลผลิต -------- */}
-        <Section num={7} title="ข้อมูลข้อมูลผลิตน้ำประปา">
+        <Section num={7} title="ข้อมูลข้อมูลผลิตน้ำประปา" cols={2}>
           <Row label="ประเภทข้อมูลผลิต" value={fmt(s.production_type)} />
           <Row label="อื่น ๆ" value={fmt(s.production_other)} />
           <Row label="ข้อมูลกรองน้ำ" value={fmt(s.has_filter)} />
@@ -376,7 +396,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 8. ถังเก็บน้ำ -------- */}
-        <Section num={8} title="ถังเก็บน้ำ / ถังสูง">
+        <Section num={8} title="ถังเก็บน้ำ / ถังสูง" cols={2}>
           <Row label="ประเภทถัง" value={fmt(s.tank_types)} />
           <Row label="อื่น ๆ" value={fmt(s.tank_other)} />
           <Row
@@ -393,7 +413,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 9. ท่อส่งน้ำ -------- */}
-        <Section num={9} title="ข้อมูลท่อส่งน้ำและจ่ายน้ำ">
+        <Section num={9} title="ข้อมูลท่อส่งน้ำและจ่ายน้ำ" cols={2}>
           <Row label="วัสดุท่อ" value={fmt(s.pipe_materials)} />
           <Row label="อื่น ๆ" value={fmt(s.pipe_other)} />
           <Row label="ขนาดท่อเมน" value={fmt(s.pipe_main_size)} />
@@ -410,7 +430,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 10. ผู้ใช้น้ำ -------- */}
-        <Section num={10} title="ข้อมูลผู้ใช้น้ำ">
+        <Section num={10} title="ข้อมูลผู้ใช้น้ำ" cols={2}>
           <Row label="ครัวเรือนในพื้นที่" value={s.household_count ?? '—'} />
           <Row label="ผู้ใช้น้ำทั้งหมด" value={s.user_count ?? '—'} />
           <Row label="มีมิเตอร์" value={s.metered_user_count ?? '—'} />
@@ -419,7 +439,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 11. บริหารจัดการ (มี tiers) -------- */}
-        <Section num={11} title="การบริหารจัดการกิจการประปา" long={isTiered}>
+        <Section num={11} title="การบริหารจัดการกิจการประปา" cols={2} long={isTiered}>
           <Row label="ระเบียบ/ข้อบังคับ" value={fmt(s.has_regulations)} />
           <Row
             label="การประชุมคณะกรรมการ"
@@ -528,7 +548,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 13. คุณภาพน้ำ -------- */}
-        <Section num={13} title="คุณภาพน้ำประปา">
+        <Section num={13} title="คุณภาพน้ำประปา" cols={2}>
           <Row
             label="ลักษณะน้ำที่ได้รับ"
             value={fmt(s.water_quality_appearance)}
@@ -581,7 +601,7 @@ export default function ReportView({
         </Section>
 
         {/* -------- 15. สรุป -------- */}
-        <Section num={15} title="สรุปผลการตรวจสอบ">
+        <Section num={15} title="สรุปผลการตรวจสอบ" cols={2}>
           <Row
             label="สภาพโดยรวม"
             value={
@@ -654,13 +674,13 @@ export default function ReportView({
         {/* -------- Footer -------- */}
         <footer className="mt-8 pt-3 border-t border-slate-300 text-center text-xs text-slate-500">
           <p>
-            เอกสารนี้พิมพ์จากข้อมูลฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
+            เอกสารนี้พิมพ์จากระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
           </p>
           <p className="mt-0.5">
-            พิมพ์เมื่อ {new Date().toLocaleString('th-TH')}
+            พิมพ์เมื่อ <ClientDate mode="datetime" fallback="กำลังโหลด..." />
           </p>
         </footer>
-      </div>
+              </div>
     </>
   )
 }
