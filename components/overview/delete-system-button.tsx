@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Trash2, AlertTriangle, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { deleteWaterSystemAction } from '../actions'
+import { deleteWaterSystemAction } from '@/app/admin/actions'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
 
 interface Props {
@@ -23,7 +23,9 @@ export default function DeleteSystemButton({
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
-  const modalRef = useFocusTrap<HTMLDivElement>(open, () => !isPending && setOpen(false))
+  const modalRef = useFocusTrap<HTMLDivElement>(open, () =>
+    !isPending && setOpen(false),
+  )
 
   function handleDelete() {
     startTransition(async () => {
@@ -44,12 +46,12 @@ export default function DeleteSystemButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs active:scale-95 transition"
+        className="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs active:scale-95 transition px-3 py-2.5 md:px-0 md:py-0 rounded-lg hover:bg-red-50 md:hover:bg-transparent"
         title="ลบข้อมูล"
         aria-label={`ลบ ${systemName}`}
       >
-        <Trash2 size={14} />
-        ลบ
+        <Trash2 size={18} className="md:w-3.5 md:h-3.5" />
+        <span className="hidden md:inline">ลบ</span>
       </button>
 
       {open && (
@@ -67,6 +69,7 @@ export default function DeleteSystemButton({
             className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden outline-none"
             onClick={e => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="flex items-start justify-between p-5 border-b border-slate-100">
               <div className="flex items-start gap-3">
                 <div
@@ -98,6 +101,7 @@ export default function DeleteSystemButton({
               </button>
             </div>
 
+            {/* Body */}
             <div className="p-5 space-y-3">
               <div className="bg-slate-50 rounded-xl p-3">
                 <p className="text-xs text-slate-500">ข้อมูลที่จะลบ</p>
@@ -123,6 +127,7 @@ export default function DeleteSystemButton({
               </p>
             </div>
 
+            {/* Actions */}
             <div className="flex gap-2 p-4 bg-slate-50 border-t border-slate-100">
               <button
                 type="button"
