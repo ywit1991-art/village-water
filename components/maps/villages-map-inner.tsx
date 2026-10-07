@@ -15,6 +15,7 @@ import {
   Minimize2,
   Activity,
   Droplet,
+  ChevronDown,
 } from 'lucide-react'
 import LeafletBase from './LeafletBase'
 import {
@@ -31,6 +32,7 @@ import { maskPhone } from '@/lib/utils/phone'
 import ThawangthongBoundary from './thawangthong-boundary'
 import StreetViewModal from './street-view-modal'
 import { useFocusTrap } from '@/components/ui/use-focus-trap'
+import { Portal } from '@/components/ui/portal'
 
 interface Props {
   markers: MarkerData[]
@@ -354,21 +356,26 @@ export default function VillagesMapInner({
         </div>
       </div>
 
+      {/* ⭐ ใช้ Portal ครอบ Modal — ทับ header */}
       {selected && (
-        <DetailModal
-          data={selected}
-          onClose={() => setSelected(null)}
-          onOpenStreetView={handleOpenStreetView}
-        />
+        <Portal>
+          <DetailModal
+            data={selected}
+            onClose={() => setSelected(null)}
+            onOpenStreetView={handleOpenStreetView}
+          />
+        </Portal>
       )}
 
       {streetViewMarker && (
-        <StreetViewModal
-          lat={streetViewMarker.lat}
-          lng={streetViewMarker.lng}
-          systemName={streetViewMarker.systemName}
-          onClose={() => setStreetViewMarker(null)}
-        />
+        <Portal>
+          <StreetViewModal
+            lat={streetViewMarker.lat}
+            lng={streetViewMarker.lng}
+            systemName={streetViewMarker.systemName}
+            onClose={() => setStreetViewMarker(null)}
+          />
+        </Portal>
       )}
     </>
   )
@@ -387,6 +394,7 @@ function DetailModal({
   onOpenStreetView: (m: MarkerData) => void
 }) {
   const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
+  
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
 
   const suff = calcSufficiency(
@@ -496,7 +504,6 @@ function DetailModal({
               label="น้ำดิบ"
               small
             />
-            {/* ⭐ ความเพียงพอ */}
             <StatBox
               value={isNoData ? '—' : `${suff.ratio}%`}
               label={suffColor.label}
@@ -524,14 +531,13 @@ function DetailModal({
             />
           </div>
 
-          {/* ⭐ แสดงแจ้งเตือนถ้าไม่มีข้อมูล */}
           {isNoData && (
             <div className="px-4 md:px-8 pt-5">
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
                 <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-xl shrink-0">
                   ❔
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-left">
                   <p className="font-bold text-slate-700 text-sm md:text-base">
                     ยังไม่มีข้อมูลสำหรับประเมิน
                   </p>
@@ -565,7 +571,12 @@ function DetailModal({
             )}
 
             {committee.length > 0 && (
-              <Section title={`คณะกรรมการ (${committee.length} คน)`}>
+              <Section
+                title={`คณะกรรมการ`}
+                collapsible
+                defaultOpen={false}
+                count={committee.length}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {committee.map((person, i) => (
                     <div
@@ -755,12 +766,20 @@ function Section({
   children,
   accent = 'brand',
   icon,
+  collapsible = false,
+  defaultOpen = false,
+  count,
 }: {
   title: string
   children: React.ReactNode
   accent?: 'brand' | 'orange' | 'amber' | 'emerald'
   icon?: React.ReactNode
+  collapsible?: boolean
+  defaultOpen?: boolean
+  count?: number
 }) {
+  const [open, setOpen] = useState(defaultOpen)
+
   const colorMap = {
     brand: 'from-brand-400 to-brand-600',
     orange: 'from-orange-400 to-orange-600',
@@ -773,16 +792,58 @@ function Section({
     amber: 'text-amber-800',
     emerald: 'text-emerald-800',
   }
+  const hoverMap = {
+    brand: 'hover:bg-brand-50',
+    orange: 'hover:bg-orange-50',
+    amber: 'hover:bg-amber-50',
+    emerald: 'hover:bg-emerald-50',
+  }
+
+  // แบบปกติ (ไม่ collapsible)
+  if (!collapsible) {
+    return (
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <span
+            className={`w-1.5 h-5 bg-gradient-to-b ${colorMap[accent]} rounded-full`}
+          />
+          {icon && <span className={textMap[accent]}>{icon}</span>}
+          <h3 className={`text-base font-bold ${textMap[accent]}`}>{title}</h3>
+        </div>
+        {children}
+      </div>
+    )
+  }
+
+  // แบบ collapsible — กดหัวข้อเพื่อยืดหด
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center gap-2 mb-3 px-2 py-1.5 -mx-2 rounded-lg transition active:scale-[0.99] ${hoverMap[accent]}`}
+        aria-expanded={open}
+      >
         <span
-          className={`w-1.5 h-5 bg-gradient-to-b ${colorMap[accent]} rounded-full`}
+          className={`w-1.5 h-5 bg-gradient-to-b ${colorMap[accent]} rounded-full shrink-0`}
         />
         {icon && <span className={textMap[accent]}>{icon}</span>}
-        <h3 className={`text-base font-bold ${textMap[accent]}`}>{title}</h3>
-      </div>
-      {children}
+        <h3 className={`text-base font-bold ${textMap[accent]} flex-1 text-left`}>
+          {title}
+        </h3>
+        {count != null && !open && (
+          <span className="text-xs text-slate-400 font-normal">
+            ({count} คน)
+          </span>
+        )}
+        <ChevronDown
+          size={16}
+          className={`${textMap[accent]} transition-transform duration-200 shrink-0 ${
+            open ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+      {open && <div>{children}</div>}
     </div>
   )
 }

@@ -54,8 +54,6 @@ export function createSufficiencyMarkerIcon(
 ): L.DivIcon {
   const c = SUFFICIENCY_COLORS[level]
   const size = getMarkerSize(userCount)
-
-  // no-data — ใช้เส้นประเพื่อแสดงว่าไม่มีข้อมูล
   const isNoData = level === 'no-data'
 
   const html = `
