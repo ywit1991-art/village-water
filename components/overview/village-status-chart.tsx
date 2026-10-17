@@ -125,8 +125,11 @@ export default function VillageStatusChart({
         {rightSlot && <div className="ml-auto shrink-0">{rightSlot}</div>}
       </div>
 
-      {/* Bars (ไม่มี Scrollbar แล้ว ขยายเต็มที่) */}
-      <div className="space-y-4 pb-4">
+      {/* Bars */}
+      <div
+        className="space-y-3.5 overflow-y-auto pr-1"
+        style={{ maxHeight: '480px' }}
+      >
         {stats.map(({ village, counts, total }, idx) => {
           const scalePct = (total / maxTotal) * 100
           const isActive = activeVillage === village.id
@@ -136,9 +139,13 @@ export default function VillageStatusChart({
             <motion.button
               key={village.id}
               type="button"
-              onClick={() => isClickable && onVillageClick?.(village.id)}
+              onClick={() =>
+                isClickable && onVillageClick?.(village.id)
+              }
               initial={{ opacity: 0, x: -20 }}
-              animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+              animate={
+                inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }
+              }
               transition={{ duration: 0.4, delay: idx * 0.05 }}
               className={`w-full flex items-center gap-3 text-left transition-all rounded-lg p-1 ${
                 isActive
@@ -162,7 +169,11 @@ export default function VillageStatusChart({
                   <motion.div
                     className="absolute left-0 top-0 h-full flex"
                     initial={{ width: 0 }}
-                    animate={inView ? { width: `${scalePct}%` } : { width: 0 }}
+                    animate={
+                      inView
+                        ? { width: `${scalePct}%` }
+                        : { width: 0 }
+                    }
                     transition={{
                       duration: 0.8,
                       delay: 0.2 + idx * 0.05,
@@ -202,7 +213,7 @@ export default function VillageStatusChart({
         })}
       </div>
 
-      <div className="mt-2 pt-3 border-t border-brand-50 text-xs text-slate-500 flex items-center justify-between">
+      <div className="mt-4 pt-3 border-t border-brand-50 text-xs text-slate-500 flex items-center justify-between">
         <span>รวม {stats.length} หมู่บ้าน</span>
         <span className="font-semibold text-brand-700">
           {grandTotal} ข้อมูล

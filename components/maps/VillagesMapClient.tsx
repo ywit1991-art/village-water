@@ -59,7 +59,6 @@ interface Props {
   onToggleFullscreen?: () => void
   markerMode?: MarkerMode
   onMarkerModeChange?: (mode: MarkerMode) => void
-  fullscreenRef?: React.RefObject<HTMLDivElement | null>
 }
 
 export default function VillagesMapClient({
@@ -69,7 +68,6 @@ export default function VillagesMapClient({
   onToggleFullscreen,
   markerMode,
   onMarkerModeChange,
-  fullscreenRef,
 }: Props) {
   return (
     <VillagesMapInner
@@ -79,7 +77,6 @@ export default function VillagesMapClient({
       onToggleFullscreen={onToggleFullscreen}
       markerMode={markerMode}
       onMarkerModeChange={onMarkerModeChange}
-      fullscreenRef={fullscreenRef}
     />
   )
 }

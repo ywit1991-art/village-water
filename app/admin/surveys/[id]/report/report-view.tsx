@@ -674,7 +674,7 @@ export default function ReportView({
         {/* -------- Footer -------- */}
         <footer className="mt-8 pt-3 border-t border-slate-300 text-center text-xs text-slate-500">
           <p>
-            เอกสารนี้พิมพ์จากฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
+            เอกสารนี้พิมพ์จากระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง
           </p>
           <p className="mt-0.5">
             พิมพ์เมื่อ <ClientDate mode="datetime" fallback="กำลังโหลด..." />
