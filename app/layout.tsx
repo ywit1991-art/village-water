@@ -1,42 +1,67 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
 import { SkipLink } from '@/components/ui/skip-link'
+import { PWAProvider } from '@/components/pwa/pwa-provider'
 
 export const metadata: Metadata = {
   title: {
-    default: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    default: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
     template: '%s | ประปาหมู่บ้าน ทต.ท่าวังทอง',
   },
   description:
-    'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา',
+    'ฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา',
   keywords: [
     'ประปาหมู่บ้าน',
     'ท่าวังทอง',
     'พะเยา',
     'เทศบาล',
-    'ระบบฐานข้อมูล',
+    'ฐานข้อมูล',
     'น้ำประปา',
   ],
   authors: [{ name: 'เทศบาลตำบลท่าวังทอง' }],
   creator: 'เทศบาลตำบลท่าวังทอง',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ประปาหมู่บ้าน',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     type: 'website',
     locale: 'th_TH',
-    siteName: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
-    title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    siteName: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
+    title: 'ระบบประปาหมู่บ้าน - ทต.ท่าวังทอง',
     description:
-      'ระบบฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
+      'ฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
     images: ['/logo.png'],
   },
   icons: {
-    icon: '/icon.png',
-    apple: '/icon.png',
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-152.png', sizes: '152x152' },
+      { url: '/icons/icon-192.png', sizes: '192x192' },
+    ],
   },
   robots: {
     index: true,
     follow: true,
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0284c7',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -57,11 +82,20 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        {/* ⭐ Apple specific meta */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="default"
+        />
+        <meta name="apple-mobile-web-app-title" content="ประปาหมู่บ้าน" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased">
         <SkipLink />
         {children}
         <Toaster position="top-right" richColors />
+        <PWAProvider />
       </body>
     </html>
   )

@@ -145,7 +145,6 @@ export default function OverviewClient({ villages, systems }: Props) {
       const lng = s.survey?.lng ?? s.system.lng
       if (!lat || !lng) continue
 
-      // คำนวณ HP รวม
       const totalHP = (s.survey?.pumps ?? []).reduce((sum, p) => {
         const hp = parseFloat(String(p?.hp ?? 0))
         return sum + (isNaN(hp) ? 0 : hp)
@@ -231,7 +230,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={20} />,
       value: stats.systems,
-      label: 'ข้อมูลประปา',
+      label: 'ระบบประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -273,7 +272,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ข้อมูลประปาหมู่บ้าน
+                ระบบประปาหมู่บ้าน
               </h1>
               <p className="text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -300,9 +299,8 @@ export default function OverviewClient({ villages, systems }: Props) {
 
       <main
         id="main-content"
-        className="relative z-10 max-w-7xl mx-auto px-4 py-6 w-full space-y-5"
+        className="relative z-10 flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5"
       >
-        {/* FILTER + STATS */}
         <div className="card overflow-hidden shadow-md">
           <div className="p-3 md:p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
             <div className="flex items-center justify-between gap-2">
@@ -451,7 +449,6 @@ export default function OverviewClient({ villages, systems }: Props) {
           </div>
         </div>
 
-        {/* MAIN TABS */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
             <button
@@ -515,7 +512,6 @@ export default function OverviewClient({ villages, systems }: Props) {
                 onClick={toggleStatsFullscreen}
                 className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-brand-50 hover:border-brand-300 text-slate-700 hover:text-brand-700 transition shrink-0 active:scale-95"
                 title={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
-                aria-label={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
               >
                 {statsFullscreen ? (
                   <Minimize2 size={16} />
@@ -527,79 +523,88 @@ export default function OverviewClient({ villages, systems }: Props) {
           )}
         </div>
 
-        {/* VIEW: แผนที่ */}
         {viewMode === 'map' && (
           <div
             ref={mapRef}
-            className="card overflow-hidden shadow-md"
-            style={
-              mapFullscreen
-                ? { height: '100vh', width: '100vw' }
-                : undefined
-            }
+            className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white"
           >
-            <VillagesMapClient
-              markers={markers}
-              height={mapFullscreen ? 'h-screen' : 'h-[700px]'}
-              isFullscreen={mapFullscreen}
-              onToggleFullscreen={toggleMapFullscreen}
-              markerMode={markerMode}
-              onMarkerModeChange={setMarkerMode}
-            />
+            <div className="absolute inset-0">
+              <VillagesMapClient
+                markers={markers}
+                height="h-full"
+                isFullscreen={mapFullscreen}
+                onToggleFullscreen={toggleMapFullscreen}
+                markerMode={markerMode}
+                onMarkerModeChange={setMarkerMode}
+                fullscreenRef={mapRef}
+              />
+            </div>
           </div>
         )}
 
-        {/* VIEW: สถิติ */}
         {viewMode === 'stats' && (
           <div
             ref={statsRef}
             className={
               statsFullscreen
-                ? 'bg-slate-50 h-screen w-screen overflow-auto p-4 md:p-6'
-                : ''
+                ? 'bg-gradient-to-br from-brand-50 via-sky-50 to-indigo-50 h-screen w-screen overflow-hidden flex flex-col p-4 md:p-8 relative' // ⭐ แก้เป็น overflow-hidden
+                : 'w-full'
             }
           >
-            {chartMode === 'status' && (
-              <StatusChart
-                statusCount={statusCount}
-                total={stats.systems}
-                activeStatus={
-                  chartFilter.type === 'status'
-                    ? (chartFilter.value as string)
-                    : null
-                }
-                onStatusClick={status => {
-                  setChartFilter(prev =>
-                    prev.type === 'status' && prev.value === status
-                      ? { type: null, value: null }
-                      : { type: 'status', value: status },
-                  )
-                  setViewMode('map')
-                }}
-              />
+            {statsFullscreen && (
+              <>
+                <div className="absolute top-10 -left-20 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-10 -right-20 w-96 h-96 rounded-full bg-indigo-200/40 blur-3xl pointer-events-none" />
+              </>
             )}
-            {chartMode === 'village' && (
-              <VillageStatusChart
-                villages={villages}
-                systems={filtered}
-                activeVillage={
-                  chartFilter.type === 'village'
-                    ? (chartFilter.value as number)
-                    : null
-                }
-                onVillageClick={villageId => {
-                  setChartFilter(prev =>
-                    prev.type === 'village' && prev.value === villageId
-                      ? { type: null, value: null }
-                      : { type: 'village', value: villageId },
-                  )
-                  setViewMode('map')
-                }}
-              />
-            )}
-            {chartMode === 'sufficiency' && (
-              <SufficiencyChart markers={markers} />
-            )}
+
+            {/* ⭐ ใส่ max-h ให้เต็มพื้นที่หน้าจอ */}
+            <div className="w-full h-full max-h-[calc(100vh-4rem)] relative z-10 flex flex-col justify-center max-w-[95vw] mx-auto">
+              {chartMode === 'status' && (
+                <StatusChart
+                  statusCount={statusCount}
+                  total={stats.systems}
+                  activeStatus={
+                    chartFilter.type === 'status'
+                      ? (chartFilter.value as string)
+                      : null
+                  }
+                  onStatusClick={status => {
+                    setChartFilter(prev =>
+                      prev.type === 'status' && prev.value === status
+                        ? { type: null, value: null }
+                        : { type: 'status', value: status },
+                    )
+                    setViewMode('map')
+                  }}
+                />
+              )}
+              {chartMode === 'village' && (
+                <VillageStatusChart
+                  villages={villages}
+                  systems={filtered}
+                  activeVillage={
+                    chartFilter.type === 'village'
+                      ? (chartFilter.value as number)
+                      : null
+                  }
+                  onVillageClick={villageId => {
+                    setChartFilter(prev =>
+                      prev.type === 'village' && prev.value === villageId
+                        ? { type: null, value: null }
+                        : { type: 'village', value: villageId },
+                    )
+                    setViewMode('map')
+                  }}
+                />
+              )}
+              {chartMode === 'sufficiency' && (
+                <SufficiencyChart
+                  markers={markers}
+                  isFullscreen={statsFullscreen} // ⭐ ส่งค่า Fullscreen
+                />
+              )}
+            </div>
           </div>
         )}
       </main>
@@ -613,7 +618,7 @@ export default function OverviewClient({ villages, systems }: Props) {
           />
           <div className="text-xs md:text-sm leading-snug text-center">
             <p className="font-medium">
-              เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ป่าแดด
+              เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ปาแดด
             </p>
             <p className="text-brand-300">
               ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000

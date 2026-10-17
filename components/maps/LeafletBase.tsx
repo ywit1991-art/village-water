@@ -15,38 +15,88 @@ if (typeof window !== 'undefined') {
   })
 }
 
+export type MapLayerType = 'street' | 'satellite' | 'terrain'
+
 interface Props {
   center?: [number, number]
   zoom?: number
   className?: string
   children: React.ReactNode
+  layerType?: MapLayerType
+}
+
+const LAYER_URLS: Record<MapLayerType, { url: string; attribution: string }> =
+  {
+    street: {
+      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    },
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      attribution:
+        '&copy; <a href="https://www.esri.com/">Esri</a> · Maxar · Earthstar Geographics',
+    },
+    terrain: {
+      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+      attribution:
+        '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+    },
+  }
+
+/** ⭐ ดักจับการเปลี่ยนขนาด Container (แก้ปัญหาแผนที่สั้น/เต็มไม่สุด) */
+function ResizeHandler() {
+  const map = useMap()
+
+  useEffect(() => {
+    // สั่งให้ Leaflet คำนวณขนาดใหม่ทันที
+    map.invalidateSize()
+
+    // คอยเช็คเมื่อขนาดเปลี่ยน (เช่น กด Fullscreen, หมุนจอ, เปลี่ยน Layout)
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize()
+    })
+
+    observer.observe(map.getContainer())
+
+    return () => observer.disconnect()
+  }, [map])
+
+  return null
 }
 
 export default function LeafletBase({
-  center = [19.1667, 99.9],
+  center = [19.1907, 99.9315],
   zoom = 13,
   className = 'h-full w-full',
   children,
+  layerType = 'street',
 }: Props) {
+  const layer = LAYER_URLS[layerType]
+
   return (
     <MapContainer
-  center={center}
-  zoom={zoom}
-  className={className}
-  scrollWheelZoom={true}
-  minZoom={11}
-  maxZoom={19}
-  maxBounds={[
-    [18.95, 99.75],   // มุมตะวันตกเฉียงใต้
-    [19.40, 100.10],  // มุมตะวันออกเฉียงเหนือ
-  ]}
-  maxBoundsViscosity={1.0}
-  bounceAtZoomLimits={false}
->
+      center={center}
+      zoom={zoom}
+      className={className}
+      scrollWheelZoom={true}
+      minZoom={11}
+      maxZoom={19}
+      maxBounds={[
+        [18.95, 99.75],
+        [19.4, 100.1],
+      ]}
+      maxBoundsViscosity={1.0}
+      bounceAtZoomLimits={false}
+      style={{ height: '100%', width: '100%' }} // ⭐ บังคับขนาด
+    >
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        key={layerType}
+        url={layer.url}
+        attribution={layer.attribution}
+        maxZoom={19}
       />
+      <ResizeHandler />
       {children}
     </MapContainer>
   )
