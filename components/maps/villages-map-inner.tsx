@@ -16,8 +16,11 @@ import {
   Activity,
   Droplet,
   ChevronDown,
+  Layers,
+  Map as MapIcon,
+  Satellite,
 } from 'lucide-react'
-import LeafletBase from './LeafletBase'
+import LeafletBase, { type MapLayerType } from './LeafletBase'
 import {
   createWaterMarkerIcon,
   createSufficiencyMarkerIcon,
@@ -41,6 +44,7 @@ interface Props {
   onToggleFullscreen?: () => void
   markerMode?: MarkerMode
   onMarkerModeChange?: (mode: MarkerMode) => void
+  fullscreenRef?: React.RefObject<HTMLDivElement | null>
 }
 
 const HOVER_DELAY_MS = 800
@@ -61,29 +65,18 @@ function AutoFitBounds({ points }: { points: [number, number][] }) {
     function doFit() {
       map.invalidateSize()
       if (points.length === 1) {
-        map.setView(points[0], 16)
+        map.setView(points[0], 14)
         return
       }
-      const lats = points.map(p => p[0])
-      const lngs = points.map(p => p[1])
-      const minLat = Math.min(...lats)
-      const maxLat = Math.max(...lats)
-      const minLng = Math.min(...lngs)
-      const maxLng = Math.max(...lngs)
-      const centerLat = (minLat + maxLat) / 2
-      const centerLng = (minLng + maxLng) / 2
-      const latSpan = maxLat - minLat
-      const lngSpan = maxLng - minLng
-      const maxSpan = Math.max(latSpan, lngSpan)
-
-      let zoom = 13
-      if (maxSpan < 0.01) zoom = 15
-      else if (maxSpan < 0.02) zoom = 14
-      else if (maxSpan < 0.05) zoom = 13
-      else if (maxSpan < 0.1) zoom = 12
-      else zoom = 11
-
-      map.setView([centerLat, centerLng], zoom, { animate: true })
+      
+      // ⭐ ใช้ L.latLngBounds เพื่อคำนวณพื้นที่ และเว้นขอบ (padding)
+      const bounds = L.latLngBounds(points)
+      
+      // ⭐ ใส่ maxZoom เพื่อไม่ให้ซูมเข้าไปหาแค่กลุ่มหมุดแคบๆ
+      map.fitBounds(bounds, { 
+        padding: [80, 80], // เว้นขอบรอบๆ 80px
+        maxZoom: 14        // ซูมได้ลึกสุดแค่ระดับ 14
+      })
     }
 
     const t1 = setTimeout(doFit, 50)
@@ -99,6 +92,16 @@ function AutoFitBounds({ points }: { points: [number, number][] }) {
   return null
 }
 
+function MapResizer() {
+  const map = useMap()
+  useEffect(() => {
+    // สั่งให้ Leaflet อัปเดตขนาดเมื่อหน้าจอเปลี่ยน
+    const timer = setTimeout(() => map.invalidateSize(), 200)
+    return () => clearTimeout(timer)
+  }, [map])
+  return null
+}
+
 function openDirections(lat: number, lng: number) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
   window.open(url, '_blank', 'noopener,noreferrer')
@@ -111,6 +114,7 @@ export default function VillagesMapInner({
   onToggleFullscreen,
   markerMode: externalMode,
   onMarkerModeChange,
+  fullscreenRef,
 }: Props) {
   const [selected, setSelected] = useState<MarkerData | null>(null)
   const [boundary, setBoundary] = useState<
@@ -123,9 +127,11 @@ export default function VillagesMapInner({
   const [streetViewMarker, setStreetViewMarker] = useState<MarkerData | null>(
     null,
   )
+  const [layerType, setLayerType] = useState<MapLayerType>('street')
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const markerMode = externalMode ?? internalMode
+  const portalContainer = isFullscreen ? fullscreenRef?.current : null
 
   function setMarkerMode(mode: MarkerMode) {
     setInternalMode(mode)
@@ -207,12 +213,20 @@ export default function VillagesMapInner({
     )
   }
 
-  const center: [number, number] = [markers[0].lat, markers[0].lng]
+  // ⭐ พิกัดกึ่งกลางของ ต.ท่าวังทอง
+  const center: [number, number] = [19.1907, 99.9315]
 
   return (
     <>
+      {/* ⭐ ปล่อยให้ขนาดเป็นไปตาม container แม่ (height) */}
       <div className={`${height} rounded-2xl overflow-hidden relative`}>
-        <LeafletBase center={center} zoom={13} className="w-full h-full">
+        <LeafletBase
+          center={center}
+          zoom={13}
+          className="w-full h-full"
+          layerType={layerType}
+        >
+          <MapResizer />
           <AutoFitBounds points={allPoints} />
           {boundary && (
             <ThawangthongBoundary boundary={boundary} visible={showHatch} />
@@ -263,9 +277,6 @@ export default function VillagesMapInner({
                   ? 'bg-brand-500 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
-              title="แสดงตามสถานะ"
-              aria-label="แสดงตามสถานะ"
-              aria-pressed={markerMode === 'status'}
             >
               <Activity size={14} />
               <span className="hidden md:inline">สถานะ</span>
@@ -279,9 +290,6 @@ export default function VillagesMapInner({
                   ? 'bg-orange-500 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
-              title="แสดงเฉพาะจุดที่พบปัญหา"
-              aria-label="แสดงเฉพาะจุดที่พบปัญหา"
-              aria-pressed={markerMode === 'problem'}
             >
               <AlertCircle size={14} />
               <span className="hidden md:inline">จุดที่พบปัญหา</span>
@@ -306,12 +314,51 @@ export default function VillagesMapInner({
                   ? 'bg-sky-500 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
-              title="แสดงตามความเพียงพอ (ฤดูแล้ง)"
-              aria-label="แสดงตามความเพียงพอ"
-              aria-pressed={markerMode === 'sufficiency'}
             >
               <Droplet size={14} />
               <span className="hidden md:inline">ความเพียงพอ</span>
+            </button>
+          </div>
+
+          {/* Layer switcher */}
+          <div className="inline-flex items-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-brand-100 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setLayerType('street')}
+              className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap active:scale-95 ${
+                layerType === 'street'
+                  ? 'bg-brand-500 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <MapIcon size={14} />
+              <span className="hidden md:inline">ถนน</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLayerType('satellite')}
+              className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap border-l border-slate-100 active:scale-95 ${
+                layerType === 'satellite'
+                  ? 'bg-emerald-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Satellite size={14} />
+              <span className="hidden md:inline">ดาวเทียม</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLayerType('terrain')}
+              className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap border-l border-slate-100 active:scale-95 ${
+                layerType === 'terrain'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Layers size={14} />
+              <span className="hidden md:inline">ภูมิประเทศ</span>
             </button>
           </div>
 
@@ -320,9 +367,6 @@ export default function VillagesMapInner({
             type="button"
             onClick={() => setShowHatch(s => !s)}
             className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-slate-700 hover:text-slate-900 text-xs font-medium transition active:scale-95"
-            title={showHatch ? 'ซ่อนลายทแยง' : 'แสดงลายทแยง'}
-            aria-label={showHatch ? 'ซ่อนลายทแยง' : 'แสดงลายทแยง'}
-            aria-pressed={showHatch}
           >
             {showHatch ? (
               <>
@@ -343,8 +387,7 @@ export default function VillagesMapInner({
               type="button"
               onClick={onToggleFullscreen}
               className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-slate-700 hover:text-slate-900 transition active:scale-95 shrink-0"
-              title={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
-              aria-label={isFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+              title={isFullscreen ? 'ออกจากเต็มจอ (Esc)' : 'ขยายเต็มจอ'}
             >
               {isFullscreen ? (
                 <Minimize2 size={14} />
@@ -356,9 +399,8 @@ export default function VillagesMapInner({
         </div>
       </div>
 
-      {/* ⭐ ใช้ Portal ครอบ Modal — ทับ header */}
       {selected && (
-        <Portal>
+        <Portal container={portalContainer}>
           <DetailModal
             data={selected}
             onClose={() => setSelected(null)}
@@ -368,7 +410,7 @@ export default function VillagesMapInner({
       )}
 
       {streetViewMarker && (
-        <Portal>
+        <Portal container={portalContainer}>
           <StreetViewModal
             lat={streetViewMarker.lat}
             lng={streetViewMarker.lng}
@@ -394,7 +436,6 @@ function DetailModal({
   onOpenStreetView: (m: MarkerData) => void
 }) {
   const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
-  
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
 
   const suff = calcSufficiency(
@@ -799,7 +840,6 @@ function Section({
     emerald: 'hover:bg-emerald-50',
   }
 
-  // แบบปกติ (ไม่ collapsible)
   if (!collapsible) {
     return (
       <div>
@@ -815,7 +855,6 @@ function Section({
     )
   }
 
-  // แบบ collapsible — กดหัวข้อเพื่อยืดหด
   return (
     <div>
       <button

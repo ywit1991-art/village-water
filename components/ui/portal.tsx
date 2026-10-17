@@ -5,13 +5,10 @@ import { createPortal } from 'react-dom'
 
 interface Props {
   children: React.ReactNode
+  container?: Element | DocumentFragment | null
 }
 
-/**
- * Portal — render children ไปที่ document.body
- * แก้ปัญหา modal ถูก stacking context ของ parent ทับ
- */
-export function Portal({ children }: Props) {
+export function Portal({ children, container }: Props) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -21,5 +18,5 @@ export function Portal({ children }: Props) {
 
   if (!mounted) return null
 
-  return createPortal(children, document.body)
+  return createPortal(children, container || document.body)
 }
