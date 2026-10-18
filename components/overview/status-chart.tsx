@@ -115,6 +115,9 @@ export default function StatusChart({
     }
   }).filter(s => s.itemCount > 0)
 
+  // ⭐ ตรวจสอบว่ามีชิ้นเดียวและเต็ม 100% หรือไม่ (เพื่อแก้บั๊ก SVG วาดวงกลมไม่ติด)
+  const isFullCircle = segments.length === 1 && segments[0].pct >= 1
+
   return (
     <div className="card p-4 md:p-6 h-full flex flex-col overflow-visible">
       
@@ -143,41 +146,75 @@ export default function StatusChart({
           <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full overflow-visible">
             {/* วาดเงาสำหรับ 3D ด้านล่าง */}
             <g transform="translate(0, 8)">
-              {segments.map(seg => (
-                <path
-                  key={`shadow-${seg.key}`}
-                  d={seg.pathData}
+              {isFullCircle ? (
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={radius}
                   fill="#000000"
                   opacity="0.15"
                   style={{ filter: 'blur(4px)' }}
                 />
-              ))}
+              ) : (
+                segments.map(seg => (
+                  <path
+                    key={`shadow-${seg.key}`}
+                    d={seg.pathData}
+                    fill="#000000"
+                    opacity="0.15"
+                    style={{ filter: 'blur(4px)' }}
+                  />
+                ))
+              )}
             </g>
             
             {/* วาดชิ้นส่วน Pie Chart หลัก */}
-            {segments.map(seg => {
-              const isHovered = hoveredKey === seg.key || activeStatus === seg.key
-              
-              return (
-                <g
-                  key={seg.key}
-                  onMouseEnter={() => setHoveredKey(seg.key)}
-                  onMouseLeave={() => setHoveredKey(null)}
-                  onClick={() => onStatusClick?.(seg.key)}
-                  className="cursor-pointer transition-all duration-300 ease-out"
-                  style={{
-                    transform: isHovered ? `translate(${seg.dx}px, ${seg.dy}px)` : 'translate(0, 0)',
-                    filter: isHovered ? `drop-shadow(0px 10px 15px ${seg.color}80)` : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))'
-                  }}
-                >
-                  <path
-                    d={seg.pathData}
-                    fill={seg.color}
-                    className="stroke-white stroke-2 hover:brightness-110"
-                  />
-                </g>
-              )
-            })}
+            {isFullCircle ? (
+              // ⭐ ถ้าเป็นวงกลมเต็ม 100% ให้วาดเป็น <circle> แทน
+              <g
+                onMouseEnter={() => setHoveredKey(segments[0].key)}
+                onMouseLeave={() => setHoveredKey(null)}
+                onClick={() => onStatusClick?.(segments[0].key)}
+                className="cursor-pointer transition-all duration-300 ease-out"
+                style={{
+                  transform: hoveredKey === segments[0].key || activeStatus === segments[0].key ? `translate(${segments[0].dx}px, ${segments[0].dy}px)` : 'translate(0, 0)',
+                  filter: hoveredKey === segments[0].key ? `drop-shadow(0px 10px 15px ${segments[0].color}80)` : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))'
+                }}
+              >
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={radius}
+                  fill={segments[0].color}
+                  className="stroke-white stroke-2 hover:brightness-110"
+                />
+              </g>
+            ) : (
+              // วาดชิ้นส่วนปกติ
+              segments.map(seg => {
+                const isHovered = hoveredKey === seg.key || activeStatus === seg.key
+                
+                return (
+                  <g
+                    key={seg.key}
+                    onMouseEnter={() => setHoveredKey(seg.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                    onClick={() => onStatusClick?.(seg.key)}
+                    className="cursor-pointer transition-all duration-300 ease-out"
+                    style={{
+                      transform: isHovered ? `translate(${seg.dx}px, ${seg.dy}px)` : 'translate(0, 0)',
+                      filter: isHovered ? `drop-shadow(0px 10px 15px ${seg.color}80)` : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))'
+                    }}
+                  >
+                    <path
+                      d={seg.pathData}
+                      fill={seg.color}
+                      className="stroke-white stroke-2 hover:brightness-110"
+                    />
+                  </g>
+                )
+              })
+            )}
           </svg>
 
           {/* ตัวเลขตรงกลาง */}

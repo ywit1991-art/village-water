@@ -150,17 +150,17 @@ export default function HomeContent({
               <img
                 src="/logo.png"
                 alt="ตราเทศบาลตำบลท่าวังทอง"
-                className="relative w-28 h-28 md:w-40 md:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white"
+                className="relative w-28 h-28 md:w-30 md:h-30 rounded-full object-cover shadow-2xl ring-2 ring-white"
               />
             </motion.div>
           </motion.div>
 
-          {/* ⭐ Title — มี shimmer วิ่งผ่าน */}
+          {/* ⭐ Title — ลดขนาดตัวหนังสือลงแล้ว */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-3xl md:text-6xl font-extrabold leading-tight tracking-tight relative"
+            className="text-2xl md:text-4xl font-extrabold leading-tight tracking-tight relative"
             style={{
               background:
                 'linear-gradient(90deg, #0369a1, #0284c7, #0ea5e9, #0284c7, #0369a1)',
@@ -290,8 +290,7 @@ export default function HomeContent({
               </motion.span>
             </motion.button>
 
-            {/* ⭐ ปุ่มหลัก — เรืองแสง */
-            }
+            {/* ⭐ ปุ่มหลัก — เรืองแสง */}
             <motion.div
               animate={{
                 boxShadow: [
