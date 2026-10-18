@@ -53,8 +53,7 @@ export default function HomeContent({
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50/60 via-white to-brand-50/30 relative overflow-hidden">
-      {/* ⭐ Animated decorative blobs — เคลื่อนไหวตลอด */}
+    <div className="h-[100dvh] w-full flex flex-col bg-gradient-to-b from-brand-50/60 via-white to-brand-50/30 relative overflow-hidden">      {/* ⭐ Animated decorative blobs — เคลื่อนไหวตลอด */}
       <motion.div
         animate={{
           x: [0, 60, 0],
@@ -100,7 +99,7 @@ export default function HomeContent({
       {/* HERO */}
       <section
         id="main-content"
-        className="relative max-w-7xl mx-auto px-4 pt-12 md:pt-20 pb-8 md:pb-12 w-full"
+        className="relative flex-1 flex flex-col justify-center max-w-7xl mx-auto px-4 w-full z-10 py-6"
       >
         <div className="flex flex-col items-center text-center w-full">
           {/* ⭐ Logo — ลอยขึ้นลงตลอดเวลา */}
@@ -199,61 +198,6 @@ export default function HomeContent({
             className="mt-5 md:mt-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-400 via-brand-500 to-indigo-500"
           />
 
-          {/* ⭐ Stats Cards — เรียงแนวนอน 3 คอลัมน์ */}
-          <div className="mt-10 md:mt-12 grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-3xl">
-            {stats.map((s, i) => {
-              const Icon = s.icon
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.65 + i * 0.1 }}
-                  whileHover={{ y: -8, scale: 1.03 }}
-                  className="relative"
-                >
-                  <motion.div
-                    animate={{
-                      y: [0, -8, 0],
-                    }}
-                    transition={{
-                      duration: 3 + i * 0.5,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                      delay: i * 0.3,
-                    }}
-                    className="group bg-white/80 backdrop-blur-sm rounded-2xl p-2.5 sm:p-4 md:p-5 shadow-sm hover:shadow-lg transition-all duration-300 ring-1 ring-slate-100 cursor-default h-full text-center"
-                  >
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.08, 1],
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                        delay: i * 0.4,
-                      }}
-                      className={`inline-flex w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl items-center justify-center mb-2 sm:mb-3 ${s.bg} ${s.color}`}
-                    >
-                      <Icon
-                        size={18}
-                        className="sm:w-5 sm:h-5 md:w-[22px] md:h-[22px]"
-                      />
-                    </motion.div>
-                    <div
-                      className={`text-lg sm:text-2xl md:text-4xl font-extrabold leading-none tabular-nums ${s.color}`}
-                    >
-                      <AnimatedCounter value={s.value} />
-                    </div>
-                    <div className="text-[10px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 font-medium">
-                      {s.label}
-                    </div>
-                  </motion.div>
-                </motion.div>
-              )
-            })}
-          </div>
 
           {/* CTA buttons */}
           <motion.div
