@@ -412,3 +412,79 @@ details.form-section > summary::marker {
 .leaflet-tooltip.suff-tooltip::before {
   border-top-color: #0ea5e9 !important;
 }
+
+@keyframes spin-once-keyframes {
+  0% {
+    transform: rotate(-180deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-once {
+  animation: spin-once-keyframes var(--spin-duration, 1s) cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* ⭐ Animation สำหรับกราฟวงกลม */
+@keyframes spin-chart {
+  0% {
+    transform: rotate(-180deg) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-spin-chart {
+  animation: spin-chart 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: var(--circumference);
+  }
+  to {
+    stroke-dashoffset: var(--target-offset);
+  }
+}
+
+.animate-draw-line {
+  animation: draw-line 1.2s ease-out forwards;
+}
+
+/* ⭐ Animation หมุนกราฟวงกลม */
+@keyframes spin-in {
+  0% {
+    transform: rotate(-180deg) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-spin-in {
+  animation: spin-in 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ⭐ Animation วาดเส้น SVG */
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: var(--circumference);
+  }
+  to {
+    stroke-dashoffset: var(--target-offset);
+  }
+}
+
+.animate-draw-line {
+  animation: draw-line 1.2s ease-out forwards;
+}

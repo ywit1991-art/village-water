@@ -77,7 +77,7 @@
     {
       "name": "ดูแผนที่ประปา",
       "short_name": "แผนที่",
-      "description": "เปิดแผนที่ระบบประปา",
+      "description": "เปิดแผนที่ข้อมูลประปา",
       "url": "/overview",
       "icons": [
         {

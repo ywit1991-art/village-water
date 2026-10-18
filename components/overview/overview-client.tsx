@@ -8,11 +8,12 @@ import {
   Droplets,
   Home,
   Package,
-  Maximize2,
-  Minimize2,
   BarChart3,
   TrendingUp,
   ChevronDown,
+  Maximize2,
+  Minimize2,
+  PieChart,
 } from 'lucide-react'
 import StatusChart from './status-chart'
 import VillageStatusChart from './village-status-chart'
@@ -250,6 +251,60 @@ export default function OverviewClient({ villages, systems }: Props) {
     },
   ]
 
+  const chartToolbar = (
+    <div className="flex items-center gap-2 flex-wrap justify-end">
+      <div className="inline-flex items-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-brand-100 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setChartMode('status')}
+          className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap active:scale-95 ${
+            chartMode === 'status'
+              ? 'bg-brand-500 text-white'
+              : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <PieChart size={14} />
+          <span className="hidden md:inline">สถานะ</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setChartMode('village')}
+          className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap border-l border-slate-100 active:scale-95 ${
+            chartMode === 'village'
+              ? 'bg-brand-500 text-white'
+              : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <BarChart3 size={14} />
+          <span className="hidden md:inline">หมู่บ้าน</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setChartMode('sufficiency')}
+          className={`inline-flex items-center gap-1.5 px-2.5 md:px-3 py-2 text-xs font-medium transition whitespace-nowrap border-l border-slate-100 active:scale-95 ${
+            chartMode === 'sufficiency'
+              ? 'bg-sky-500 text-white'
+              : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Droplets size={14} />
+          <span className="hidden md:inline">ความเพียงพอ</span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={toggleStatsFullscreen}
+        className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 backdrop-blur-sm shadow-lg border border-brand-100 hover:bg-white text-slate-700 hover:text-slate-900 transition active:scale-95 shrink-0"
+        title={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
+      >
+        {statsFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+      </button>
+    </div>
+  )
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
       <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl pointer-events-none" />
@@ -299,7 +354,7 @@ export default function OverviewClient({ villages, systems }: Props) {
 
       <main
         id="main-content"
-        className="relative z-10 flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5"
+        className="flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5"
       >
         <div className="card overflow-hidden shadow-md">
           <div className="p-3 md:p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
@@ -449,121 +504,84 @@ export default function OverviewClient({ villages, systems }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setViewMode('map')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 ${
-                viewMode === 'map'
-                  ? 'bg-brand-600 text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <MapPin size={16} />
-              แผนที่
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('stats')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 ${
-                viewMode === 'stats'
-                  ? 'bg-brand-600 text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <BarChart3 size={16} />
-              สถิติ
-            </button>
-          </div>
-
-          {viewMode === 'stats' && (
-            <>
-              <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3 py-1.5 border border-slate-200 shadow-sm">
-                <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
-                  ดูสถิติ:
-                </span>
-                <div className="inline-flex bg-slate-100 rounded-lg p-0.5">
-                  {(
-                    [
-                      { key: 'status', label: '🍩 สถานะ' },
-                      { key: 'village', label: '📊 หมู่บ้าน' },
-                      { key: 'sufficiency', label: '💧 ความเพียงพอ' },
-                    ] as const
-                  ).map(t => (
-                    <button
-                      key={t.key}
-                      type="button"
-                      onClick={() => setChartMode(t.key)}
-                      className={`px-3 py-1 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-                        chartMode === t.key
-                          ? 'bg-white text-brand-700 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={toggleStatsFullscreen}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-brand-50 hover:border-brand-300 text-slate-700 hover:text-brand-700 transition shrink-0 active:scale-95"
-                title={statsFullscreen ? 'ออกจากเต็มจอ' : 'ขยายเต็มจอ'}
-              >
-                {statsFullscreen ? (
-                  <Minimize2 size={16} />
-                ) : (
-                  <Maximize2 size={16} />
-                )}
-              </button>
-            </>
-          )}
-        </div>
-
         {viewMode === 'map' && (
-          <div
-            ref={mapRef}
-            className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white"
-          >
-            <div className="absolute inset-0">
-              <VillagesMapClient
-                markers={markers}
-                height="h-full"
-                isFullscreen={mapFullscreen}
-                onToggleFullscreen={toggleMapFullscreen}
-                markerMode={markerMode}
-                onMarkerModeChange={setMarkerMode}
-                fullscreenRef={mapRef}
-              />
+          <>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 bg-brand-600 text-white shadow-md"
+                >
+                  <MapPin size={16} />
+                  แผนที่
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('stats')}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 text-slate-600 hover:bg-slate-50"
+                >
+                  <BarChart3 size={16} />
+                  สถิติ
+                </button>
+              </div>
             </div>
-          </div>
+
+            <div
+              ref={mapRef}
+              className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white"
+            >
+              <div className="absolute inset-0">
+                <VillagesMapClient
+                  markers={markers}
+                  height="h-full"
+                  isFullscreen={mapFullscreen}
+                  onToggleFullscreen={toggleMapFullscreen}
+                  markerMode={markerMode}
+                  onMarkerModeChange={setMarkerMode}
+                  fullscreenRef={mapRef}
+                />
+              </div>
+            </div>
+          </>
         )}
 
-        {/* ⭐ VIEW: สถิติ (ขยายเต็มจอ) */}
         {viewMode === 'stats' && (
           <div
             ref={statsRef}
             className={
               statsFullscreen
-                ? 'bg-gradient-to-br from-brand-50 via-sky-50 to-indigo-50 h-screen w-screen overflow-hidden flex flex-col p-4 md:p-8 relative'
-                : 'w-full'
+                ? 'bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full'
+                : 'w-full flex flex-col space-y-5'
             }
           >
-            {statsFullscreen && (
-              <>
-                <div className="absolute top-10 -left-20 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl pointer-events-none" />
-                <div className="absolute bottom-10 -right-20 w-96 h-96 rounded-full bg-indigo-200/40 blur-3xl pointer-events-none" />
-              </>
+            {!statsFullscreen && (
+              <div className="flex items-center gap-3 flex-wrap shrink-0 relative z-10">
+                <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('map')}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 text-slate-600 hover:bg-slate-50"
+                  >
+                    <MapPin size={16} />
+                    แผนที่
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 bg-brand-600 text-white shadow-md"
+                  >
+                    <BarChart3 size={16} />
+                    สถิติ
+                  </button>
+                </div>
+              </div>
             )}
 
-            <div className="w-full h-full relative z-10 flex flex-col justify-center max-w-[95vw] mx-auto">
+            <div className="w-full flex-1 relative z-10 flex flex-col min-h-0">
               {chartMode === 'status' && (
                 <StatusChart
                   statusCount={statusCount}
                   total={stats.systems}
+                  rightSlot={chartToolbar}
                   activeStatus={
                     chartFilter.type === 'status'
                       ? (chartFilter.value as string)
@@ -575,14 +593,16 @@ export default function OverviewClient({ villages, systems }: Props) {
                         ? { type: null, value: null }
                         : { type: 'status', value: status },
                     )
-                    setViewMode('map')
+                    if (!statsFullscreen) setViewMode('map')
                   }}
+                  isFullscreen={statsFullscreen}
                 />
               )}
               {chartMode === 'village' && (
                 <VillageStatusChart
                   villages={villages}
                   systems={filtered}
+                  rightSlot={chartToolbar}
                   activeVillage={
                     chartFilter.type === 'village'
                       ? (chartFilter.value as number)
@@ -594,14 +614,16 @@ export default function OverviewClient({ villages, systems }: Props) {
                         ? { type: null, value: null }
                         : { type: 'village', value: villageId },
                     )
-                    setViewMode('map')
+                    if (!statsFullscreen) setViewMode('map')
                   }}
+                  isFullscreen={statsFullscreen}
                 />
               )}
               {chartMode === 'sufficiency' && (
                 <SufficiencyChart
                   markers={markers}
-                  isFullscreen={statsFullscreen} // ⭐ ส่งค่า Fullscreen
+                  rightSlot={chartToolbar}
+                  isFullscreen={statsFullscreen}
                 />
               )}
             </div>

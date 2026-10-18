@@ -529,7 +529,7 @@ export async function saveSurveyAction(
       updated_at: new Date().toISOString(),
     }
 
-    // Sync ชื่อระบบประปา (ถ้ามีการแก้ในฟอร์ม)
+    // Sync ชื่อข้อมูลประปา (ถ้ามีการแก้ในฟอร์ม)
     const newName = cleaned.water_system_name
     if (
       newName &&
