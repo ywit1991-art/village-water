@@ -1,10 +1,11 @@
 {
   "name": "ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง",
   "short_name": "ประปาหมู่บ้าน",
-  "description": "ฐานข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา",
+  "description": "ข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"], 
   "orientation": "portrait-primary",
   "background_color": "#f0f9ff",
   "theme_color": "#0284c7",
