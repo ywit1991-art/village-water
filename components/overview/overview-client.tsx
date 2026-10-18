@@ -47,7 +47,6 @@ export default function OverviewClient({ villages, systems }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [mapFullscreen, setMapFullscreen] = useState(false)
   const [statsFullscreen, setStatsFullscreen] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [chartMode, setChartMode] = useState<ChartMode>('status')
   const [markerMode, setMarkerMode] = useState<MarkerMode>('sufficiency')
@@ -222,28 +221,28 @@ export default function OverviewClient({ villages, systems }: Props) {
 
   const cards = [
     {
-      icon: <MapPin size={20} />,
+      icon: <MapPin size={16} />,
       value: stats.villages,
       label: 'หมู่บ้าน',
       color: 'text-brand-600',
       bg: 'bg-brand-50',
     },
     {
-      icon: <Droplets size={20} />,
+      icon: <Droplets size={16} />,
       value: stats.systems,
       label: 'ข้อมูลประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
     {
-      icon: <Home size={20} />,
+      icon: <Home size={16} />,
       value: stats.households,
       label: 'ครัวเรือน',
       color: 'text-indigo-600',
       bg: 'bg-indigo-50',
     },
     {
-      icon: <Package size={20} />,
+      icon: <Package size={16} />,
       value: stats.capacity,
       label: 'ความจุ (ลบ.ม.)',
       color: 'text-amber-600',
@@ -306,7 +305,7 @@ export default function OverviewClient({ villages, systems }: Props) {
   )
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
       
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl" />
@@ -314,25 +313,25 @@ export default function OverviewClient({ villages, systems }: Props) {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-100/20 blur-3xl" />
       </div>
 
-      <header className="sticky top-0 z-30 bg-gradient-to-br from-brand-700 via-brand-500 to-brand-400 text-white shadow-lg relative overflow-hidden">
+      <header className="sticky top-0 z-30 bg-gradient-to-br from-brand-700 via-brand-500 to-brand-400 text-white shadow-lg relative overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
         <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="relative max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative shrink-0">
               <div className="absolute inset-0 rounded-full bg-white/40 blur-lg scale-110" />
               <img
                 src="/logo.png"
                 alt="ตราเทศบาลตำบลท่าวังทอง"
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
+                className="relative w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-lg ring-2 ring-white/40 bg-white/10 p-0.5"
               />
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
                 ข้อมูลประปาหมู่บ้าน
               </h1>
-              <p className="text-[11px] text-brand-50 hidden md:block">
+              <p className="text-[10px] md:text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
               </p>
             </div>
@@ -355,291 +354,240 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
       </header>
 
-      <main
-        id="main-content"
-        className="flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5 relative z-10"
-      >
-        <div className="card bg-white overflow-hidden shadow-md">
-          {/* ⭐ ปรับโครงสร้างให้ทุกอย่างอยู่ในแถวเดียวกัน (Flex Wrap) */}
-          <div className="p-3 md:p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
-            <div className="flex flex-wrap items-center gap-2 md:gap-3">
-              
-              {/* 1. ปุ่มกรอง (มือถือ) / หัวข้อ (คอม) */}
+      <main className="flex-1 min-h-0 max-w-[1600px] mx-auto px-3 md:px-4 py-3 md:py-4 w-full flex flex-col md:flex-row gap-3 md:gap-4 relative">
+        
+        {/* ================= ซ้าย: Sidebar (30%) ================= */}
+        <div className="w-full md:w-[30%] lg:w-[28%] flex flex-col gap-2 md:gap-3 shrink-0 md:h-full">
+          
+          {/* 1. Toggle & Filters Card */}
+          <div className="card bg-white/95 backdrop-blur-sm p-3 shadow-sm border border-slate-100 flex flex-col gap-2 shrink-0">
+            
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 shadow-inner w-full">
               <button
                 type="button"
-                onClick={() => setFiltersOpen(o => !o)}
-                className="md:hidden inline-flex items-center gap-2 text-sm font-semibold text-brand-700 active:scale-95 transition"
+                onClick={() => setViewMode('map')}
+                className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
+                  viewMode === 'map'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                }`}
               >
-                <Filter size={16} />
-                <span>กรองข้อมูล</span>
-                {hasAnyFilter && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-brand-500 text-white text-[10px] font-bold min-w-[18px] text-center">
-                    {(villageFilter !== 'all' ? 1 : 0) +
-                      (statusFilter !== 'all' ? 1 : 0) +
-                      (chartFilter.type ? 1 : 0)}
-                  </span>
-                )}
-                <ChevronDown
-                  size={16}
-                  className={`text-brand-600 transition-transform ${
-                    filtersOpen ? 'rotate-180' : ''
-                  }`}
-                />
+                <MapPin size={14} />
+                แผนที่
               </button>
-
-              <div className="hidden md:flex items-center gap-2 text-sm font-semibold text-brand-700">
-                <Filter size={16} />
-                <span>กรองข้อมูล</span>
-              </div>
-
-              {/* 2. ปุ่มสลับ แผนที่ / สถิติ */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 shadow-inner">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('map')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
-                    viewMode === 'map'
-                      ? 'bg-white text-brand-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                  }`}
-                >
-                  <MapPin size={14} />
-                  แผนที่
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('stats')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
-                    viewMode === 'stats'
-                      ? 'bg-white text-brand-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                  }`}
-                >
-                  <BarChart3 size={14} />
-                  สถิติ
-                </button>
-              </div>
-
-              {/* 3. ตัวกรอง หมู่บ้าน/สถานะ (ย้ายมาไว้ต่อจากปุ่ม) */}
-              <div
-                className={`${
-                  filtersOpen ? 'flex' : 'hidden'
-                } md:flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0`}
+              <button
+                type="button"
+                onClick={() => setViewMode('stats')}
+                className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
+                  viewMode === 'stats'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                }`}
               >
-                <div className="flex items-center gap-2 shrink-0">
-                  <label className="text-xs text-slate-500 whitespace-nowrap shrink-0">
-                    หมู่บ้าน
-                  </label>
-                  <select
-                    value={villageFilter}
-                    onChange={e => {
-                      setVillageFilter(
-                        e.target.value === 'all'
-                          ? 'all'
-                          : Number(e.target.value),
-                      )
-                      setChartFilter({ type: null, value: null })
-                    }}
-                    className="input text-sm py-1.5 pr-8"
-                    style={{ width: 'auto', minWidth: '160px' }}
-                  >
-                    <option value="all">
-                      ทั้งหมด ({villages.length} หมู่)
-                    </option>
-                    {villages.map(v => (
-                      <option key={v.id} value={v.id}>
-                        หมู่ {v.village_no} {v.village_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <BarChart3 size={14} />
+                สถิติ
+              </button>
+            </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <label className="text-xs text-slate-500 whitespace-nowrap shrink-0">
-                    สถานะ
-                  </label>
-                  <select
-                    value={statusFilter}
-                    onChange={e => {
-                      setStatusFilter(e.target.value)
-                      setChartFilter({ type: null, value: null })
-                    }}
-                    className="input text-sm py-1.5 pr-8"
-                    style={{ width: 'auto', minWidth: '130px' }}
-                  >
-                    <option value="all">ทั้งหมด</option>
-                    {STATUS_OPTIONS.map(s => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            <div className="h-px w-full bg-slate-100" />
 
-                {chartFilter.type && (
-                  <button
-                    onClick={() =>
-                      setChartFilter({ type: null, value: null })
-                    }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800 text-xs font-medium hover:bg-brand-200 active:scale-95 transition shrink-0"
-                  >
-                    🎯{' '}
-                    {chartFilter.type === 'status'
-                      ? chartFilter.value
-                      : `หมู่ ${chartFilter.value}`}
-                    <span className="text-brand-500 ml-1">×</span>
-                  </button>
-                )}
-
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs md:text-sm font-bold text-brand-900 flex items-center gap-1.5">
+                  <Filter size={12} />
+                  กรองข้อมูล
+                </h3>
                 {hasAnyFilter && (
                   <button
                     onClick={clearAllFilters}
-                    className="text-xs text-brand-600 hover:underline font-medium active:scale-95 transition shrink-0"
+                    className="text-[10px] md:text-[11px] text-brand-600 hover:underline font-medium active:scale-95 transition"
                   >
                     ล้างตัวกรอง
                   </button>
                 )}
               </div>
 
-              {/* 4. Badge จำนวน (ดันไปขวาสุด) */}
-              <div
-                role="status"
-                aria-live="polite"
-                aria-label={`พบ ${filtered.length} ระบบ`}
-                className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800 mt-2 md:mt-0 w-full sm:w-auto justify-center sm:justify-start"
-              >
-                <TrendingUp size={14} aria-hidden="true" />
-                <span className="text-xs font-semibold whitespace-nowrap">
-                  พบ {filtered.length} ระบบ
-                </span>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-[10px] md:text-[11px] text-slate-500 font-medium">หมู่บ้าน</label>
+                  <select
+                    value={villageFilter}
+                    onChange={e => {
+                      setVillageFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                      setChartFilter({ type: null, value: null })
+                    }}
+                    className="input text-xs md:text-sm py-1.5 px-2 md:px-3 w-full"
+                  >
+                    <option value="all">ทั้งหมด ({villages.length} หมู่)</option>
+                    {villages.map(v => (
+                      <option key={v.id} value={v.id}>หมู่ {v.village_no} {v.village_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-0.5">
+                  <label className="text-[10px] md:text-[11px] text-slate-500 font-medium">สถานะ</label>
+                  <select
+                    value={statusFilter}
+                    onChange={e => {
+                      setStatusFilter(e.target.value)
+                      setChartFilter({ type: null, value: null })
+                    }}
+                    className="input text-xs md:text-sm py-1.5 px-2 md:px-3 w-full"
+                  >
+                    <option value="all">ทั้งหมด</option>
+                    {STATUS_OPTIONS.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {chartFilter.type && (
+                  <div className="pt-0.5">
+                    <button
+                      onClick={() => setChartFilter({ type: null, value: null })}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-100 text-brand-800 text-[10px] md:text-xs font-medium hover:bg-brand-200 active:scale-95 transition w-full justify-center"
+                    >
+                      🎯 {chartFilter.type === 'status' ? chartFilter.value : `หมู่ ${chartFilter.value}`}
+                      <span className="text-brand-500 ml-1">×</span>
+                    </button>
+                  </div>
+                )}
               </div>
+            </div>
+
+            <div className="h-px w-full bg-slate-100" />
+
+            <div className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-800 w-full border border-brand-100">
+              <TrendingUp size={14} />
+              <span className="text-xs font-semibold whitespace-nowrap">
+                พบ {filtered.length} ระบบ
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-brand-50">
+          {/* 2. Stats Grid 2x2 */}
+          {/* ⭐ ปรับ Layout การ์ดด้านในให้กระจายตัว (justify-between) เพื่อไม่ให้ดูโล่ง */}
+          <div className="grid grid-cols-2 gap-2 md:gap-3 md:flex-1 min-h-[160px]">
             {cards.map((c, i) => (
-              <div
-                key={i}
-                className="p-4 hover:bg-brand-50/60 transition-all group cursor-default"
+              <div 
+                key={i} 
+                className="card p-3 md:p-4 hover:bg-brand-50/60 transition-all group cursor-pointer border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${c.bg} ${c.color}`}
-                  >
-                    {c.icon}
-                  </div>
-                  <span className="text-xs text-slate-500 font-medium">
+                {/* ด้านบน: ชื่อ + ไอคอน */}
+                <div className="flex items-start justify-between gap-1 w-full">
+                  <span className="text-[11px] md:text-sm text-slate-500 font-medium pt-0.5 truncate">
                     {c.label}
                   </span>
+                  <div className={`w-7 h-7 md:w-9 md:h-9 shrink-0 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 ${c.bg} ${c.color}`}>
+                    {/* ขยายไอคอนให้ใหญ่ขึ้นเล็กน้อยเพื่อให้เต็มกล่อง */}
+                    <span className="scale-110 md:scale-125">{c.icon}</span>
+                  </div>
                 </div>
-                <p className="text-2xl md:text-3xl font-extrabold text-brand-900 leading-none tabular-nums">
+                
+                {/* ด้านล่าง: ตัวเลขใหญ่ๆ */}
+                <p className="text-xl md:text-3xl lg:text-4xl font-extrabold text-brand-900 leading-none tabular-nums mt-4 md:mt-auto">
                   <AnimatedCounter value={c.value} />
                 </p>
               </div>
             ))}
           </div>
+
         </div>
 
-        {viewMode === 'map' && (
-          <div
-            ref={mapRef}
-            className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white animate-in fade-in duration-300"
-          >
-            <div className="absolute inset-0">
-              <VillagesMapClient
-                markers={markers}
-                height="h-full"
-                isFullscreen={mapFullscreen}
-                onToggleFullscreen={toggleMapFullscreen}
-                markerMode={markerMode}
-                onMarkerModeChange={setMarkerMode}
-                fullscreenRef={mapRef}
-              />
-            </div>
-          </div>
-        )}
-
-        {viewMode === 'stats' && (
-          <div
-            ref={statsRef}
-            className={
-              statsFullscreen
-                ? 'bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full animate-in fade-in duration-300'
-                : 'w-full flex flex-col space-y-5 animate-in fade-in duration-300'
-            }
-          >
-            <div className="w-full flex-1 relative z-10 flex flex-col min-h-0">
-              {chartMode === 'status' && (
-                <StatusChart
-                  statusCount={statusCount}
-                  total={stats.systems}
-                  rightSlot={chartToolbar}
-                  activeStatus={
-                    chartFilter.type === 'status'
-                      ? (chartFilter.value as string)
-                      : null
-                  }
-                  onStatusClick={status => {
-                    setChartFilter(prev =>
-                      prev.type === 'status' && prev.value === status
-                        ? { type: null, value: null }
-                        : { type: 'status', value: status },
-                    )
-                    if (!statsFullscreen) setViewMode('map')
-                  }}
-                  isFullscreen={statsFullscreen}
-                />
-              )}
-              {chartMode === 'village' && (
-                <VillageStatusChart
-                  villages={villages}
-                  systems={filtered}
-                  rightSlot={chartToolbar}
-                  activeVillage={
-                    chartFilter.type === 'village'
-                      ? (chartFilter.value as number)
-                      : null
-                  }
-                  onVillageClick={villageId => {
-                    setChartFilter(prev =>
-                      prev.type === 'village' && prev.value === villageId
-                        ? { type: null, value: null }
-                        : { type: 'village', value: villageId },
-                    )
-                    if (!statsFullscreen) setViewMode('map')
-                  }}
-                  isFullscreen={statsFullscreen}
-                />
-              )}
-              {chartMode === 'sufficiency' && (
-                <SufficiencyChart
+        {/* ================= ขวา: เนื้อหา (70%) ================= */}
+        <div className="w-full md:w-[70%] lg:w-[72%] flex flex-col flex-1 min-h-[500px] md:min-h-0 relative">
+          
+          {/* Map View */}
+          {viewMode === 'map' && (
+            <div
+              ref={mapRef}
+              className="card overflow-hidden shadow-md w-full h-[500px] md:h-full relative bg-white animate-in fade-in duration-300"
+            >
+              <div className="absolute inset-0">
+                <VillagesMapClient
                   markers={markers}
-                  rightSlot={chartToolbar}
-                  isFullscreen={statsFullscreen}
+                  height="h-full"
+                  isFullscreen={mapFullscreen}
+                  onToggleFullscreen={toggleMapFullscreen}
+                  markerMode={markerMode}
+                  onMarkerModeChange={setMarkerMode}
+                  fullscreenRef={mapRef}
                 />
-              )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Stats View */}
+          {viewMode === 'stats' && (
+            <div
+              ref={statsRef}
+              className={
+                statsFullscreen
+                  ? 'fixed inset-0 z-[9999] bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full animate-in fade-in duration-300'
+                  : 'w-full h-full flex flex-col animate-in fade-in duration-300'
+              }
+            >
+              <div className="w-full flex-1 relative flex flex-col min-h-0">
+                {chartMode === 'status' && (
+                  <StatusChart
+                    statusCount={statusCount}
+                    total={stats.systems}
+                    rightSlot={chartToolbar}
+                    activeStatus={chartFilter.type === 'status' ? (chartFilter.value as string) : null}
+                    onStatusClick={status => {
+                      setChartFilter(prev => prev.type === 'status' && prev.value === status ? { type: null, value: null } : { type: 'status', value: status })
+                      if (!statsFullscreen) setViewMode('map')
+                    }}
+                    isFullscreen={statsFullscreen}
+                  />
+                )}
+                {chartMode === 'village' && (
+                  <VillageStatusChart
+                    villages={villages}
+                    systems={filtered}
+                    rightSlot={chartToolbar}
+                    activeVillage={chartFilter.type === 'village' ? (chartFilter.value as number) : null}
+                    onVillageClick={villageId => {
+                      setChartFilter(prev => prev.type === 'village' && prev.value === villageId ? { type: null, value: null } : { type: 'village', value: villageId })
+                      if (!statsFullscreen) setViewMode('map')
+                    }}
+                    isFullscreen={statsFullscreen}
+                  />
+                )}
+                {chartMode === 'sufficiency' && (
+                  <SufficiencyChart
+                    markers={markers}
+                    rightSlot={chartToolbar}
+                    isFullscreen={statsFullscreen}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+          
+        </div>
       </main>
 
-      <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-4 mt-auto z-10">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
-          <img
-            src="/logo.png"
-            alt="ตราเทศบาล"
-            className="w-11 h-11 rounded-full ring-2 ring-white/20 shrink-0"
-          />
-          <div className="text-xs md:text-sm leading-snug text-center">
-            <p className="font-medium">
-              เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ปาแดด
-            </p>
-            <p className="text-brand-300">
-              ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
-            </p>
+      {!statsFullscreen && !mapFullscreen && (
+        <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-2 md:py-3 mt-auto z-10 shrink-0">
+          <div className="max-w-[1600px] mx-auto px-4 flex items-center justify-center gap-3">
+            <img
+              src="/logo.png"
+              alt="ตราเทศบาล"
+              className="w-7 h-7 md:w-9 md:h-9 rounded-full ring-2 ring-white/20 shrink-0"
+            />
+            <div className="text-[10px] md:text-xs leading-snug text-center">
+              <p className="font-medium">
+                เทศบาลตำบลท่าวังทอง เลขที่ 131 หมู่ที่ 4 ถนนพะเยา-ปาแดด
+              </p>
+              <p className="text-brand-300">
+                ตำบลท่าวังทอง อำเภอเมืองพะเยา จังหวัดพะเยา 56000
+              </p>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   )
 }

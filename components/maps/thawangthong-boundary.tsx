@@ -44,8 +44,8 @@ const HATCH_PATTERN_ID = 'thawangthong-hatch-pattern'
 export default function ThawangthongBoundary({
   boundary,
   visible = true,
-  hatchColor = '#94a3b8',
-  outlineColor = '#7c3aed',
+  hatchColor = '#ff0000',
+  outlineColor = '#ff0000',
 }: Props) {
   const map = useMap()
 
@@ -109,8 +109,8 @@ export default function ThawangthongBoundary({
               x1="0" y1="0"
               x2="0" y2="18"
               stroke="${hatchColor}"
-              stroke-width="1.5"
-              stroke-opacity="0.4"
+              stroke-width="1"
+              stroke-opacity="1"
             />
           </pattern>
         `

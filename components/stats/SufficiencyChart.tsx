@@ -59,7 +59,7 @@ export default function SufficiencyChart({
 
   if (rows.length === 0) {
     return (
-      <div className="card p-6">
+      <div className="card p-6 h-full flex flex-col">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-bold text-brand-900 flex items-center gap-2">
             <Droplets size={18} className="text-brand-600" />
@@ -67,9 +67,9 @@ export default function SufficiencyChart({
           </h2>
           {rightSlot}
         </div>
-        <p className="text-sm text-brand-400 text-center py-10">
-          ยังไม่มีข้อมูลครัวเรือน
-        </p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-brand-400">ยังไม่มีข้อมูลครัวเรือน</p>
+        </div>
       </div>
     )
   }
@@ -85,14 +85,18 @@ export default function SufficiencyChart({
   const yMax = 100
   const yTicks = [100, 75, 50, 25, 0]
 
-  const paddingClass = isFullscreen ? 'p-6 md:p-8' : 'p-4 md:p-6'
+  const paddingClass = isFullscreen ? 'p-6 md:p-8' : 'p-4 md:p-5'
   const titleClass = isFullscreen ? 'text-xl md:text-2xl' : 'text-base md:text-lg'
   const legendTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-[10px] md:text-xs'
   const axisTextClass = isFullscreen ? 'text-sm font-medium' : 'text-[9px] md:text-[10px]'
   const xAxisTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-[10px]'
+  
+  const minBarWidth = isFullscreen ? 60 : 45 
+  const chartWidth = Math.max(rows.length * minBarWidth, 300)
 
   return (
-    <div className={`card ${paddingClass} flex flex-col w-full ${isFullscreen ? 'h-full' : 'min-h-[500px]'}`}>
+    // ⭐ เปลี่ยนเป็น h-full เพื่อให้การ์ดสูงเต็มพื้นที่ที่เหลือ
+    <div className={`card ${paddingClass} flex flex-col w-full h-full`}>
       
       {/* Header */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-100 shrink-0">
@@ -153,7 +157,7 @@ export default function SufficiencyChart({
 
         <div className="flex w-full flex-1 min-h-0 relative">
           
-          {/* ⭐ แกน Y (Fixed ด้านซ้าย) */}
+          {/* แกน Y */}
           <div className={`relative shrink-0 ${isFullscreen ? 'w-12' : 'w-8 md:w-12'} flex flex-col`}>
             <div className="relative flex-1">
               {yTicks.map((val, i) => {
@@ -173,19 +177,18 @@ export default function SufficiencyChart({
                 )
               })}
             </div>
-            {/* Spacer ความสูง h-14 ต้องเท่ากับแกน X ด้านล่าง */}
             <div className="h-14 shrink-0" />
           </div>
 
-          {/* ⭐ พื้นที่กราฟ (Scroll ได้เมื่อจอเล็ก) */}
+          {/* พื้นที่กราฟ */}
           <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2">
-            <div className="h-full flex flex-col w-full min-w-[600px]"> 
-              {/* min-w-[600px] ทำให้จอใหญ่แท่งกราฟขยายเต็ม แต่จอเล็กปัดซ้ายขวาได้ */}
-
-              {/* พื้นที่แท่งกราฟ */}
-              <div className="relative flex-1 w-full min-h-[250px]">
+            <div 
+              className="h-full flex flex-col"
+              style={{ width: `${chartWidth}px`, minWidth: '100%' }}
+            >
+              {/* ⭐ พื้นที่แท่งกราฟ: ใช้ flex-1 ทำให้ยืดเต็มพื้นที่ความสูงที่เหลือ */}
+              <div className="relative flex-1 w-full min-h-[200px]">
                 
-                {/* เส้น Grid */}
                 {yTicks.map((_, i) => (
                   <div
                     key={i}
@@ -194,8 +197,7 @@ export default function SufficiencyChart({
                   />
                 ))}
 
-                {/* ⭐ แท่งกราฟ (ใช้ flex-1 ให้ขยายเต็มพื้นที่) */}
-                <div className="absolute inset-0 flex items-end justify-start w-full px-2">
+                <div className="absolute inset-0 flex items-end justify-start w-full px-1">
                   {rows.map((row, idx) => {
                     const prodPct = Math.min((row.dailyProduction / yMax) * 100, 100)
                     const demandPct = Math.min((row.peakDayDemand / yMax) * 100, 100)
@@ -203,11 +205,11 @@ export default function SufficiencyChart({
                     return (
                       <div 
                         key={row.systemId} 
-                        className="flex flex-col items-center justify-end h-full flex-1 min-w-[30px] px-0.5 md:px-1"
+                        className="flex flex-col items-center justify-end h-full shrink-0 px-0.5 md:px-1"
+                        style={{ width: `${minBarWidth}px` }}
                       >
                         <div className="flex items-end justify-center gap-0.5 md:gap-1 w-full h-full relative group">
                           
-                          {/* แท่งผลิต */}
                           <div className="relative flex flex-col items-center justify-end h-full flex-1">
                             {row.dailyProduction > yMax && (
                               <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[8px] md:text-[9px]'} font-bold text-blue-700 tabular-nums whitespace-nowrap z-10`}>
@@ -215,13 +217,12 @@ export default function SufficiencyChart({
                               </div>
                             )}
                             <div
-                              className="w-full max-w-[20px] md:max-w-[28px] rounded-t bg-blue-600 transition-[height] duration-700 ease-out cursor-pointer hover:bg-blue-700"
+                              className="w-full max-w-[14px] md:max-w-[20px] rounded-t bg-blue-600 transition-[height] duration-700 ease-out cursor-pointer hover:bg-blue-700"
                               style={{ height: mounted ? `${Math.max(prodPct, 2)}%` : '0%' }}
                               title={`ม.${row.villageNo} ${row.systemName}\nผลิต: ${row.dailyProduction} ลบ.ม./วัน`}
                             />
                           </div>
 
-                          {/* แท่งต้องการ */}
                           <div className="relative flex flex-col items-center justify-end h-full flex-1">
                             {row.peakDayDemand > yMax && (
                               <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[8px] md:text-[9px]'} font-bold text-teal-700 tabular-nums whitespace-nowrap z-10`}>
@@ -229,7 +230,7 @@ export default function SufficiencyChart({
                               </div>
                             )}
                             <div
-                              className="w-full max-w-[20px] md:max-w-[28px] rounded-t bg-teal-400 transition-[height] duration-700 ease-out cursor-pointer hover:bg-teal-500"
+                              className="w-full max-w-[14px] md:max-w-[20px] rounded-t bg-teal-400 transition-[height] duration-700 ease-out cursor-pointer hover:bg-teal-500"
                               style={{ height: mounted ? `${Math.max(demandPct, 2)}%` : '0%' }}
                               title={`ม.${row.villageNo} ${row.systemName}\nต้องการ: ${row.peakDayDemand} ลบ.ม./วัน`}
                             />
@@ -242,12 +243,13 @@ export default function SufficiencyChart({
                 </div>
               </div>
 
-              {/* ⭐ แกน X (ชื่อหมู่บ้าน) ความสูง h-14 เพื่อให้ตรงกับ Spacer ด้านซ้าย */}
-              <div className="flex w-full mt-2 shrink-0 h-14 overflow-hidden px-2">
+              {/* แกน X */}
+              <div className="flex w-full mt-2 shrink-0 h-12 overflow-hidden px-1">
                 {rows.map(row => (
                   <div 
                     key={row.systemId} 
-                    className="flex-1 min-w-[30px] text-center px-0.5 flex flex-col justify-start"
+                    className="shrink-0 text-center px-0.5 flex flex-col justify-start"
+                    style={{ width: `${minBarWidth}px` }}
                   >
                     <p className={`${xAxisTextClass} font-semibold text-brand-700 truncate leading-tight`}>
                       ม.{row.villageNo}
@@ -268,18 +270,11 @@ export default function SufficiencyChart({
             </div>
           </div>
         </div>
-        
-        {/* แจ้งเตือนปัดหน้าจอ */}
-        {rows.length > 10 && (
-          <div className="md:hidden absolute bottom-0 right-0 bg-gradient-to-l from-white via-white/80 to-transparent w-16 h-full pointer-events-none flex items-center justify-end pr-1 z-20">
-             <span className="text-[9px] text-slate-400 rotate-90 whitespace-nowrap">ปัด ➔</span>
-          </div>
-        )}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-1.5 text-[9px] md:text-sm text-slate-500 leading-relaxed shrink-0">
+      <div className="mt-2 pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[9px] md:text-xs text-slate-500 leading-relaxed shrink-0">
         <Info size={isFullscreen ? 16 : 12} className="shrink-0 mt-0.5 text-slate-400" />
-        <span className="line-clamp-2 md:line-clamp-none">
+        <span className="line-clamp-1 md:line-clamp-none">
           <strong>สูตร:</strong> ผลิต/วัน = กำลังผลิต × {PRODUCTION_HOURS_PER_DAY} ชม. · ความต้องการ (PDD) = ครัวเรือน × {PEOPLE_PER_HOUSEHOLD} คน × {WATER_PER_PERSON_PER_DAY} ลิตร × {DRY_SEASON_FACTOR} (ฤดูแล้ง)
         </span>
       </div>

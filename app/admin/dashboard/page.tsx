@@ -270,7 +270,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-slate-500">
                 {session.role === 'operator'
                   ? 'คุณยังไม่ได้รับมอบหมายข้อมูลประปา'
-                  : 'ไม่พบข้อมูลหมู่บ้านที่คุณเข้าถึงได้'}
+                  : 'ไม่พบข้อมูลประปาหมู่บ้านที่คุณเข้าถึงได้'}
               </p>
             </div>
           )}

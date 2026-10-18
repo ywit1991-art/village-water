@@ -484,7 +484,7 @@ export async function saveSurveyAction(
   const sb = adminSb()
 
   if (!canAccessVillage(session, villageId)) {
-    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลหมู่บ้านนี้' }
+    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลประปาหมู่บ้านนี้' }
   }
   if (systemId && !canAccessSystem(session, systemId, villageId)) {
     return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลระบบนี้' }

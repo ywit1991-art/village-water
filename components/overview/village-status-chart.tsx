@@ -65,16 +65,18 @@ export default function VillageStatusChart({
 
   if (stats.length === 0) {
     return (
-      <div className="card p-6">
+      <div className="card p-6 flex flex-col h-full">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-bold text-brand-900">
             สถานะแยกตามหมู่บ้าน
           </h2>
           {rightSlot}
         </div>
-        <p className="text-sm text-brand-400 text-center py-10">
-          ยังไม่มีข้อมูลประปา
-        </p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-brand-400">
+            ยังไม่มีข้อมูลประปา
+          </p>
+        </div>
       </div>
     )
   }
@@ -93,21 +95,22 @@ export default function VillageStatusChart({
   })
   const grandTotal = Object.values(totals).reduce((a, b) => a + b, 0)
 
-  // ⭐ ขนาดตัวหนังสือ
-  const titleClass = isFullscreen ? 'text-2xl md:text-3xl' : 'text-lg'
-  const legendTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-xs'
-  const labelTextClass = isFullscreen ? 'text-base md:text-lg' : 'text-xs'
-  const subLabelClass = isFullscreen ? 'text-sm' : 'text-[10px]'
+  // ⭐ ปรับขนาดตัวอักษรให้เล็กลง
+  const titleClass = isFullscreen ? 'text-xl md:text-2xl' : 'text-base md:text-lg'
+  const legendTextClass = isFullscreen ? 'text-xs md:text-sm' : 'text-[10px] md:text-xs'
+  const labelTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-[11px] md:text-xs'
+  const subLabelClass = isFullscreen ? 'text-xs' : 'text-[9px] md:text-[10px]'
 
   return (
-    <div ref={ref} className={`card p-6 flex flex-col h-full`}>
+    <div ref={ref} className="card p-4 md:p-5 flex flex-col h-full overflow-hidden">
+      
       {/* Header + Legend inline */}
-      <div className="flex items-center gap-3 mb-5 pb-3 border-b border-brand-50 flex-wrap shrink-0">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-2 mb-3 pb-3 border-b border-brand-50 flex-wrap shrink-0">
         <h2 className={`${titleClass} font-bold text-brand-900 shrink-0`}>
           สถานะแยกตามหมู่บ้าน
         </h2>
 
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 flex-1">
           {STATUS_ORDER.map(k => {
             const c = STATUS_COLORS[k]
             const count = totals[k]
@@ -115,9 +118,12 @@ export default function VillageStatusChart({
             const pct =
               grandTotal > 0 ? Math.round((count / grandTotal) * 100) : 0
             return (
-              <div key={k} className={`flex items-center gap-1.5 ${legendTextClass}`}>
+              <div
+                key={k}
+                className={`flex items-center gap-1.5 ${legendTextClass}`}
+              >
                 <span
-                  className="w-3 h-3 rounded-sm border border-white shadow shrink-0"
+                  className="w-2.5 h-2.5 rounded-sm border border-white shadow shrink-0"
                   style={{ background: c.hex }}
                 />
                 <span className="text-slate-600">{k}</span>
@@ -130,11 +136,13 @@ export default function VillageStatusChart({
           })}
         </div>
 
-        {rightSlot && <div className="ml-auto shrink-0">{rightSlot}</div>}
+        <div className="flex items-center gap-2 shrink-0 xl:ml-auto">
+          {rightSlot}
+        </div>
       </div>
 
-      {/* Bars — ⭐ ไม่มี Scrollbar แล้ว */}
-      <div className="space-y-4 pb-4 flex-1">
+      {/* รายการหมู่บ้าน */}
+      <div className="space-y-2.5 pb-2 flex-1 overflow-y-auto custom-scrollbar pr-2">
         {stats.map(({ village, counts, total }, idx) => {
           const scalePct = (total / maxTotal) * 100
           const isActive = activeVillage === village.id
@@ -148,7 +156,7 @@ export default function VillageStatusChart({
               initial={{ opacity: 0, x: -20 }}
               animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
               transition={{ duration: 0.4, delay: idx * 0.05 }}
-              className={`w-full flex items-center gap-3 text-left transition-all rounded-lg p-1 ${
+              className={`w-full flex items-center gap-2 md:gap-3 text-left transition-all rounded-lg p-1 ${
                 isActive
                   ? 'ring-2 ring-brand-400 bg-brand-50/60'
                   : isClickable
@@ -156,21 +164,37 @@ export default function VillageStatusChart({
                     : ''
               }`}
             >
-              <div className={`shrink-0 text-right ${isFullscreen ? 'w-32 md:w-40' : 'w-24 md:w-28'}`}>
-                <p className={`${labelTextClass} font-semibold text-brand-700 truncate leading-tight`}>
+              {/* ⭐ ลดความกว้างของชื่อหมู่บ้านลง */}
+              <div
+                className={`shrink-0 text-right ${
+                  isFullscreen ? 'w-24 md:w-32' : 'w-20 md:w-24'
+                }`}
+              >
+                <p
+                  className={`${labelTextClass} font-semibold text-brand-700 truncate leading-tight`}
+                >
                   หมู่ {village.village_no}
                 </p>
-                <p className={`${subLabelClass} text-slate-500 truncate leading-tight`}>
+                <p
+                  className={`${subLabelClass} text-slate-500 truncate leading-tight`}
+                >
                   {village.village_name}
                 </p>
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className={`relative bg-slate-50 rounded-md overflow-hidden ${isFullscreen ? 'h-10' : 'h-7'}`}>
+                {/* ⭐ ลดความสูงของแท่งกราฟลง */}
+                <div
+                  className={`relative bg-slate-50 rounded-md overflow-hidden ${
+                    isFullscreen ? 'h-7 md:h-8' : 'h-5 md:h-6'
+                  }`}
+                >
                   <motion.div
                     className="absolute left-0 top-0 h-full flex"
                     initial={{ width: 0 }}
-                    animate={inView ? { width: `${scalePct}%` } : { width: 0 }}
+                    animate={
+                      inView ? { width: `${scalePct}%` } : { width: 0 }
+                    }
                     transition={{
                       duration: 0.8,
                       delay: 0.2 + idx * 0.05,
@@ -185,7 +209,9 @@ export default function VillageStatusChart({
                       return (
                         <div
                           key={k}
-                          className={`h-full flex items-center justify-center font-bold text-white transition hover:brightness-110 ${isFullscreen ? 'text-sm' : 'text-[10px]'}`}
+                          className={`h-full flex items-center justify-center font-bold text-white transition hover:brightness-110 ${
+                            isFullscreen ? 'text-[11px]' : 'text-[9px] md:text-[10px]'
+                          }`}
                           style={{
                             width: `${segPct}%`,
                             background: c.hex,
@@ -200,8 +226,17 @@ export default function VillageStatusChart({
                 </div>
               </div>
 
-              <div className={`shrink-0 text-right ${isFullscreen ? 'w-14' : 'w-10'}`}>
-                <p className={`${isFullscreen ? 'text-lg' : 'text-sm'} font-bold text-brand-900 tabular-nums`}>
+              {/* ⭐ ลดขนาดตัวเลขผลรวมด้านขวา */}
+              <div
+                className={`shrink-0 text-right ${
+                  isFullscreen ? 'w-10' : 'w-8'
+                }`}
+              >
+                <p
+                  className={`${
+                    isFullscreen ? 'text-base' : 'text-xs md:text-sm'
+                  } font-bold text-brand-900 tabular-nums`}
+                >
                   {total}
                 </p>
               </div>
@@ -210,7 +245,10 @@ export default function VillageStatusChart({
         })}
       </div>
 
-      <div className={`mt-2 pt-3 border-t border-brand-50 flex items-center justify-between ${legendTextClass} text-slate-500 shrink-0`}>
+      {/* Footer */}
+      <div
+        className={`mt-1 pt-2 border-t border-brand-50 flex items-center justify-between ${legendTextClass} text-slate-500 shrink-0`}
+      >
         <span>รวม {stats.length} หมู่บ้าน</span>
         <span className="font-semibold text-brand-700">
           {grandTotal} ข้อมูล
@@ -218,7 +256,9 @@ export default function VillageStatusChart({
       </div>
 
       {onVillageClick && (
-        <p className={`${subLabelClass} text-slate-400 text-center mt-3 shrink-0`}>
+        <p
+          className={`${subLabelClass} text-slate-400 text-center mt-1.5 shrink-0`}
+        >
           💡 คลิกที่หมู่บ้านเพื่อกรองแผนที่
         </p>
       )}
