@@ -333,7 +333,7 @@ export default function OverviewClient({ villages, systems }: Props) {
                 ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[10px] md:text-[11px] text-brand-50 hidden md:block">
-                ทต.ท่าวังทอง · อ.เมืองพะเยา
+                เทศบาลตำบลท่าวังทอง
               </p>
             </div>
           </Link>
