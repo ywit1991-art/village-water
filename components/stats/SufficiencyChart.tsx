@@ -105,9 +105,7 @@ export default function SufficiencyChart({
             <span className="sm:hidden">น้ำประปา (ฤดูแล้ง)</span>
           </h2>
 
-          <span className={`hidden md:inline ${legendTextClass} text-slate-500 whitespace-nowrap`}>
-            {rows.length} ระบบ · {WATER_PER_PERSON_PER_DAY} ลิตร/คน/วัน · {PEOPLE_PER_HOUSEHOLD} คน/ครัวเรือน
-          </span>
+          {/* ⭐ ลบข้อความ 20 ระบบ · 50 ลิตร/คน/วัน · 5 คน/ครัวเรือน ออกแล้ว */}
 
           <span className="text-slate-300 hidden xl:inline">|</span>
 
@@ -196,19 +194,16 @@ export default function SufficiencyChart({
                   />
                 ))}
 
-                {/* ⭐⭐⭐ รวมแท่งกราฟและชื่อไว้ใน Column เดียวกัน ⭐⭐⭐ */}
                 <div className="absolute inset-0 flex items-end w-full">
                   {rows.map((row, idx) => {
                     const prodPct = Math.min((row.dailyProduction / yMax) * 100, 100)
                     const demandPct = Math.min((row.peakDayDemand / yMax) * 100, 100)
 
                     return (
-                      // คอลัมน์หลักของแต่ละระบบ
                       <div 
                         key={row.systemId} 
                         className="flex-1 flex flex-col items-center justify-end h-full min-w-0 px-1 relative group"
                       >
-                        {/* 1. ส่วนแท่งกราฟ (สูงเท่ากับพื้นที่ที่เหลือ) */}
                         <div className="relative flex items-end justify-center gap-0.5 md:gap-1 w-full h-full">
                           <div className="relative flex flex-col items-center justify-end h-full flex-1">
                             {row.dailyProduction > yMax && (
@@ -237,9 +232,7 @@ export default function SufficiencyChart({
                           </div>
                         </div>
 
-                        {/* 2. ส่วนชื่อด้านล่าง (หมุนแนวตั้ง 90 องศา) */}
                         <div className="h-24 md:h-28 w-full shrink-0 flex flex-col items-center pt-2">
-                          {/* ชื่อหมู่บ้านและระบบ */}
                           <div 
                             className="flex-1 flex flex-col items-end justify-start h-full"
                             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
@@ -252,7 +245,6 @@ export default function SufficiencyChart({
                             </span>
                           </div>
                           
-                          {/* เปอร์เซ็นต์ (ไม่หมุน) */}
                           <span
                             className={`text-[10px] md:text-[11px] font-bold tabular-nums mt-1`}
                             style={{ color: SUFFICIENCY_COLORS[row.level].hex }}
