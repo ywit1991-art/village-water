@@ -89,13 +89,11 @@ export default function SufficiencyChart({
   const titleClass = isFullscreen ? 'text-xl md:text-2xl' : 'text-base md:text-lg'
   const legendTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-[10px] md:text-xs'
   const axisTextClass = isFullscreen ? 'text-sm font-medium' : 'text-[9px] md:text-[10px]'
-  const xAxisTextClass = isFullscreen ? 'text-sm md:text-base' : 'text-[10px]'
   
-  const minBarWidth = isFullscreen ? 60 : 45 
-  const chartWidth = Math.max(rows.length * minBarWidth, 300)
+  // ⭐ กำหนดความกว้างขั้นต่ำต่อ 1 คอลัมน์ (แท่ง+ชื่อ)
+  const minItemWidth = isFullscreen ? 60 : 45
 
   return (
-    // ⭐ เปลี่ยนเป็น h-full เพื่อให้การ์ดสูงเต็มพื้นที่ที่เหลือ
     <div className={`card ${paddingClass} flex flex-col w-full h-full`}>
       
       {/* Header */}
@@ -177,18 +175,19 @@ export default function SufficiencyChart({
                 )
               })}
             </div>
-            <div className="h-14 shrink-0" />
+            {/* ⭐ Spacer ด้านล่าง: เพิ่มความสูงให้เท่ากับพื้นที่ชื่อแนวตั้ง */}
+            <div className="h-24 md:h-28 shrink-0" />
           </div>
 
-          {/* พื้นที่กราฟ */}
+          {/* พื้นที่กราฟ Scroll ได้ */}
           <div className="flex-1 overflow-x-auto overflow-y-hidden custom-scrollbar pb-2">
             <div 
               className="h-full flex flex-col"
-              style={{ width: `${chartWidth}px`, minWidth: '100%' }}
+              style={{ minWidth: `${rows.length * minItemWidth}px` }}
             >
-              {/* ⭐ พื้นที่แท่งกราฟ: ใช้ flex-1 ทำให้ยืดเต็มพื้นที่ความสูงที่เหลือ */}
+              
+              {/* พื้นที่แท่งกราฟ (มีเส้น Grid) */}
               <div className="relative flex-1 w-full min-h-[200px]">
-                
                 {yTicks.map((_, i) => (
                   <div
                     key={i}
@@ -197,27 +196,28 @@ export default function SufficiencyChart({
                   />
                 ))}
 
-                <div className="absolute inset-0 flex items-end justify-start w-full px-1">
+                {/* ⭐⭐⭐ รวมแท่งกราฟและชื่อไว้ใน Column เดียวกัน ⭐⭐⭐ */}
+                <div className="absolute inset-0 flex items-end w-full">
                   {rows.map((row, idx) => {
                     const prodPct = Math.min((row.dailyProduction / yMax) * 100, 100)
                     const demandPct = Math.min((row.peakDayDemand / yMax) * 100, 100)
 
                     return (
+                      // คอลัมน์หลักของแต่ละระบบ
                       <div 
                         key={row.systemId} 
-                        className="flex flex-col items-center justify-end h-full shrink-0 px-0.5 md:px-1"
-                        style={{ width: `${minBarWidth}px` }}
+                        className="flex-1 flex flex-col items-center justify-end h-full min-w-0 px-1 relative group"
                       >
-                        <div className="flex items-end justify-center gap-0.5 md:gap-1 w-full h-full relative group">
-                          
+                        {/* 1. ส่วนแท่งกราฟ (สูงเท่ากับพื้นที่ที่เหลือ) */}
+                        <div className="relative flex items-end justify-center gap-0.5 md:gap-1 w-full h-full">
                           <div className="relative flex flex-col items-center justify-end h-full flex-1">
                             {row.dailyProduction > yMax && (
-                              <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[8px] md:text-[9px]'} font-bold text-blue-700 tabular-nums whitespace-nowrap z-10`}>
-                                <ArrowUp size={8} /> {Math.round(row.dailyProduction)}
+                              <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[9px]'} font-bold text-blue-700 tabular-nums whitespace-nowrap z-10`}>
+                                <ArrowUp size={10} /> {Math.round(row.dailyProduction)}
                               </div>
                             )}
                             <div
-                              className="w-full max-w-[14px] md:max-w-[20px] rounded-t bg-blue-600 transition-[height] duration-700 ease-out cursor-pointer hover:bg-blue-700"
+                              className="w-full max-w-[16px] md:max-w-[24px] rounded-t bg-blue-600 transition-[height] duration-700 ease-out cursor-pointer hover:bg-blue-700"
                               style={{ height: mounted ? `${Math.max(prodPct, 2)}%` : '0%' }}
                               title={`ม.${row.villageNo} ${row.systemName}\nผลิต: ${row.dailyProduction} ลบ.ม./วัน`}
                             />
@@ -225,48 +225,47 @@ export default function SufficiencyChart({
 
                           <div className="relative flex flex-col items-center justify-end h-full flex-1">
                             {row.peakDayDemand > yMax && (
-                              <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[8px] md:text-[9px]'} font-bold text-teal-700 tabular-nums whitespace-nowrap z-10`}>
-                                <ArrowUp size={8} /> {Math.round(row.peakDayDemand)}
+                              <div className={`absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-0.5 ${isFullscreen ? 'text-xs' : 'text-[9px]'} font-bold text-teal-700 tabular-nums whitespace-nowrap z-10`}>
+                                <ArrowUp size={10} /> {Math.round(row.peakDayDemand)}
                               </div>
                             )}
                             <div
-                              className="w-full max-w-[14px] md:max-w-[20px] rounded-t bg-teal-400 transition-[height] duration-700 ease-out cursor-pointer hover:bg-teal-500"
+                              className="w-full max-w-[16px] md:max-w-[24px] rounded-t bg-teal-400 transition-[height] duration-700 ease-out cursor-pointer hover:bg-teal-500"
                               style={{ height: mounted ? `${Math.max(demandPct, 2)}%` : '0%' }}
                               title={`ม.${row.villageNo} ${row.systemName}\nต้องการ: ${row.peakDayDemand} ลบ.ม./วัน`}
                             />
                           </div>
-
                         </div>
+
+                        {/* 2. ส่วนชื่อด้านล่าง (หมุนแนวตั้ง 90 องศา) */}
+                        <div className="h-24 md:h-28 w-full shrink-0 flex flex-col items-center pt-2">
+                          {/* ชื่อหมู่บ้านและระบบ */}
+                          <div 
+                            className="flex-1 flex flex-col items-end justify-start h-full"
+                            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+                          >
+                            <span className={`text-[9px] md:text-[10px] font-semibold text-brand-700 whitespace-nowrap`}>
+                              ม.{row.villageNo}
+                            </span>
+                            <span className={`text-[9px] md:text-[10px] text-slate-500 whitespace-nowrap`}>
+                              {row.systemName}
+                            </span>
+                          </div>
+                          
+                          {/* เปอร์เซ็นต์ (ไม่หมุน) */}
+                          <span
+                            className={`text-[10px] md:text-[11px] font-bold tabular-nums mt-1`}
+                            style={{ color: SUFFICIENCY_COLORS[row.level].hex }}
+                          >
+                            {row.level === 'no-data' ? '—' : `${row.ratio}%`}
+                          </span>
+                        </div>
+
                       </div>
                     )
                   })}
                 </div>
               </div>
-
-              {/* แกน X */}
-              <div className="flex w-full mt-2 shrink-0 h-12 overflow-hidden px-1">
-                {rows.map(row => (
-                  <div 
-                    key={row.systemId} 
-                    className="shrink-0 text-center px-0.5 flex flex-col justify-start"
-                    style={{ width: `${minBarWidth}px` }}
-                  >
-                    <p className={`${xAxisTextClass} font-semibold text-brand-700 truncate leading-tight`}>
-                      ม.{row.villageNo}
-                    </p>
-                    <p className={`${isFullscreen ? 'text-sm' : 'text-[8px] md:text-[9px]'} text-slate-500 truncate leading-tight hidden md:block`}>
-                      {row.systemName}
-                    </p>
-                    <p
-                      className={`${isFullscreen ? 'text-base' : 'text-[9px] md:text-[10px]'} font-bold tabular-nums leading-tight mt-0.5`}
-                      style={{ color: SUFFICIENCY_COLORS[row.level].hex }}
-                    >
-                      {row.level === 'no-data' ? '—' : `${row.ratio}%`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
             </div>
           </div>
         </div>
