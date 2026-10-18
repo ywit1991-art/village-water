@@ -230,7 +230,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={16} />,
       value: stats.systems,
-      label: 'ข้อมูลประปา',
+      label: 'ระบบประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -313,7 +313,6 @@ export default function OverviewClient({ villages, systems }: Props) {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-100/20 blur-3xl" />
       </div>
 
-      {/* ⭐ ปรับ max-w-[1600px] เป็น max-w-7xl ให้เท่ากับ Dashboard */}
       <header className="sticky top-0 z-30 bg-gradient-to-br from-brand-700 via-brand-500 to-brand-400 text-white shadow-lg relative overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
         <div className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl pointer-events-none" />
@@ -330,7 +329,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ข้อมูลประปาหมู่บ้าน
+                ระบบประปาหมู่บ้าน
               </h1>
               <p className="text-[10px] md:text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -355,11 +354,11 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
       </header>
 
-      {/* ⭐ ปรับ max-w-[1600px] เป็น max-w-7xl และ px-4 py-6 ให้เท่ากับ Dashboard */}
-      <main className="flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col md:flex-row gap-4 relative">
+      <main className="flex-1 min-h-0 max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4 w-full flex flex-col md:flex-row gap-3 md:gap-4 relative overflow-hidden">
         
         {/* ================= ซ้าย: Sidebar (30%) ================= */}
-        <div className="w-full md:w-[30%] lg:w-[32%] flex flex-col gap-2 md:gap-3 shrink-0 md:h-full">
+        {/* ⭐ เพิ่ม overflow-y-auto เพื่อให้เลื่อนดูได้กรณีจอเตี้ย และ pr-1 เพื่อไม่ให้ Scrollbar ทับเนื้อหา */}
+        <div className="w-full md:w-[30%] lg:w-[32%] flex flex-col gap-2 md:gap-3 shrink-0 md:h-full md:overflow-y-auto custom-scrollbar md:pr-2 pb-2">
           
           {/* 1. Toggle & Filters Card */}
           <div className="card bg-white/95 backdrop-blur-sm p-3 shadow-sm border border-slate-100 flex flex-col gap-2 shrink-0">
@@ -468,23 +467,24 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
           </div>
 
-          {/* 2. Stats Grid 2x2 */}
-          <div className="grid grid-cols-2 gap-2 md:gap-3 md:flex-1 min-h-[160px]">
+          {/* 2. Stats Grid 2x2 (ปรับให้กะทัดรัดขึ้น) */}
+          <div className="grid grid-cols-2 gap-2 md:gap-3 md:flex-1 min-h-[140px]">
             {cards.map((c, i) => (
               <div 
                 key={i} 
-                className="card p-3 md:p-4 hover:bg-brand-50/60 transition-all group cursor-pointer border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
+                // ⭐ ลด Padding ลง และปรับ layout ให้กะทัดรัด
+                className="card p-2 md:p-3 hover:bg-brand-50/60 transition-all group cursor-pointer border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-1 w-full">
-                  <span className="text-[11px] md:text-sm text-slate-500 font-medium pt-0.5 truncate">
+                  <span className="text-[10px] md:text-xs text-slate-500 font-medium pt-0.5 truncate">
                     {c.label}
                   </span>
-                  <div className={`w-7 h-7 md:w-9 md:h-9 shrink-0 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 ${c.bg} ${c.color}`}>
-                    <span className="scale-110 md:scale-125">{c.icon}</span>
+                  <div className={`w-6 h-6 md:w-7 md:h-7 shrink-0 rounded-md flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 ${c.bg} ${c.color}`}>
+                    <span className="scale-90 md:scale-100">{c.icon}</span>
                   </div>
                 </div>
                 
-                <p className="text-xl md:text-3xl lg:text-4xl font-extrabold text-brand-900 leading-none tabular-nums mt-4 md:mt-auto">
+                <p className="text-lg md:text-2xl lg:text-3xl font-extrabold text-brand-900 leading-none tabular-nums mt-2">
                   <AnimatedCounter value={c.value} />
                 </p>
               </div>
@@ -567,7 +567,6 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
       </main>
 
-      {/* ⭐ ปรับ max-w-[1600px] เป็น max-w-7xl ให้เท่ากับ Dashboard */}
       {!statsFullscreen && !mapFullscreen && (
         <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-2 md:py-3 mt-auto z-10 shrink-0">
           <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
