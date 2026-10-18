@@ -12,8 +12,8 @@ import { canViewAudit } from '@/lib/auth/permissions'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const ACTION_LABELS: Record<string, string> = {
-  login: 'เข้าสู่ระบบ',
-  logout: 'ออกจากระบบ',
+  login: 'เข้าใช้งาน',
+  logout: 'ออกจากการใช้งาน',
   create_staff: 'สร้างเจ้าหน้าที่',
   update_staff: 'แก้ไขเจ้าหน้าที่',
   delete_staff: 'ลบเจ้าหน้าที่',

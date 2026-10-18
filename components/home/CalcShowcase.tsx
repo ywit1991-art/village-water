@@ -137,7 +137,7 @@ export function CalcShowcase() {
           เราคำนวณความเพียงพอของน้ำอย่างไร?
         </h2>
         <p className="text-sm md:text-base text-slate-500 mt-2 max-w-2xl mx-auto leading-relaxed">
-          ระบบประเมินว่าแต่ละจุดประปามีน้ำเพียงพอต่อการใช้งานหรือไม่โดยอ้างอิงจากมาตรฐานของหน่วยงานภาครัฐ
+          การประเมินว่าแต่ละจุดประปามีน้ำเพียงพอต่อการใช้งานหรือไม่ โดยอ้างอิงจากมาตรฐานของหน่วยงานภาครัฐ
         </p>
       </motion.div>
 
@@ -233,7 +233,7 @@ export function CalcShowcase() {
                 <InputRow label="คนต่อครัวเรือน" value="5 คน" />
                 <InputRow label="อัตราการใช้น้ำ" value="50 ลิตร/คน/วัน" />
                 <InputRow label="Peak Factor (ฤดูแล้ง)" value="× 1.5" />
-                <InputRow label="ชั่วโมงทำงานระบบ" value="14 ชม./วัน" />
+                <InputRow label="ชั่วโมงทำงาน" value="14 ชม./วัน" />
                 <InputRow label="กำลังผลิตปั๊ม" value="5 แรงม้า" highlight />
                 <InputRow label="ความจุถังเก็บ" value="12 ลบ.ม." highlight />
               </div>
@@ -366,7 +366,7 @@ export function CalcShowcase() {
               <li className="flex gap-2">
                 <span className="text-brand-500 shrink-0">•</span>
                 <span>
-                  <strong>เวลาทำงาน 14 ชม./วัน</strong> — ค่ามาตรฐานระบบ
+                  <strong>เวลาทำงาน 14 ชม./วัน</strong> — ค่ามาตรฐานจุด
                   ประปาหมู่บ้านขนาดกลาง
                 </span>
               </li>

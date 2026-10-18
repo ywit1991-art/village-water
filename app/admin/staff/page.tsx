@@ -31,7 +31,7 @@ export default async function StaffPage() {
             ไม่มีสิทธิ์เข้าถึง
           </h1>
           <p className="text-sm text-slate-500 mb-5">
-            หน้านี้สำหรับผู้ดูแลระบบเท่านั้น
+            หน้านี้สำหรับผู้ดูแลข้อมูลเท่านั้น
           </p>
           <Link href="/admin/dashboard" className="btn-primary">
             ← กลับแดชบอร์ด
@@ -122,7 +122,7 @@ export default async function StaffPage() {
           <StatCard
             icon={<Shield size={18} />}
             value={list.filter(s => s.role === 'super_admin').length}
-            label="ผู้ดูแลระบบ"
+            label="ผู้ดูแลข้อมูล"
             color="text-red-600 bg-red-50"
           />
           <StatCard
@@ -138,7 +138,7 @@ export default async function StaffPage() {
                 s => s.role === 'village_head' || s.role === 'operator',
               ).length
             }
-            label="ผู้ใหญ่บ้าน/ประจำระบบ"
+            label="ผู้ใหญ่บ้าน/ประจำจุดประปา"
             color="text-emerald-600 bg-emerald-50"
           />
         </div>
@@ -161,7 +161,7 @@ export default async function StaffPage() {
           <div className="md:hidden divide-y divide-brand-50">
             {list.length === 0 && (
               <div className="p-8 text-center text-sm text-slate-400">
-                ยังไม่มีเจ้าหน้าที่ในระบบ
+                ยังไม่มีเจ้าหน้าที่ในจุดประปา
               </div>
             )}
             {list.map(s => {
@@ -202,7 +202,7 @@ export default async function StaffPage() {
                       {s.role === 'village_head' && v
                         ? `หมู่ ${v.village_no} ${v.village_name}`
                         : s.role === 'operator'
-                          ? `${sysIds.length} ระบบ`
+                          ? `${sysIds.length} จุดประปา`
                           : 'ทั้งตำบล'}
                     </span>
                   </div>
@@ -291,7 +291,7 @@ export default async function StaffPage() {
                         {s.role === 'village_head' && v ? (
                           `หมู่ ${v.village_no} ${v.village_name}`
                         ) : s.role === 'operator' ? (
-                          `${sysIds.length} ระบบ`
+                          `${sysIds.length} จุดประปา`
                         ) : (
                           <span className="text-slate-400">ทั้งตำบล</span>
                         )}

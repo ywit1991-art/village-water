@@ -16,7 +16,7 @@ export function Section5() {
 
   const pumps = (watch('pumps') as any[]) ?? []
 
-  // ⭐ คำนวณกำลังผลิตประมาณจาก HP รวม (ใช้สูตรเดียวกับระบบ)
+  // ⭐ คำนวณกำลังผลิตประมาณจาก HP รวม (ใช้สูตรเดียวกับข้อมูล)
   const totalHP = pumps.reduce((sum, p) => {
     const hp = parseFloat(String(p?.hp ?? 0))
     return sum + (isNaN(hp) ? 0 : hp)
@@ -132,7 +132,7 @@ export function Section5() {
       {/* ⭐ กำลังการผลิต */}
       <div className="mt-6 pt-4 border-t border-slate-200">
         <label className="label font-semibold text-brand-800">
-          กำลังการผลิตรวมของระบบ (ลบ.ม./ชม.) *
+          กำลังการผลิตรวมของจุดประปา (ลบ.ม./ชม.) *
         </label>
         <div className="grid md:grid-cols-2 gap-4 items-end">
           <div>

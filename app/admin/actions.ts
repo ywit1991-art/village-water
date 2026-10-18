@@ -42,7 +42,7 @@ export async function loginAction(
     .single()
 
   if (error || !staff) {
-    return { error: 'ไม่พบเลขนี้ในระบบ' }
+    return { error: 'ไม่พบผู้ใช้งาน' }
   }
   if (!staff.is_active) {
     return { error: 'บัญชีนี้ถูกระงับการใช้งาน' }
@@ -114,7 +114,7 @@ export async function createWaterSystemAction(
   formData: FormData,
 ): Promise<{ error?: string; id?: number }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const villageId = Number(formData.get('village_id'))
   const systemName = (formData.get('system_name') as string)?.trim()
@@ -186,7 +186,7 @@ export async function updateWaterSystemAction(
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const id = Number(formData.get('id'))
   const systemName = (formData.get('system_name') as string)?.trim()
@@ -296,7 +296,7 @@ export async function createStaffAction(
     return { error: 'ผู้ใหญ่บ้านต้องเลือกหมู่บ้าน' }
   }
   if (role === 'operator' && systemIds.length === 0) {
-    return { error: 'เจ้าหน้าที่ประจำระบบต้องเลือกระบบอย่างน้อย 1' }
+    return { error: 'เจ้าหน้าที่ประจำจุดประปาต้องเลือกข้อมูลอย่างน้อย 1' }
   }
 
   const sb = adminSb()
@@ -371,7 +371,7 @@ export async function updateStaffAction(
     return { error: 'ผู้ใหญ่บ้านต้องเลือกหมู่บ้าน' }
   }
   if (role === 'operator' && systemIds.length === 0) {
-    return { error: 'เจ้าหน้าที่ประจำระบบต้องเลือกระบบอย่างน้อย 1' }
+    return { error: 'เจ้าหน้าที่ประจำจุดประปาต้องเลือกข้อมูลอย่างน้อย 1' }
   }
 
   const sb = adminSb()
@@ -453,7 +453,7 @@ export async function saveSurveyAction(
   formData: FormData,
 ): Promise<{ error?: string; ok?: boolean }> {
   const session = await getSession()
-  if (!session) return { error: 'กรุณาเข้าสู่ระบบใหม่' }
+  if (!session) return { error: 'กรุณาเข้าใช้งานใหม่' }
 
   const id = formData.get('id') as string
   const isNew = id === 'new'
@@ -487,7 +487,7 @@ export async function saveSurveyAction(
     return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลประปาหมู่บ้านนี้' }
   }
   if (systemId && !canAccessSystem(session, systemId, villageId)) {
-    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลระบบนี้' }
+    return { error: 'คุณไม่มีสิทธิ์บันทึกข้อมูลชุดนี้' }
   }
 
   const cleaned = cleanSurveyPayload(rawValues)

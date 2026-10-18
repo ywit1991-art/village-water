@@ -105,7 +105,7 @@ export default function SufficiencyChart({
             <span className="sm:hidden">น้ำประปา (ฤดูแล้ง)</span>
           </h2>
 
-          {/* ⭐ ลบข้อความ 20 ระบบ · 50 ลิตร/คน/วัน · 5 คน/ครัวเรือน ออกแล้ว */}
+          {/* ⭐ ลบข้อความ 20 ข้อมูล · 50 ลิตร/คน/วัน · 5 คน/ครัวเรือน ออกแล้ว */}
 
           <span className="text-slate-300 hidden xl:inline">|</span>
 

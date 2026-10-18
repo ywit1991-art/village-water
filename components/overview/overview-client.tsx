@@ -230,7 +230,7 @@ export default function OverviewClient({ villages, systems }: Props) {
     {
       icon: <Droplets size={16} />,
       value: stats.systems,
-      label: 'ระบบประปา',
+      label: 'จุดประปา',
       color: 'text-sky-600',
       bg: 'bg-sky-50',
     },
@@ -461,7 +461,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             <div className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50 text-brand-800 w-full border border-brand-100">
               <TrendingUp size={14} />
               <span className="text-xs font-semibold whitespace-nowrap">
-                พบ {filtered.length} ระบบ
+                พบ {filtered.length} ข้อมูล
               </span>
             </div>
           </div>

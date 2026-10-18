@@ -107,7 +107,7 @@ export default function IdleGuard({
           ไม่มีการใช้งาน
         </h3>
         <p className="text-sm text-brand-600 mb-4">
-          ข้อมูลจะออกจากระบบอัตโนมัติใน
+          ข้อมูลจะออกจากการใช้งานอัตโนมัติใน
         </p>
         <p className="text-4xl font-extrabold text-brand-700 tabular-nums mb-5">
           {secondsLeft} วินาที

@@ -20,7 +20,7 @@ export default async function HomePage() {
     validSurveys.map(s => s.village_id).filter(Boolean),
   )
 
-  // นับเฉพาะระบบที่มีข้อมูลส่งเรียบร้อย
+  // นับเฉพาะข้อมูลที่ส่งเรียบร้อย
   const systemsWithData = new Set(
     validSurveys.map(s => s.water_system_id).filter(Boolean),
   )

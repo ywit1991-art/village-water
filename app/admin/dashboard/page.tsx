@@ -41,7 +41,7 @@ interface SystemRow {
 
 const ROLE_HEADERS: Record<string, { title: string; subtitle: string }> = {
   super_admin: {
-    title: 'แผงควบคุมผู้ดูแลระบบ',
+    title: 'แผงควบคุมผู้ดูแลข้อมูล',
     subtitle: 'จัดการเจ้าหน้าที่ ดูประวัติ และดูแลข้อมูลทั้งหมด',
   },
   staff: {
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
               <button
                 className="px-2.5 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium hover:bg-white/10 active:scale-95 transition inline-flex items-center gap-1.5"
                 type="submit"
-                aria-label="ออกจากระบบ"
+                aria-label="ออกจากการใช้งาน"
               >
                 <LogOut size={16} />
                 <span className="hidden md:inline">ออก</span>
@@ -223,7 +223,7 @@ export default async function DashboardPage() {
           <ScopeBanner
             icon={<Droplets size={18} />}
             color="amber"
-            title="ระบบที่คุณดูแล"
+            title="จุดประปาที่คุณดูแล"
             detail={`${filteredSystems.length} ข้อมูลประปา ใน ${grouped.size} หมู่บ้าน`}
           />
         )}
@@ -235,7 +235,7 @@ export default async function DashboardPage() {
               {session.role === 'village_head'
                 ? 'หมู่บ้านของฉัน'
                 : session.role === 'operator'
-                  ? 'หมู่บ้านที่มีระบบ'
+                  ? 'หมู่บ้านที่มีจุดประปา'
                   : 'หมู่บ้านที่มีข้อมูล'}
             </p>
             <p className="text-xl md:text-2xl font-bold text-brand-900">
