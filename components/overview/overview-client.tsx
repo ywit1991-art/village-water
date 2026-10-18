@@ -307,9 +307,12 @@ export default function OverviewClient({ villages, systems }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
-      <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl pointer-events-none" />
-      <div className="absolute top-40 -right-40 w-96 h-96 rounded-full bg-brand-200/30 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-100/20 blur-3xl pointer-events-none" />
+      
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl" />
+        <div className="absolute top-40 -right-40 w-96 h-96 rounded-full bg-brand-200/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-indigo-100/20 blur-3xl" />
+      </div>
 
       <header className="sticky top-0 z-30 bg-gradient-to-br from-brand-700 via-brand-500 to-brand-400 text-white shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
@@ -354,11 +357,14 @@ export default function OverviewClient({ villages, systems }: Props) {
 
       <main
         id="main-content"
-        className="flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5"
+        className="flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full flex flex-col space-y-5 relative z-10"
       >
-        <div className="card overflow-hidden shadow-md">
+        <div className="card bg-white overflow-hidden shadow-md">
+          {/* ⭐ ปรับโครงสร้างให้ทุกอย่างอยู่ในแถวเดียวกัน (Flex Wrap) */}
           <div className="p-3 md:p-4 bg-gradient-to-r from-brand-50/60 to-white border-b border-brand-100">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              
+              {/* 1. ปุ่มกรอง (มือถือ) / หัวข้อ (คอม) */}
               <button
                 type="button"
                 onClick={() => setFiltersOpen(o => !o)}
@@ -386,23 +392,40 @@ export default function OverviewClient({ villages, systems }: Props) {
                 <span>กรองข้อมูล</span>
               </div>
 
-              <div
-                role="status"
-                aria-live="polite"
-                aria-label={`พบ ${filtered.length} ระบบ`}
-                className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800"
-              >
-                <TrendingUp size={14} aria-hidden="true" />
-                <span className="text-xs font-semibold whitespace-nowrap">
-                  พบ {filtered.length} ระบบ
-                </span>
+              {/* 2. ปุ่มสลับ แผนที่ / สถิติ */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('map')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
+                    viewMode === 'map'
+                      ? 'bg-white text-brand-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <MapPin size={14} />
+                  แผนที่
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('stats')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs md:text-sm transition-all active:scale-95 ${
+                    viewMode === 'stats'
+                      ? 'bg-white text-brand-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                  }`}
+                >
+                  <BarChart3 size={14} />
+                  สถิติ
+                </button>
               </div>
-            </div>
 
-            <div
-              className={`mt-3 ${filtersOpen ? 'block' : 'hidden'} md:block`}
-            >
-              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              {/* 3. ตัวกรอง หมู่บ้าน/สถานะ (ย้ายมาไว้ต่อจากปุ่ม) */}
+              <div
+                className={`${
+                  filtersOpen ? 'flex' : 'hidden'
+                } md:flex flex-wrap items-center gap-2 w-full md:w-auto mt-2 md:mt-0`}
+              >
                 <div className="flex items-center gap-2 shrink-0">
                   <label className="text-xs text-slate-500 whitespace-nowrap shrink-0">
                     หมู่บ้าน
@@ -418,7 +441,7 @@ export default function OverviewClient({ villages, systems }: Props) {
                       setChartFilter({ type: null, value: null })
                     }}
                     className="input text-sm py-1.5 pr-8"
-                    style={{ width: 'auto', minWidth: '180px' }}
+                    style={{ width: 'auto', minWidth: '160px' }}
                   >
                     <option value="all">
                       ทั้งหมด ({villages.length} หมู่)
@@ -442,7 +465,7 @@ export default function OverviewClient({ villages, systems }: Props) {
                       setChartFilter({ type: null, value: null })
                     }}
                     className="input text-sm py-1.5 pr-8"
-                    style={{ width: 'auto', minWidth: '150px' }}
+                    style={{ width: 'auto', minWidth: '130px' }}
                   >
                     <option value="all">ทั้งหมด</option>
                     {STATUS_OPTIONS.map(s => (
@@ -477,6 +500,19 @@ export default function OverviewClient({ villages, systems }: Props) {
                   </button>
                 )}
               </div>
+
+              {/* 4. Badge จำนวน (ดันไปขวาสุด) */}
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label={`พบ ${filtered.length} ระบบ`}
+                className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-100 text-brand-800 mt-2 md:mt-0 w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <TrendingUp size={14} aria-hidden="true" />
+                <span className="text-xs font-semibold whitespace-nowrap">
+                  พบ {filtered.length} ระบบ
+                </span>
+              </div>
             </div>
           </div>
 
@@ -505,44 +541,22 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
 
         {viewMode === 'map' && (
-          <>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 bg-brand-600 text-white shadow-md"
-                >
-                  <MapPin size={16} />
-                  แผนที่
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('stats')}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 text-slate-600 hover:bg-slate-50"
-                >
-                  <BarChart3 size={16} />
-                  สถิติ
-                </button>
-              </div>
+          <div
+            ref={mapRef}
+            className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white animate-in fade-in duration-300"
+          >
+            <div className="absolute inset-0">
+              <VillagesMapClient
+                markers={markers}
+                height="h-full"
+                isFullscreen={mapFullscreen}
+                onToggleFullscreen={toggleMapFullscreen}
+                markerMode={markerMode}
+                onMarkerModeChange={setMarkerMode}
+                fullscreenRef={mapRef}
+              />
             </div>
-
-            <div
-              ref={mapRef}
-              className="card overflow-hidden shadow-md flex-1 min-h-[500px] relative bg-white"
-            >
-              <div className="absolute inset-0">
-                <VillagesMapClient
-                  markers={markers}
-                  height="h-full"
-                  isFullscreen={mapFullscreen}
-                  onToggleFullscreen={toggleMapFullscreen}
-                  markerMode={markerMode}
-                  onMarkerModeChange={setMarkerMode}
-                  fullscreenRef={mapRef}
-                />
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
         {viewMode === 'stats' && (
@@ -550,32 +564,10 @@ export default function OverviewClient({ villages, systems }: Props) {
             ref={statsRef}
             className={
               statsFullscreen
-                ? 'bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full'
-                : 'w-full flex flex-col space-y-5'
+                ? 'bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full animate-in fade-in duration-300'
+                : 'w-full flex flex-col space-y-5 animate-in fade-in duration-300'
             }
           >
-            {!statsFullscreen && (
-              <div className="flex items-center gap-3 flex-wrap shrink-0 relative z-10">
-                <div className="flex items-center gap-2 p-1 rounded-xl bg-white shadow-sm border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('map')}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 text-slate-600 hover:bg-slate-50"
-                  >
-                    <MapPin size={16} />
-                    แผนที่
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all active:scale-95 bg-brand-600 text-white shadow-md"
-                  >
-                    <BarChart3 size={16} />
-                    สถิติ
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="w-full flex-1 relative z-10 flex flex-col min-h-0">
               {chartMode === 'status' && (
                 <StatusChart
@@ -631,7 +623,7 @@ export default function OverviewClient({ villages, systems }: Props) {
         )}
       </main>
 
-      <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-4 mt-auto">
+      <footer className="relative bg-gradient-to-r from-brand-800 to-brand-900 text-brand-100 py-4 mt-auto z-10">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-3">
           <img
             src="/logo.png"
