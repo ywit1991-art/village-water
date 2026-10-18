@@ -51,7 +51,7 @@ function MapResizer() {
 }
 
 export default function LeafletBase({
-  center = [19.1907, 99.9315], // ⭐ ตั้งพิกัดเริ่มต้นที่ท่าวังทอง
+  center = [19.1907, 99.9315], // พิกัดเริ่มต้นที่ท่าวังทอง
   zoom = 13,
   className = 'h-full w-full',
   children,
@@ -65,21 +65,17 @@ export default function LeafletBase({
       zoom={zoom}
       className={className}
       scrollWheelZoom={true}
-      minZoom={11}
-      maxZoom={19}
-      maxBounds={[
-        [18.95, 99.75],
-        [19.4, 100.1],
-      ]}
-      maxBoundsViscosity={1.0}
-      bounceAtZoomLimits={false}
+      // ⭐ ลบ maxBounds และ maxBoundsViscosity ออก
+      minZoom={10} // ลด minZoom ลงเพื่อให้ยืดหยุ่น
+      maxZoom={20} // เพิ่ม maxZoom เพื่อให้ซูมลึกได้
+      zoomSnap={0.5} // ให้ซูมแบบครึ่งระดับได้ เนียนตากว่า
     >
       <MapResizer />
       <TileLayer
-        key={layerType} // ⭐ บังคับโหลด Layer ใหม่เมื่อเปลี่ยนประเภท
+        key={layerType}
         url={layer.url}
         attribution={layer.attribution}
-        maxZoom={19}
+        maxZoom={20}
       />
       {children}
     </MapContainer>

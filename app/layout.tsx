@@ -1,16 +1,7 @@
-import type { Metadata, Viewport } from 'next'
+import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
 import { SkipLink } from '@/components/ui/skip-link'
-
-// ⭐ เพิ่ม Viewport สำหรับ Theme สีของมือถือ
-export const viewport: Viewport = {
-  themeColor: '#0284c7',
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-}
 
 export const metadata: Metadata = {
   title: {
@@ -29,12 +20,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'เทศบาลตำบลท่าวังทอง' }],
   creator: 'เทศบาลตำบลท่าวังทอง',
-  manifest: '/manifest.webmanifest', // ⭐ ชี้ไปที่ manifest ที่สร้างในข้อ 1
-  appleWebApp: {
-    capable: true, // ⭐ ทำให้ iOS รองรับการติดตั้งแบบเต็มจอ
-    statusBarStyle: 'default',
-    title: 'ประปาหมู่บ้าน',
-  },
   openGraph: {
     type: 'website',
     locale: 'th_TH',
@@ -46,7 +31,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/icon.png',
-    apple: '/icon-192x192.png', // ⭐ ไอคอนสำหรับ iPhone/iPad
+    apple: '/icon.png',
   },
   robots: {
     index: true,

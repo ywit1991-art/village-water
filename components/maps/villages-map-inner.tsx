@@ -49,45 +49,49 @@ interface Props {
 
 const HOVER_DELAY_MS = 800
 
-/** Auto fit bounds */
-function AutoFitBounds({ points }: { points: [number, number][] }) {
+/** Auto fit bounds (⭐ บังคับซูมให้ชิดแนวเขตที่สุด) */
+function AutoFitBounds({
+  points,
+  boundary,
+}: {
+  points: [number, number][]
+  boundary: GeoJSON.FeatureCollection | GeoJSON.Feature | null
+}) {
   const map = useMap()
-  const fittedKeyRef = useRef<string>('')
+  const hasFittedRef = useRef(false)
 
   useEffect(() => {
-    if (points.length === 0) return
-    const key = points
-      .map(p => `${p[0].toFixed(5)},${p[1].toFixed(5)}`)
-      .join('|')
-    if (fittedKeyRef.current === key) return
-    fittedKeyRef.current = key
-
-    function doFit() {
+    // ⭐ ใช้ setTimeout รอให้ Leaflet วาด Container เสร็จก่อน 1 วินาที
+    // ถ้าไม่รอ บางที Leaflet จะคำนวณขนาดผิด แล้ว Zoom ไม่เข้า
+    const timer = setTimeout(() => {
       map.invalidateSize()
-      if (points.length === 1) {
-        map.setView(points[0], 14)
-        return
-      }
-      
-      // ⭐ ใช้ L.latLngBounds เพื่อคำนวณพื้นที่ และเว้นขอบ (padding)
-      const bounds = L.latLngBounds(points)
-      
-      // ⭐ ใส่ maxZoom เพื่อไม่ให้ซูมเข้าไปหาแค่กลุ่มหมุดแคบๆ
-      map.fitBounds(bounds, { 
-        padding: [80, 80], // เว้นขอบรอบๆ 80px
-        maxZoom: 14        // ซูมได้ลึกสุดแค่ระดับ 14
-      })
-    }
 
-    const t1 = setTimeout(doFit, 50)
-    const t2 = setTimeout(doFit, 300)
-    const t3 = setTimeout(doFit, 800)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-      clearTimeout(t3)
-    }
-  }, [points, map])
+      if (boundary) {
+        try {
+          const layer = L.geoJSON(boundary)
+          const bounds = layer.getBounds()
+          
+          if (bounds.isValid()) {
+            // ⭐ ใช้ padding [0,0] เพื่อให้ชิดขอบที่สุด และไม่จำกัด maxZoom
+            map.fitBounds(bounds, { padding: [0, 0] })
+            hasFittedRef.current = true
+            return
+          }
+        } catch (e) {
+          console.warn('Boundary fit error', e)
+        }
+      }
+
+      // Fallback ถ้าไม่มี boundary ให้ดูจาก markers
+      if (points.length > 0 && !hasFittedRef.current) {
+        const bounds = L.latLngBounds(points)
+        map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 })
+        hasFittedRef.current = true
+      }
+    }, 1000) // ⭐ รอ 1 วินาที
+
+    return () => clearTimeout(timer)
+  }, [points, map, boundary])
 
   return null
 }
@@ -95,7 +99,6 @@ function AutoFitBounds({ points }: { points: [number, number][] }) {
 function MapResizer() {
   const map = useMap()
   useEffect(() => {
-    // สั่งให้ Leaflet อัปเดตขนาดเมื่อหน้าจอเปลี่ยน
     const timer = setTimeout(() => map.invalidateSize(), 200)
     return () => clearTimeout(timer)
   }, [map])
@@ -213,12 +216,10 @@ export default function VillagesMapInner({
     )
   }
 
-  // ⭐ พิกัดกึ่งกลางของ ต.ท่าวังทอง
   const center: [number, number] = [19.1907, 99.9315]
 
   return (
     <>
-      {/* ⭐ ปล่อยให้ขนาดเป็นไปตาม container แม่ (height) */}
       <div className={`${height} rounded-2xl overflow-hidden relative`}>
         <LeafletBase
           center={center}
@@ -227,7 +228,7 @@ export default function VillagesMapInner({
           layerType={layerType}
         >
           <MapResizer />
-          <AutoFitBounds points={allPoints} />
+          <AutoFitBounds points={allPoints} boundary={boundary} />
           {boundary && (
             <ThawangthongBoundary boundary={boundary} visible={showHatch} />
           )}
@@ -267,7 +268,6 @@ export default function VillagesMapInner({
 
         {/* Controls */}
         <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 flex-wrap justify-end max-w-[calc(100%-1.5rem)]">
-          {/* Marker mode toggle group */}
           <div className="inline-flex items-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-brand-100 overflow-hidden">
             <button
               type="button"
@@ -320,7 +320,6 @@ export default function VillagesMapInner({
             </button>
           </div>
 
-          {/* Layer switcher */}
           <div className="inline-flex items-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-brand-100 overflow-hidden">
             <button
               type="button"
@@ -362,7 +361,6 @@ export default function VillagesMapInner({
             </button>
           </div>
 
-          {/* Hatch toggle */}
           <button
             type="button"
             onClick={() => setShowHatch(s => !s)}
@@ -381,7 +379,6 @@ export default function VillagesMapInner({
             )}
           </button>
 
-          {/* Fullscreen */}
           {onToggleFullscreen && (
             <button
               type="button"
@@ -479,7 +476,6 @@ function DetailModal({
           <X size={22} />
         </button>
 
-        {/* HERO */}
         <div
           className="relative px-4 md:px-8 py-5 md:py-6 text-white shrink-0"
           style={{
@@ -515,7 +511,6 @@ function DetailModal({
           </div>
         </div>
 
-        {/* CONTENT */}
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100">
             <StatBox
@@ -722,7 +717,6 @@ function DetailModal({
           </div>
         </div>
 
-        {/* FOOTER */}
         <div className="px-4 md:px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 flex-wrap">
           <div className="flex items-center gap-4 text-sm text-slate-500">
             <span>ข้อมูลที่ {m.systemNo}</span>
@@ -764,9 +758,6 @@ function DetailModal({
   )
 }
 
-/* ============================================================ */
-/* SUB COMPONENTS                                                */
-/* ============================================================ */
 function StatBox({
   value,
   label,

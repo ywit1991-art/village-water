@@ -305,7 +305,8 @@ export default function OverviewClient({ villages, systems }: Props) {
   )
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative overflow-hidden">
+    // ⭐ เปลี่ยนเป็น min-h-[100dvh] และลบ overflow-hidden บนมือถือ เพื่อให้ Scroll ดูได้เต็มๆ
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative md:h-[100dvh] md:overflow-hidden">
       
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-sky-200/30 blur-3xl" />
@@ -329,7 +330,7 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
             <div>
               <h1 className="font-bold leading-tight text-sm md:text-base">
-                ระบบประปาหมู่บ้าน
+                ข้อมูลประปาหมู่บ้าน
               </h1>
               <p className="text-[10px] md:text-[11px] text-brand-50 hidden md:block">
                 ทต.ท่าวังทอง · อ.เมืองพะเยา
@@ -354,13 +355,11 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4 w-full flex flex-col md:flex-row gap-3 md:gap-4 relative overflow-hidden">
+      <main className="flex-1 md:min-h-0 max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4 w-full flex flex-col md:flex-row gap-3 md:gap-4 relative z-10">
         
         {/* ================= ซ้าย: Sidebar (30%) ================= */}
-        {/* ⭐ เพิ่ม overflow-y-auto เพื่อให้เลื่อนดูได้กรณีจอเตี้ย และ pr-1 เพื่อไม่ให้ Scrollbar ทับเนื้อหา */}
         <div className="w-full md:w-[30%] lg:w-[32%] flex flex-col gap-2 md:gap-3 shrink-0 md:h-full md:overflow-y-auto custom-scrollbar md:pr-2 pb-2">
           
-          {/* 1. Toggle & Filters Card */}
           <div className="card bg-white/95 backdrop-blur-sm p-3 shadow-sm border border-slate-100 flex flex-col gap-2 shrink-0">
             
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 shadow-inner w-full">
@@ -467,12 +466,10 @@ export default function OverviewClient({ villages, systems }: Props) {
             </div>
           </div>
 
-          {/* 2. Stats Grid 2x2 (ปรับให้กะทัดรัดขึ้น) */}
           <div className="grid grid-cols-2 gap-2 md:gap-3 md:flex-1 min-h-[140px]">
             {cards.map((c, i) => (
               <div 
                 key={i} 
-                // ⭐ ลด Padding ลง และปรับ layout ให้กะทัดรัด
                 className="card p-2 md:p-3 hover:bg-brand-50/60 transition-all group cursor-pointer border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-1 w-full">
@@ -494,13 +491,14 @@ export default function OverviewClient({ villages, systems }: Props) {
         </div>
 
         {/* ================= ขวา: เนื้อหา (70%) ================= */}
-        <div className="w-full md:w-[70%] lg:w-[68%] flex flex-col flex-1 min-h-[500px] md:min-h-0 relative">
+        <div className="w-full md:w-[70%] lg:w-[68%] flex flex-col md:flex-1 md:min-h-0 relative">
           
           {/* Map View */}
           {viewMode === 'map' && (
             <div
               ref={mapRef}
-              className="card overflow-hidden shadow-md w-full h-[500px] md:h-full relative bg-white animate-in fade-in duration-300"
+              // ⭐ เปลี่ยนความสูงบนมือถือเป็น 60vh เพื่อให้เห็นแผนที่เต็มๆ
+              className="card overflow-hidden shadow-md w-full h-[60vh] min-h-[400px] md:h-full relative bg-white animate-in fade-in duration-300"
             >
               <div className="absolute inset-0">
                 <VillagesMapClient
@@ -523,7 +521,7 @@ export default function OverviewClient({ villages, systems }: Props) {
               className={
                 statsFullscreen
                   ? 'fixed inset-0 z-[9999] bg-slate-50 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full animate-in fade-in duration-300'
-                  : 'w-full h-full flex flex-col animate-in fade-in duration-300'
+                  : 'w-full h-[60vh] min-h-[400px] md:h-full flex flex-col animate-in fade-in duration-300'
               }
             >
               <div className="w-full flex-1 relative flex flex-col min-h-0">
