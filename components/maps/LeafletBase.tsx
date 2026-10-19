@@ -25,18 +25,22 @@ interface Props {
   layerType?: MapLayerType
 }
 
-const LAYER_URLS: Record<MapLayerType, { url: string; attribution: string }> = {
+// ⭐ กำหนด maxZoom ให้ตรงกับที่แต่ละ Provider รองรับ
+const LAYER_URLS: Record<MapLayerType, { url: string; attribution: string; maxZoom: number }> = {
   street: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     attribution: '&copy; <a href="https://www.esri.com/">Esri</a> · Maxar · Earthstar Geographics',
+    maxZoom: 18, // ⭐ ดาวเทียมส่วนใหญ่จะชัดสุดประมาณ 18
   },
   terrain: {
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+    maxZoom: 17, // ⭐ OpenTopoMap จำกัดที่ 17
   },
 }
 
@@ -51,7 +55,7 @@ function MapResizer() {
 }
 
 export default function LeafletBase({
-  center = [19.1907, 99.9315], // พิกัดเริ่มต้นที่ท่าวังทอง
+  center = [19.1907, 99.9315],
   zoom = 13,
   className = 'h-full w-full',
   children,
@@ -65,17 +69,18 @@ export default function LeafletBase({
       zoom={zoom}
       className={className}
       scrollWheelZoom={true}
-      // ⭐ ลบ maxBounds และ maxBoundsViscosity ออก
-      minZoom={10} // ลด minZoom ลงเพื่อให้ยืดหยุ่น
-      maxZoom={20} // เพิ่ม maxZoom เพื่อให้ซูมลึกได้
-      zoomSnap={0.5} // ให้ซูมแบบครึ่งระดับได้ เนียนตากว่า
+      minZoom={10}
+      // ⭐ ใช้ maxZoom ของแต่ละ Layer แทนการฟิกซ์ที่ 20
+      maxZoom={layer.maxZoom} 
+      zoomSnap={0.5}
     >
       <MapResizer />
       <TileLayer
-        key={layerType}
+        key={layerType} 
         url={layer.url}
         attribution={layer.attribution}
-        maxZoom={20}
+        // ⭐ ใส่ maxZoom ให้ TileLayer ด้วย
+        maxZoom={layer.maxZoom} 
       />
       {children}
     </MapContainer>

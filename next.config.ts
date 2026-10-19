@@ -8,10 +8,14 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
+  
+  // ⭐ เพิ่ม 2 บรรทัดนี้ เพื่อบอกให้ดึงหน้า /offline มาแสดง
+  fallbacks: {
+    document: "/offline", 
+  },
 });
 
 const nextConfig: NextConfig = {
-  // ⭐ เปลี่ยนจาก false เป็น {} เพื่อแก้ Error Type
   turbopack: {}, 
 };
 
