@@ -3,17 +3,15 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development", // ⭐ ปิดตอน Dev
   register: true,
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  
-  // ⭐ เพิ่ม 2 บรรทัดนี้ เพื่อบอกให้ดึงหน้า /offline มาแสดง
   fallbacks: {
-    document: "/offline", 
+    document: "/offline", // ⭐ ต้องมีบรรทัดนี้
   },
-});
+})
 
 const nextConfig: NextConfig = {
   turbopack: {}, 

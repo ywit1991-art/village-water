@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
 import { SkipLink } from '@/components/ui/skip-link'
+import OfflineDetector from '@/components/OfflineDetector' // ⭐ นำเข้า Component
 
 export const metadata: Metadata = {
   title: {
@@ -20,13 +21,18 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'เทศบาลตำบลท่าวังทอง' }],
   creator: 'เทศบาลตำบลท่าวังทอง',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ประปาหมู่บ้าน',
+  },
   openGraph: {
     type: 'website',
     locale: 'th_TH',
     siteName: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
     title: 'ข้อมูลประปาหมู่บ้าน - ทต.ท่าวังทอง',
-    description:
-      'ข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
+    description: 'ข้อมูลประปาหมู่บ้าน เทศบาลตำบลท่าวังทอง อำเภอเมืองพะเยา',
     images: ['/logo.png'],
   },
   icons: {
@@ -37,6 +43,14 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+}
+
+export const viewport = {
+  themeColor: '#0284c7',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -60,6 +74,10 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <SkipLink />
+        
+        {/* ⭐ ตัวดักจับการออฟไลน์ */}
+        <OfflineDetector /> 
+        
         {children}
         <Toaster position="top-right" richColors />
       </body>
