@@ -53,7 +53,7 @@ export default function HomeContent({
   ]
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col bg-gradient-to-b from-brand-50/60 via-white to-brand-50/30 relative overflow-hidden">      {/* ⭐ Animated decorative blobs — เคลื่อนไหวตลอด */}
+    <div className="min-h-[100dvh] w-full flex flex-col bg-gradient-to-b from-brand-50/60 via-white to-brand-50/30 relative overflow-hidden">      {/* ⭐ Animated decorative blobs — เคลื่อนไหวตลอด */}
       <motion.div
         animate={{
           x: [0, 60, 0],
