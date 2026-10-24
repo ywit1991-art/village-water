@@ -1,203 +1,182 @@
 'use client';
-
-import dynamic from 'next/dynamic';
-import { useState, useMemo, useEffect } from 'react';
-import { X, Phone, FileText, MapPin, CheckCircle2, BarChart3 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import Header from '@/components/ui/Header';
-import type { Person } from '@/types';
-import type { VulnType } from '@/lib/constants';
-import { VULN } from '@/lib/constants';
-import { logAccess } from '@/lib/tracking';
+import { useEffect, useState, useMemo } from 'react';
+import Navbar from '@/components/ui/Navbar';
+import { checkAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
+import { Search, Filter, MapPin, X, Phone, FileText, RotateCcw, LogOut, CheckCircle2, Calendar, Building2 } from 'lucide-react';
+import Link from 'next/link';
+import { VULN, type VulnType } from '@/lib/constants';
+import { useRouter } from 'next/navigation';
 
-const MapView = dynamic(() => import('@/components/map/MapView'), {
-  ssr: false,
-  loading: () => (
-    <div className="absolute inset-0 bg-gradient-soft flex items-center justify-center">
-      <div className="w-12 h-12 rounded-full border-4 border-pink-200 border-t-pink-500 animate-spin" />
-    </div>
-  ),
-});
+const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false });
 
-export default function MapPage() {
+export default function StaffMapPage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [allPersons, setAllPersons] = useState<Person[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [persons, setPersons] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any>(null);
   
-  const [searchQuery, setSearchQuery] = useState('');
-  const [villageFilter, setVillageFilter] = useState('ALL');
-  const [interventionFilter, setInterventionFilter] = useState('ALL');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  
-  const [selected, setSelected] = useState<Person | null>(null);
+  // Filters
+  const [search, setSearch] = useState('');
+  const [village, setVillage] = useState('ALL');
+  const [type, setType] = useState('ALL');
 
   useEffect(() => {
-    const staffCode = sessionStorage.getItem('staff_code');
-    const role = sessionStorage.getItem('staff_role');
-
-    if (!staffCode || (role !== 'MUNICIPALITY' && role !== 'SUPERADMIN')) {
-      router.replace('/login');
-      return;
-    }
-    setCurrentUser(staffCode);
-    logAccess(staffCode, 'VIEW_MAP');
+    const auth = checkAuth(['MUNICIPALITY', 'OSM']);
+    if (!auth) { window.location.href = '/login'; return; }
+    setUser(auth);
 
     const fetchPersons = async () => {
-      const { data, error } = await supabase()
-        .from('vulnerable_persons')
-        .select('*, interventions(*)')
-        .order('created_at', { ascending: false });
-        
-      if (!error && data) {
-        const formattedData: Person[] = data.map((d: any) => ({
-          id: d.id,
-          national_id: d.national_id, // 👈 เพิ่มบรรทัดนี้
-          prefix: d.prefix,
-          first_name: d.first_name,
-          last_name: d.last_name,
-          birth_date: d.birth_date,
-          gender: null,
-          phone: d.phone,
-          latitude: d.latitude,
-          longitude: d.longitude,
-          photo_urls: d.photo_urls || [],
-          note: d.note,
-          vulnerabilities: d.vulnerabilities || [],
-          interventions: d.interventions || [],
-          created_by: d.created_by,   // 👈 เพิ่มบรรทัดนี้
-          created_at: d.created_at,   // 👈 เพิ่มบรรทัดนี้
-        }));
-        setAllPersons(formattedData);
-      }
+      // ดึงข้อมูลคน พร้อมประวัติการช่วยเหลือทั้งหมด
+      const { data } = await supabase().from('vulnerable_persons').select('*, interventions(*)');
+      if (data) setPersons(data);
     };
-    
     fetchPersons();
-  }, [router]);
-
-  const handleLogout = () => {
-    if (currentUser) logAccess(currentUser, 'LOGOUT');
-    sessionStorage.clear();
-    router.replace('/');
-  };
-
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setVillageFilter('ALL');
-    setInterventionFilter('ALL');
-    setTypeFilter('ALL');
-  };
+  }, []);
 
   const filteredPersons = useMemo(() => {
-    return allPersons.filter((person) => {
-      const fullName = `${person.first_name} ${person.last_name}`.toLowerCase();
-      const matchSearch = fullName.includes(searchQuery.toLowerCase().trim());
-      const matchType = typeFilter === 'ALL' || person.vulnerabilities.includes(typeFilter as VulnType);
-      const matchVillage = villageFilter === 'ALL' || (person.note && person.note.includes(`หมู่ที่ ${villageFilter}`));
-      
-      let matchIntervention = true;
-      if (interventionFilter === 'none') {
-        matchIntervention = !person.interventions || person.interventions.length === 0;
-      } else if (interventionFilter !== 'ALL') {
-        matchIntervention = person.interventions?.some((i: any) => i.solution_type === interventionFilter) || false;
-      }
-
-      return matchSearch && matchType && matchVillage && matchIntervention;
+    return persons.filter(p => {
+      const matchSearch = `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase());
+      const matchVillage = village === 'ALL' || p.note?.includes(`หมู่ที่ ${village}`) || p.note?.includes(`หมู่ ${village}`);
+      const matchType = type === 'ALL' || p.vulnerabilities?.includes(type);
+      return matchSearch && matchVillage && matchType;
     });
-  }, [allPersons, searchQuery, typeFilter, villageFilter, interventionFilter]);
+  }, [persons, search, village, type]);
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setVillage('ALL');
+    setType('ALL');
+  };
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    window.location.href = '/';
+  };
+
+  if (!user) return null;
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden">
-      <MapView persons={filteredPersons} onSelect={setSelected} />
+    <main className="h-screen w-screen overflow-hidden relative bg-slate-50">
       
-      <Header
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-        villageFilter={villageFilter} setVillageFilter={setVillageFilter}
-        interventionFilter={interventionFilter} setInterventionFilter={setInterventionFilter}
-        typeFilter={typeFilter} setTypeFilter={setTypeFilter}
-        onClearFilters={handleClearFilters}
-        onLogout={handleLogout}
-      />
+      {/* แสดงจำนวนข้อมูล */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg pointer-events-none">
+        พบข้อมูลบนแผนที่: {filteredPersons.length} ราย
+      </div>
 
-      {/* 👇 ปุ่มดูรายงานสถิติ (สำหรับเทศบาล) 👇 */}
-      <button
-        onClick={() => router.push('/municipality/report')}
-        className="absolute top-[76px] left-4 z-[9999] flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-full shadow-lg text-sm font-medium transition-colors"
-      >
-        <BarChart3 className="w-4 h-4" /> ดูรายงานสถิติ
+// ... โค้ด import ด้านบนเหมือนเดิม ...
+// ในส่วนของแถบเครื่องมือด้านบน (Top bar)
+
+<div className="absolute top-0 left-0 right-0 z-[1000] p-2 md:p-4 pointer-events-none">
+  <div className="max-w-[1200px] mx-auto pointer-events-auto bg-white/95 backdrop-blur-md rounded-xl md:rounded-2xl shadow-lg border border-white/40 p-1.5 md:p-2 flex flex-col md:flex-row gap-2 justify-between">
+    
+    <div className="flex gap-2 flex-1">
+      <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-2 md:px-3 py-1.5 md:py-2 flex-1">
+        <Search className="w-4 h-4 text-pink-500" />
+        <input type="text" placeholder="ค้นหา..." value={search} onChange={e => setSearch(e.target.value)} className="bg-transparent outline-none text-xs md:text-sm w-full" />
+      </div>
+      {/* ตัวกรอง แสดงเฉพาะจอใหญ่ */}
+      <div className="hidden md:flex gap-2">
+        <select value={village} onChange={e => setVillage(e.target.value)} className="bg-slate-100 text-sm font-medium rounded-lg px-3 py-2 outline-none">
+          <option value="ALL">ทุกหมู่บ้าน</option>
+          {Array.from({ length: 14 }).map((_, i) => <option key={i+1} value={i+1}>หมู่ {i+1}</option>)}
+        </select>
+        <select value={type} onChange={e => setType(e.target.value)} className="bg-slate-100 text-sm font-medium rounded-lg px-3 py-2 outline-none">
+          <option value="ALL">ทุกประเภท</option>
+          {Object.entries(VULN).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+      </div>
+    </div>
+
+    <div className="flex gap-1.5 md:gap-2 justify-end">
+      <button onClick={handleClearFilters} className="bg-slate-100 text-slate-600 hover:bg-slate-200 p-2 md:px-4 md:py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shrink-0" title="ล้างตัวกรอง">
+        <RotateCcw className="w-4 h-4" />
       </button>
 
-      {/* Popup Modal แสดงข้อมูลบุคคล */}
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSelected(null)}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
-              <button
-                onClick={() => setSelected(null)}
-                className="absolute top-4 right-4 w-9 h-9 bg-slate-100/80 hover:bg-red-100 text-slate-500 hover:text-red-500 rounded-full flex items-center justify-center transition-colors z-10"
-              >
-                <X className="w-5 h-5" />
-              </button>
+      <Link href="/municipality/report" className="bg-slate-800 text-white p-2 md:px-4 md:py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-900 transition-colors shrink-0" title="รายงานสถิติ">
+        <Filter className="w-4 h-4" /> <span className="hidden md:inline">รายงานสถิติ</span>
+      </Link>
 
-              <div className="p-6 overflow-y-auto">
-                <h3 className="text-xl font-bold text-slate-900 pr-8">
-                  {selected.prefix}{selected.first_name} {selected.last_name}
-                </h3>
-                
-                <div className="flex flex-wrap gap-1.5 mt-3 mb-4">
-                  {selected.vulnerabilities.map((v) => (
-                    <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-white" style={{ backgroundColor: VULN[v as VulnType]?.color || '#94a3b8' }}>
-                      {VULN[v as VulnType]?.emoji} {VULN[v as VulnType]?.label || v}
-                    </span>
-                  ))}
-                </div>
+      <button onClick={handleLogout} className="bg-red-50 text-red-600 hover:bg-red-100 p-2 md:px-4 md:py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shrink-0" title="ออกจากระบบ">
+        <LogOut className="w-4 h-4" /> <span className="hidden md:inline">ออกจากระบบ</span>
+      </button>
+    </div>
 
-                <div className="space-y-2 text-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-2xl">
-                  <p className="flex items-start gap-2"><MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" /> {selected.note || 'ไม่ระบุที่อยู่'}</p>
-                  {selected.phone && <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /> {selected.phone}</p>}
-                </div>
+  </div>
+</div>
 
+      <MapView persons={filteredPersons} onSelect={setSelected} />
+
+      {/* 👇 Popup Modal รายละเอียด (เพิ่มประวัติการช่วยเหลือ) 👇 */}
+      {selected && (
+        <div className="absolute inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl relative animate-slide-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            
+            <div className="p-6 overflow-y-auto">
+              <button onClick={() => setSelected(null)} className="absolute top-4 right-4 bg-slate-100 p-2 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors z-10"><X className="w-4 h-4" /></button>
+              
+              <h3 className="text-xl font-bold text-slate-800 pr-8">{selected.prefix}{selected.first_name} {selected.last_name}</h3>
+              
+              <div className="flex flex-wrap gap-1 mt-2 mb-4">
+                {selected.vulnerabilities?.map((v: string) => (
+                  <span key={v} className="px-2 py-0.5 rounded-md text-[10px] font-bold text-white" style={{ backgroundColor: VULN[v as VulnType]?.color }}>{VULN[v as VulnType]?.label}</span>
+                ))}
+              </div>
+
+              <div className="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-2xl mb-4">
+                <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" /> {selected.note || 'ไม่ระบุที่อยู่'}</p>
+                {selected.phone && <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /> {selected.phone}</p>}
+              </div>
+
+              {/* 👇 ส่วนแสดงประวัติการช่วยเหลือ 👇 */}
+              <div className="mb-6">
                 <h4 className="font-bold text-slate-800 mb-3 text-sm flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500" /> ประวัติการช่วยเหลือ
                 </h4>
+                
                 {selected.interventions && selected.interventions.length > 0 ? (
-                  <div className="space-y-2 mb-6">
+                  <div className="space-y-2">
                     {selected.interventions.map((inv: any) => (
-                      <div key={inv.id} className="text-sm border border-slate-100 p-3 rounded-xl bg-white">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
-                          inv.solution_type === 'ช่วยเหลือ' ? 'bg-pink-100 text-pink-700' : 'bg-sky-100 text-sky-700'
-                        }`}>{inv.solution_type}</span>
-                        <p className="text-slate-600 mt-1">หน่วยงาน: {inv.agency || '-'} • วันที่: {inv.assistance_date ? new Date(inv.assistance_date).toLocaleDateString('th-TH') : '-'}</p>
+                      <div key={inv.id} className="border border-slate-100 p-3 rounded-xl bg-white shadow-sm text-sm">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                            inv.solution_type === 'ช่วยเหลือ' ? 'bg-pink-100 text-pink-700' : 
+                            inv.solution_type === 'ให้คำแนะนำ' ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {inv.solution_type}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {inv.assistance_date ? new Date(inv.assistance_date).toLocaleDateString('th-TH') : '-'}
+                          </span>
+                        </div>
+                        
+                        <p className="text-slate-600 text-xs mt-2 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400" /> หน่วยงาน: {inv.agency || '-'}
+                        </p>
                         {inv.aid_category && (
-                          <p className="text-slate-600">สิ่งของ: {inv.aid_category} ({inv.aid_quantity} {inv.aid_unit})</p>
+                          <p className="text-slate-600 text-xs mt-1">
+                            🎁 สิ่งของ: {inv.aid_category} ({inv.aid_quantity} {inv.aid_unit})
+                          </p>
                         )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-400 mb-6 italic">ยังไม่มีการบันทึกการช่วยเหลือ</p>
+                  <p className="text-sm text-slate-400 italic bg-slate-50 p-3 rounded-xl text-center border border-dashed border-slate-200">
+                    ยังไม่มีการบันทึกการช่วยเหลือ
+                  </p>
                 )}
-
-                <button
-                  onClick={() => window.open(`/person/${selected.id}/print`, '_blank')}
-                  className="w-full py-3 bg-slate-800 text-white rounded-xl font-medium shadow-md flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors"
-                >
-                  <FileText className="w-5 h-5" /> ดูข้อมูล / พิมพ์เอกสาร (PDF)
-                </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <button onClick={() => window.open(`/person/${selected.id}/print`, '_blank')} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-slate-900 transition-colors">
+                <FileText className="w-5 h-5" /> ดูข้อมูล / พิมพ์เอกสาร
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </main>
   );
 }

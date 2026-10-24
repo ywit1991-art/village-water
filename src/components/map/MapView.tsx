@@ -12,16 +12,17 @@ interface Props {
   onSelect: (p: Person) => void;
 }
 
-// ฟังก์ชันสำหรับซูมให้เห็นพื้นที่ทั้งหมด
+// ฟังก์ชันซูมเข้าหาหมุด
 function FitBounds({ persons }: { persons: Person[] }) {
   const map = useMap();
   useEffect(() => {
-    if (persons.length > 0) {
-      const validPersons = persons.filter(p => p.latitude && p.longitude);
-      if (validPersons.length > 0) {
-        const bounds = L.latLngBounds(validPersons.map(p => [p.latitude, p.longitude]));
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      }
+    // กรองเอาเฉพาะที่มีพิกัดเป็นตัวเลขจริงๆ
+    const validPersons = persons.filter(p => !isNaN(Number(p.latitude)) && !isNaN(Number(p.longitude)));
+    
+    if (validPersons.length > 0) {
+      const bounds = L.latLngBounds(validPersons.map(p => [Number(p.latitude), Number(p.longitude)]));
+      // ซูมแบบนุ่มนวล
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
     }
   }, [persons, map]);
   return null;
@@ -29,7 +30,7 @@ function FitBounds({ persons }: { persons: Person[] }) {
 
 export default function MapView({ persons, onSelect }: Props) {
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 z-0">
       <MapContainer
         center={[MUNICIPALITY_OFFICE.lat, MUNICIPALITY_OFFICE.lng]}
         zoom={13}
@@ -43,18 +44,24 @@ export default function MapView({ persons, onSelect }: Props) {
 
         <FitBounds persons={persons} />
 
-        {/* 👇 ลบ CircleMarker จุดสีฟ้าออกแล้ว 👇 */}
+        {/* 👇 วาดหมุดลงบนแผนที่ 👇 */}
+        {persons.map((p) => {
+          const lat = Number(p.latitude);
+          const lng = Number(p.longitude);
 
-        {persons
-          .filter(p => p.latitude != null && p.longitude != null)
-          .map((p) => (
+          // ถ้าพิกัดไม่ถูกต้อง ให้ข้ามไป
+          if (isNaN(lat) || isNaN(lng)) return null;
+
+          return (
             <Marker
               key={p.id}
-              position={[p.latitude, p.longitude]}
+              position={[lat, lng]}
               icon={buildMarkerIcon(p.vulnerabilities as any)}
               eventHandlers={{ click: () => onSelect(p) }}
+              zIndexOffset={1000} // 👈 ดันให้หมุดอยู่บนสุด ไม่ถูกทับ
             />
-        ))}
+          );
+        })}
       </MapContainer>
     </div>
   );

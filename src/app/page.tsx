@@ -1,77 +1,64 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { LogIn, MapPin, AlertCircle, ShieldCheck, HeartPulse, UserCheck } from 'lucide-react';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { VULN, type VulnType } from '@/lib/constants';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { LogIn, Users, ShieldAlert, HeartPulse, UserX } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { motion } from 'framer-motion';
 
-const PublicMap = dynamic(() => import('@/components/map/PublicMap'), { ssr: false });
-const HouseholdBarChart = dynamic(() => import('@/components/dashboard/HouseholdBarChart'), { ssr: false });
-const AgeBarChart = dynamic(() => import('@/components/dashboard/AgeBarChart'), { ssr: false });
-const StatusPieChart = dynamic(() => import('@/components/dashboard/StatusPieChart'), { ssr: false });
-const SolutionDonutChart = dynamic(() => import('@/components/dashboard/SolutionDonutChart'), { ssr: false });
+import HouseholdBarChart from '@/components/dashboard/HouseholdBarChart';
+import AgeBarChart from '@/components/dashboard/AgeBarChart';
+import StatusPieChart from '@/components/dashboard/StatusPieChart';
 
-export default function PublicHomePage() {
+const PublicMap = dynamic(() => import('@/components/map/PublicMap'), { 
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">กำลังโหลดแผนที่...</div>
+});
+
+export default function HomePage() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
   
-  // State ข้อมูลหลัก
-  const [stats, setStats] = useState({ total: 0, typeCounts: {} as Record<VulnType, number> });
-  const [insights, setInsights] = useState({ overlap: 0, pending: 0, livesAlone: 0 });
-  
-  // State ข้อมูลกราฟ
-  const [barData, setBarData] = useState<any[]>([]);
-  const [mapVillages, setMapVillages] = useState<any[]>([]); 
+  const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState({ total: 0, elderly: 0, disabled: 0, bedridden: 0, lowIncome: 0, pregnant: 0, pending: 0, overlap: 0, livesAlone: 0 });
+  const [villageData, setVillageData] = useState<any[]>([]);
   const [ageData, setAgeData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
-  const [solutionData, setSolutionData] = useState<any[]>([]);
 
   useEffect(() => {
-    setIsMounted(true);
+    setMounted(true);
 
     const fetchData = async () => {
       try {
-        const { data: vulnerableData, error } = await supabase().from('vulnerable_persons').select('*');
+        const { data: vulnerableData } = await supabase().from('vulnerable_persons').select('*');
         const { data: registryData } = await supabase().from('registry_persons').select('national_id, village_no');
         const { data: interventions } = await supabase().from('interventions').select('*');
 
-        if (!error && vulnerableData) {
-          // 1. คำนวณยอดรวมและประเภท
-          const typeCounts = {} as Record<VulnType, number>;
-          (Object.keys(VULN) as VulnType[]).forEach(key => {
-            typeCounts[key] = vulnerableData.filter((p: any) => p.vulnerabilities?.includes(key)).length;
-          });
-          setStats({ total: vulnerableData.length, typeCounts });
-
-          // 2. คำนวณ Insights (การทับซ้อน, รอดำเนินการ, อยู่ลำพัง)
-          const overlapCount = vulnerableData.filter((p: any) => p.vulnerabilities?.length > 1).length;
-          const assistedIds = new Set(interventions?.map(i => i.person_id) || []);
-          const pendingCount = vulnerableData.filter((p: any) => !assistedIds.has(p.id)).length;
-          const livesAloneCount = vulnerableData.filter((p: any) => p.lives_alone === true || p.note?.includes('อยู่คนเดียว')).length; // ประมาณการจาก note
+        if (vulnerableData) {
+          const assistedIds = new Set(interventions?.map((i: any) => i.person_id) || []);
           
-          setInsights({ overlap: overlapCount, pending: pendingCount, livesAlone: livesAloneCount });
+          const total = vulnerableData.length;
+          const elderly = vulnerableData.filter((p: any) => p.vulnerabilities?.includes('ELDERLY')).length;
+          const disabled = vulnerableData.filter((p: any) => p.vulnerabilities?.includes('DISABLED')).length;
+          const bedridden = vulnerableData.filter((p: any) => p.vulnerabilities?.includes('BEDRIDDEN')).length;
+          const lowIncome = vulnerableData.filter((p: any) => p.vulnerabilities?.includes('LOW_INCOME')).length;
+          const pregnant = vulnerableData.filter((p: any) => p.vulnerabilities?.includes('PREGNANT')).length;
+          
+          const pending = vulnerableData.filter((p: any) => !assistedIds.has(p.id)).length;
+          const overlap = vulnerableData.filter((p: any) => p.vulnerabilities && p.vulnerabilities.length > 1).length;
+          const livesAlone = vulnerableData.filter((p: any) => p.lives_alone === true || p.note?.includes('อยู่คนเดียว')).length;
 
-          // 3. คำนวณกราฟแท่งหมู่บ้านและแผนที่
-          const villagesData = Array.from({ length: 14 }).map((_, i) => {
+          setStats({ total, elderly, disabled, bedridden, lowIncome, pregnant, pending, overlap, livesAlone });
+
+          const villages = Array.from({ length: 14 }).map((_, i: any) => {
             const moo = i + 1;
             const mooData = vulnerableData.filter((v: any) => {
               const regInfo = registryData?.find((r: any) => r.national_id === v.national_id);
               return regInfo && parseInt(regInfo.village_no) === moo;
             });
-
-            const total = mooData.length;
-            let color = '#FDF2F8';
-            if (total >= 5) color = '#BE185D';
-            else if (total >= 3) color = '#EC4899';
-            else if (total >= 1) color = '#F9A8D4';
-
             return {
-              id: moo, name: `หมู่ ${moo}`, count: total, color: color,
+              id: moo, name: `${moo}`, count: mooData.length,
               ELDERLY: mooData.filter((p: any) => p.vulnerabilities?.includes('ELDERLY')).length,
               DISABLED: mooData.filter((p: any) => p.vulnerabilities?.includes('DISABLED')).length,
               BEDRIDDEN: mooData.filter((p: any) => p.vulnerabilities?.includes('BEDRIDDEN')).length,
@@ -79,13 +66,10 @@ export default function PublicHomePage() {
               PREGNANT: mooData.filter((p: any) => p.vulnerabilities?.includes('PREGNANT')).length,
             };
           });
-          setBarData(villagesData);
-          setMapVillages(villagesData);
-
-          // 4. คำนวณช่วงอายุ (คำนวณจาก birth_date)
-          const currentYear = new Date().getFullYear();
-          const getAge = (birth: string) => birth ? currentYear - new Date(birth).getFullYear() : 0;
           
+          setVillageData(villages.filter((v: any) => v.count > 0));
+
+          const currentYear = new Date().getFullYear();
           const ageGroups = [
             { name: 'เด็ก (0-14)', min: 0, max: 14 },
             { name: 'วัยรุ่น (15-24)', min: 15, max: 24 },
@@ -93,145 +77,115 @@ export default function PublicHomePage() {
             { name: 'ผู้สูงอายุ (60-69)', min: 60, max: 69 },
             { name: 'สูงอายุมาก (70+)', min: 70, max: 150 }
           ];
-
-          const ageStats = ageGroups.map(group => ({
+          const aData = ageGroups.map(group => ({
             name: group.name,
             value: vulnerableData.filter((p: any) => {
-              const age = getAge(p.birth_date);
+              const age = p.birth_date ? currentYear - new Date(p.birth_date).getFullYear() : 0;
               return age >= group.min && age <= group.max;
             }).length
           }));
-          setAgeData(ageStats);
+          
+          setAgeData(aData.filter((group: any) => group.value > 0));
 
-          // 5. คำนวณสถานะการช่วยเหลือ
           setStatusData([
-            { name: 'ช่วยเหลือแล้ว', value: vulnerableData.length - pendingCount, color: '#EC4899' },
-            { name: 'รอดำเนินการ', value: pendingCount, color: '#0EA5E9' },
-          ].filter(item => item.value > 0));
-
-          // 6. คำนวณแนวทางแก้ไข
-          const adviceCount = interventions?.filter(i => i.solution_type === 'ให้คำแนะนำ').length || 0;
-          const helpCount = interventions?.filter(i => i.solution_type === 'ช่วยเหลือ').length || 0;
-          const referCount = interventions?.filter(i => i.solution_type === 'ประสานส่งต่อ').length || 0;
-
-          setSolutionData([
-            { name: 'ให้คำแนะนำ', value: adviceCount, color: '#0EA5E9' },
-            { name: 'ให้ความช่วยเหลือ', value: helpCount, color: '#EC4899' },
-            { name: 'ประสานส่งต่อ', value: referCount, color: '#F9A8D4' },
-          ].filter(item => item.value > 0));
+            { name: 'ช่วยเหลือแล้ว', value: total - pending, color: '#EC4899' },
+            { name: 'รอดำเนินการ', value: pending, color: '#0EA5E9' },
+          ]);
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoadingData(false); 
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
   }, []);
 
-  if (!isMounted || isLoadingData) return <div className="min-h-screen bg-slate-50" />;
+  if (!mounted) return <div className="min-h-screen bg-slate-50" />;
 
   return (
-    <main className="min-h-screen bg-slate-50 relative overflow-hidden flex flex-col">
-      <header className="bg-white shadow-sm z-20 sticky top-0">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-full p-1 border border-slate-100">
-              <Image src="/logo.png" alt="Logo" width={48} height={48} className="object-contain" />
-            </div>
+    <main className="min-h-screen bg-slate-50 pb-10">
+      <header className="bg-white shadow-sm border-b border-slate-100 sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Logo" width={32} height={32} className="w-8 h-8 md:w-10 md:h-10 object-contain" />
             <div>
-              <h1 className="font-bold text-slate-900 text-lg leading-tight">ระบบข้อมูลกลุ่มเปราะบาง</h1>
-              <p className="text-xs text-pink-600 font-medium">เทศบาลตำบลท่าวังทอง</p>
+              <h1 className="font-bold text-slate-900 text-sm md:text-base leading-tight">ข้อมูลกลุ่มเปราะบาง</h1>
+              <p className="text-[10px] md:text-xs text-pink-600 font-medium">เทศบาลตำบลท่าวังทอง</p>
             </div>
           </div>
-          <button onClick={() => router.push('/login')} className="flex items-center gap-2 bg-gradient-brand text-white px-6 py-2.5 rounded-full font-semibold shadow-glow hover:scale-105 transition-all text-sm">
-            <LogIn className="w-4 h-4" /> เข้าสู่ระบบเจ้าหน้าที่
+          <button onClick={() => router.push('/login')} className="flex items-center gap-1.5 bg-gradient-to-r from-pink-500 to-sky-500 text-white p-2 md:px-4 md:py-2 rounded-lg font-semibold text-xs md:text-sm shadow-md">
+            <LogIn className="w-4 h-4" /> <span className="hidden sm:inline">เข้าสู่ระบบ</span>
           </button>
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8 flex-1 flex flex-col gap-6">
+      <div className="max-w-[1400px] mx-auto px-3 md:px-4 mt-4 md:mt-6 space-y-3 md:space-y-4">
         
-        {/* Stats Cards */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <div className="col-span-2 md:col-span-1 bg-gradient-brand rounded-2xl p-5 text-white shadow-glow flex flex-col justify-center">
-            <p className="text-white/80 font-medium mb-1 text-sm">ผู้ลงทะเบียนทั้งหมด</p>
-            <h3 className="text-3xl font-bold">{stats.total} <span className="text-sm font-normal">ราย</span></h3>
-          </div>
-          {(Object.keys(VULN) as VulnType[]).map((key) => (
-            <div key={key} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{VULN[key].emoji}</span>
-                <p className="text-slate-500 text-xs font-medium">{VULN[key].label}</p>
-              </div>
-              <h4 className="text-2xl font-bold text-slate-800">{stats.typeCounts[key] || 0}</h4>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* 👇 Executive Insights (ข้อมูลเชิงลึกสไตล์สากล) 👇 */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-800 rounded-2xl p-5 text-white shadow-md flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-              <AlertCircle className="w-6 h-6 text-pink-400" />
-            </div>
-            <div>
-              <p className="text-slate-300 text-sm">ผู้รอรับความช่วยเหลือ</p>
-              <h3 className="text-2xl font-bold">{insights.pending} ราย</h3>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-6 h-6 text-pink-500" />
-            </div>
-            <div>
-              <p className="text-slate-500 text-sm">ความเปราะบางทับซ้อน (2+ ด้าน)</p>
-              <h3 className="text-2xl font-bold text-slate-800">{insights.overlap} ราย</h3>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
-              <UserCheck className="w-6 h-6 text-sky-500" />
-            </div>
-            <div>
-              <p className="text-slate-500 text-sm">ผู้ใช้ชีวิตลำพัง (กลุ่มเสี่ยงสูง)</p>
-              <h3 className="text-2xl font-bold text-slate-800">{insights.livesAlone} ราย</h3>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Charts Grid */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <motion.div 
+          initial="hidden" animate="visible" 
+          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-3"
+        >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-gradient-to-r from-pink-500 to-sky-500 rounded-xl md:rounded-2xl p-3 text-white shadow-md flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0"><Users className="w-4 h-4 md:w-5 md:h-5" /></div>
+            <div><p className="text-white/80 text-[10px] md:text-xs mb-0.5">ทั้งหมด</p><h3 className="text-lg md:text-2xl font-bold">{stats.total} <span className="text-[10px] font-normal">ราย</span></h3></div>
+          </motion.div>
           
-          {/* แผนที่ */}
-          <div className="bg-white p-4 rounded-3xl shadow-soft border border-slate-100 flex flex-col relative overflow-hidden h-[400px]">
-            <div className="flex justify-between items-center mb-4 px-2 z-10 relative">
-              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                <MapPin className="text-pink-500" /> แผนที่ความหนาแน่น
-              </h2>
-            </div>
-            <div className="relative w-full flex-1 rounded-2xl overflow-hidden border border-slate-100">
-              <PublicMap villages={mapVillages} />
-            </div>
-          </div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-white rounded-xl md:rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-orange-50 flex items-center justify-center shrink-0 text-sm md:text-lg">👵</div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">ผู้สูงอายุ</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.elderly} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </motion.div>
 
-          {/* กราฟแท่งหมู่บ้าน */}
-          <div className="h-[400px]">
-            <HouseholdBarChart barData={barData} />
-          </div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-white rounded-xl md:rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0 text-sm md:text-lg">♿</div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">ผู้พิการ</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.disabled} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </motion.div>
 
-          {/* กราฟช่วงอายุ (ใหม่) */}
-          <div className="h-[350px]">
-            <AgeBarChart ageData={ageData} />
-          </div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-white rounded-xl md:rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 text-sm md:text-lg">🛏️</div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">ติดเตียง</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.bedridden} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </motion.div>
 
-          {/* กราฟสถานะ */}
-          <div className="h-[350px]">
-            <StatusPieChart statusData={statusData} />
-          </div>
-          
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-white rounded-xl md:rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-yellow-50 flex items-center justify-center shrink-0 text-sm md:text-lg">💰</div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">รายได้น้อย</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.lowIncome} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </motion.div>
+
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} className="bg-white rounded-xl md:rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0 text-sm md:text-lg">🤰</div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">ตั้งครรภ์</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.pregnant} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </motion.div>
         </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
+          <div className="bg-[#1e293b] rounded-xl md:rounded-2xl p-3 md:p-4 text-white shadow-md flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0"><ShieldAlert className="w-4 h-4 md:w-5 md:h-5 text-pink-400" /></div>
+            <div><p className="text-slate-300 text-[10px] md:text-xs mb-0.5">รอรับความช่วยเหลือ</p><h3 className="text-base md:text-xl font-bold">{stats.pending} <span className="text-[10px] font-normal">ราย</span></h3></div>
+          </div>
+          <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-pink-50 flex items-center justify-center shrink-0"><HeartPulse className="w-4 h-4 md:w-5 md:h-5 text-pink-500" /></div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">เปราะบางทับซ้อน (2+ ด้าน)</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.overlap} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </div>
+          <div className="bg-white rounded-xl md:rounded-2xl p-3 md:p-4 shadow-sm border border-slate-100 flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-sky-50 flex items-center justify-center shrink-0"><UserX className="w-4 h-4 md:w-5 md:h-5 text-sky-500" /></div>
+            <div><p className="text-slate-500 text-[10px] md:text-xs mb-0.5">ใช้ชีวิตลำพัง (เสี่ยงสูง)</p><h3 className="text-base md:text-xl font-bold text-slate-800">{stats.livesAlone} <span className="text-[10px] font-normal text-slate-400">ราย</span></h3></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+          <div className="bg-white p-2 md:p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[300px] md:h-[400px]">
+            <h2 className="font-bold text-sm md:text-base text-slate-800 flex items-center gap-2 px-1 mb-2"><span className="text-pink-500">📍</span> แผนที่ความหนาแน่น</h2>
+            <div className="relative w-full flex-1 rounded-xl overflow-hidden border border-slate-100">
+              <PublicMap villages={villageData} />
+            </div>
+          </div>
+          <div className="h-[300px] md:h-[400px]"><HouseholdBarChart data={villageData} /></div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+          <div className="h-[300px] md:h-[350px]"><AgeBarChart data={ageData} /></div>
+          <div className="h-[300px] md:h-[350px]"><StatusPieChart data={statusData} /></div>
+        </div>
       </div>
     </main>
   );

@@ -2,24 +2,19 @@ import L from 'leaflet';
 import { VULN, type VulnType } from '@/lib/constants';
 
 export function buildMarkerIcon(vuln: VulnType[], isActive = false): L.DivIcon {
-  const colors = vuln.map((v) => VULN[v].color);
-  const background =
-    colors.length === 0
-      ? '#94A3B8'
-      : colors.length === 1
-        ? colors[0]
-        : `conic-gradient(${colors
-            .map((c, i) => {
-              const s = (i * 100) / colors.length;
-              const e = ((i + 1) * 100) / colors.length;
-              return `${c} ${s}% ${e}%`;
-            })
-            .join(', ')})`;
+  // 🛡️ ดัก Error เผื่อข้อมูล vulnerabilities ส่งมาเป็นค่าว่างหรือผิดรูปแบบ
+  const safeVuln = Array.isArray(vuln) ? vuln : [];
+  
+  let color = '#EC4899'; // สีชมพูเริ่มต้น
+
+  if (safeVuln.length > 0 && VULN[safeVuln[0]]) {
+    color = VULN[safeVuln[0]].color;
+  }
 
   return L.divIcon({
-    className: `custom-marker ${isActive ? 'active' : ''}`,
-    html: `<div class="vuln-pin" style="background:${background};"></div>`,
-    iconSize: [38, 38],
-    iconAnchor: [19, 38],
+    className: 'custom-marker', // ใช้คลาสจาก globals.css
+    html: `<div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12], // จุดกึ่งกลางหมุด
   });
 }

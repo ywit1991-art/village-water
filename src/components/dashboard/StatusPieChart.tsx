@@ -1,84 +1,67 @@
 'use client';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { motion } from 'framer-motion';
 
-interface Props {
-  statusData: any[];
-}
+export default function StatusPieChart({ data }: { data: any[] }) {
+  if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-400">ไม่มีข้อมูล</div>;
 
-export default function StatusPieChart({ statusData }: Props) {
-  const hasData = statusData.length > 0;
-  
-  const displayData = hasData ? statusData : [
-    { name: 'ยังไม่มีข้อมูล', value: 1, color: '#e2e8f0' }
-  ];
-  
-  const total = statusData.reduce((sum, item) => sum + item.value, 0);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  const renderLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <ul className="flex flex-col gap-3 justify-center">
+        {payload.map((entry: any, index: number) => {
+          const percent = total > 0 ? ((entry.payload.value / total) * 100).toFixed(0) : 0;
+          return (
+            <li key={`item-${index}`} className="flex items-center gap-2 text-sm">
+              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+              <span className="text-slate-600">{entry.value}</span>
+              <span className="font-bold text-slate-800 ml-1">
+                {entry.payload.value} ราย ({percent}%)
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload;
+      const percent = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
+      return (
+        <div className="bg-white p-3 rounded-xl shadow-lg border border-slate-100 text-sm">
+          <p className="font-bold text-slate-800 mb-1">{item.name}</p>
+          <p className="text-slate-600">จำนวน: <span className="font-bold text-pink-500">{item.value}</span> ราย</p>
+          <p className="text-slate-600">คิดเป็น: <span className="font-bold text-sky-500">{percent}%</span></p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 h-full flex flex-col">
-      <div className="mb-4">
+    <motion.div 
+      whileHover={{ y: -5, boxShadow: "0px 10px 30px rgba(0,0,0,0.08)" }}
+      transition={{ duration: 0.3 }}
+      className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 h-full flex flex-col"
+    >
+      <div className="mb-2">
         <h3 className="font-bold text-slate-800 text-lg">สถานะการติดตามเพื่อแก้ไขปัญหา</h3>
       </div>
-      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6">
-        
-        <div className="space-y-4 w-full md:w-auto">
-          {hasData ? (
-            displayData.map((item, idx) => {
-              const percent = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
-              
-              return (
-                <div key={idx} className="flex items-start gap-2">
-                  <span className="w-3 h-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: item.color }} />
-                  <div>
-                    <p className="text-sm text-slate-600">{item.name}</p>
-                    <p className="text-lg font-bold text-slate-800">
-                      {item.value} ราย 
-                      <span className="text-sm font-medium text-slate-400 ml-1.5">({percent}%)</span>
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="flex items-start gap-2">
-              <span className="w-3 h-3 rounded-full mt-1 shrink-0 bg-slate-200" />
-              <div>
-                <p className="text-sm text-slate-500">ยังไม่มีข้อมูล</p>
-                <p className="text-sm text-slate-400">รอการบันทึก</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="w-[200px] h-[200px] relative">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie 
-                data={displayData} 
-                dataKey="value" 
-                cx="50%" 
-                cy="50%" 
-                outerRadius={90} 
-                stroke="none"
-                isAnimationActive={true}
-                animationDuration={1500}
-              >
-                {displayData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              {/* 👇 แก้เป็น any แล้ว 👇 */}
-              {hasData && (
-                <Tooltip 
-                  formatter={(value: any) => [`${value} ราย`, 'จำนวน']} 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} 
-                />
-              )}
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
+      <div className="flex-1 flex items-center justify-center" suppressHydrationWarning>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={0} outerRadius={110} stroke="none" isAnimationActive={true} animationBegin={200} animationDuration={1500}>
+              {data.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend layout="vertical" verticalAlign="middle" align="right" content={renderLegend} wrapperStyle={{ paddingLeft: '20px' }} />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
-    </div>
+    </motion.div>
   );
 }

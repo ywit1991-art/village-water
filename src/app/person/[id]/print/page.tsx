@@ -12,13 +12,12 @@ export default function PrintPersonPage() {
   const { id } = useParams();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
-  const [registry, setRegistry] = useState<any>(null); // 👈 State เก็บข้อมูลทะเบียนราษฎร
+  const [registry, setRegistry] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [osmName, setOsmName] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. ดึงข้อมูลกลุ่มเปราะบาง
       const { data: person, error } = await supabase()
         .from('vulnerable_persons')
         .select('*, interventions(*)')
@@ -28,7 +27,6 @@ export default function PrintPersonPage() {
       if (!error && person) {
         setData(person);
         
-        // 2. ดึงข้อมูลจากทะเบียนราษฎร (เพื่อเอาบ้านเลขที่/หมู่ที่)
         const { data: regData } = await supabase()
           .from('registry_persons')
           .select('house_no, village_no, subdistrict, district, province')
@@ -37,7 +35,6 @@ export default function PrintPersonPage() {
         
         if (regData) setRegistry(regData);
 
-        // 3. ดึงชื่อ อสม.
         const users = getUsers();
         const staff = users.find(u => u.username === person.created_by);
         if (staff) setOsmName(staff.name);
@@ -47,34 +44,35 @@ export default function PrintPersonPage() {
     fetchData();
   }, [id]);
 
+  // 👇 แก้ไขฟังก์ชันย้อนกลับให้ฉลาดขึ้น 👇
   const handleBack = () => {
-    const role = sessionStorage.getItem('staff_role');
-    if (role === 'OSM') {
-      router.push('/person/my-records');
+    // ถ้าประวัติการเข้าชมมีมากกว่า 1 หน้า (เปิดมาจากหน้าอื่น) ให้ย้อนกลับ
+    if (window.history.length > 1) {
+      router.back();
     } else {
-      router.push('/map');
+      // ถ้าเปิดมาแบบแท็บใหม่ (เช่น window.open) ให้เด้งไปหน้าหลักตามสิทธิ์
+      const role = sessionStorage.getItem('staff_role');
+      if (role === 'OSM') {
+        router.push('/person/my-records');
+      } else {
+        router.push('/map');
+      }
     }
   };
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-pink-500" /></div>;
   if (!data) return <div className="min-h-screen flex items-center justify-center text-slate-500">ไม่พบข้อมูล</div>;
 
-  // 👇 ฟังก์ชันจัดรูปแบบเลขบัตรประชาชน x-xxxx-xxxxx-xx-x 👇
   const formatNationalId = (id: string) => {
     if (!id) return '-';
     const cleanId = id.replace(/\D/g, '');
     return cleanId.replace(/^(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})$/, '$1-$2-$3-$4-$5');
   };
 
-  // 👇 ฟังก์ชันจัดรูปแบบวันที่แบบเต็ม (3 กันยายน 2515) 👇
   const formatThaiDate = (dateString: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('th-TH', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
+    return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   const calcAdl = (scores: any) => {
@@ -85,9 +83,9 @@ export default function PrintPersonPage() {
   return (
     <div className="min-h-screen bg-slate-100 py-10 print:bg-white print:py-0">
       
-      {/* แถบเครื่องมือ (ซ่อนตอนพิมพ์) */}
+      {/* แถบเครื่องมือ */}
       <div className="max-w-[210mm] mx-auto mb-4 flex justify-between items-center px-4 print:hidden">
-        <button onClick={handleBack} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-4 py-2 rounded-xl shadow-sm transition-colors">
+        <button onClick={handleBack} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 bg-white px-4 py-2 rounded-xl shadow-sm transition-colors border border-slate-200">
           <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
         </button>
         <button onClick={() => window.print()} className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-6 py-2.5 rounded-xl shadow-glow font-medium transition-colors">
@@ -95,10 +93,9 @@ export default function PrintPersonPage() {
         </button>
       </div>
 
-      {/* เนื้อหาเอกสาร (A4) */}
+      {/* เนื้อหาเอกสาร */}
       <div className="max-w-[210mm] mx-auto bg-white p-10 shadow-lg print:shadow-none print:p-0 print:max-w-none min-h-[297mm]">
         
-        {/* Header เอกสาร */}
         <div className="flex items-center gap-4 border-b-2 border-slate-800 pb-4 mb-6">
           <Image src="/logo.png" alt="Logo" width={80} height={80} className="object-contain" />
           <div>
@@ -108,7 +105,6 @@ export default function PrintPersonPage() {
           </div>
         </div>
 
-        {/* 1. ข้อมูลส่วนบุคคล */}
         <div className="mb-6">
           <h3 className="font-bold text-lg bg-slate-100 p-2 mb-3 border-l-4 border-pink-500">1. ข้อมูลส่วนบุคคล</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -116,17 +112,10 @@ export default function PrintPersonPage() {
             <p><span className="text-slate-500">เลขบัตรประชาชน:</span> {formatNationalId(data.national_id)}</p>
             <p><span className="text-slate-500">วันเกิด:</span> {formatThaiDate(data.birth_date)}</p>
             <p><span className="text-slate-500">เบอร์โทร:</span> {data.phone || '-'}</p>
-            
-            {/* 👇 เพิ่มบ้านเลขที่และหมู่ที่จากทะเบียนราษฎร 👇 */}
             <p className="col-span-2">
               <span className="text-slate-500">ที่อยู่ตามทะเบียน:</span>{' '}
-              {registry ? (
-                `บ้านเลขที่ ${registry.house_no || '-'} หมู่ที่ ${registry.village_no || '-'} ต.${registry.subdistrict} อ.${registry.district} จ.${registry.province}`
-              ) : (
-                data.note || '-' // ถ้าไม่เจอในทะเบียนให้ใช้ note แทน
-              )}
+              {registry ? `บ้านเลขที่ ${registry.house_no || '-'} หมู่ที่ ${registry.village_no || '-'} ต.${registry.subdistrict} อ.${registry.district} จ.${registry.province}` : data.note || '-'}
             </p>
-
             <p className="col-span-2 mt-2">
               <span className="text-slate-500">ประเภทกลุ่มเปราะบาง:</span>{' '}
               {data.vulnerabilities?.map((v: string) => VULN[v as VulnType]?.label).join(', ')}
@@ -134,13 +123,12 @@ export default function PrintPersonPage() {
           </div>
         </div>
 
-        {/* 2. ข้อมูลตามแบบประเมิน */}
         <div className="mb-6">
           <h3 className="font-bold text-lg bg-slate-100 p-2 mb-3 border-l-4 border-pink-500">2. ข้อมูลตามแบบประเมิน</h3>
           
           {data.elderly_profile && (
             <div className="mb-4 border border-slate-200 rounded-lg p-4">
-              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินผู้สูงอายุ (Elderly Health Profile)</h4>
+              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินผู้สูงอายุ</h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <p><span className="text-slate-500">น้ำหนัก/ส่วนสูง:</span> {data.elderly_profile.weight || '-'} กก. / {data.elderly_profile.height || '-'} ซม.</p>
                 <p><span className="text-slate-500">การมองเห็น/ได้ยิน:</span> {data.elderly_profile.vision || '-'} / {data.elderly_profile.hearing || '-'}</p>
@@ -152,31 +140,28 @@ export default function PrintPersonPage() {
 
           {data.disability_profile && (
             <div className="mb-4 border border-slate-200 rounded-lg p-4">
-              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินผู้พิการ (Disability Profile)</h4>
+              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินผู้พิการ</h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <p><span className="text-slate-500">ประเภทความพิการ:</span> {data.disability_profile.disabilityType || '-'}</p>
                 <p><span className="text-slate-500">ระดับความพิการ:</span> {data.disability_profile.disabilityLevel || '-'}</p>
                 <p><span className="text-slate-500">อุปกรณ์ทางการแพทย์:</span> {data.disability_profile.medicalEquipment || '-'}</p>
                 <p><span className="text-slate-500">ผู้ดูแลหลัก:</span> {data.disability_profile.hasCaregiver ? `${data.disability_profile.caregiverName} (${data.disability_profile.caregiverRelation})` : 'ไม่มี'}</p>
-                <p><span className="text-slate-500">คะแนน ADL:</span> <strong>{calcAdl(data.disability_profile.adlScores)} คะแนน</strong></p>
               </div>
             </div>
           )}
 
           {data.welfare_profile && (
             <div className="mb-4 border border-slate-200 rounded-lg p-4">
-              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินความยากลำบาก (Welfare Profile)</h4>
+              <h4 className="font-semibold text-pink-600 mb-2">แบบประเมินความยากลำบาก</h4>
               <div className="grid grid-cols-1 gap-y-2 text-sm">
                 <p><span className="text-slate-500">สาเหตุความยากลำบาก:</span> {data.welfare_profile.hardshipCauses?.join(', ') || '-'}</p>
                 <p><span className="text-slate-500">สิ่งที่ต้องการให้รัฐช่วย:</span> {data.welfare_profile.governmentNeeds?.join(', ') || '-'}</p>
-                <p><span className="text-slate-500">สิ่งที่ต้องการให้ชุมชนช่วย:</span> {data.welfare_profile.communityNeeds?.join(', ') || '-'}</p>
                 <p><span className="text-slate-500">สภาพเศรษฐกิจ:</span> รายรับ {data.welfare_profile.incomeSufficiency || '-'}, หนี้สิน {data.welfare_profile.debtStatus || '-'}</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* 3. ประวัติการช่วยเหลือ */}
         <div className="mb-8">
           <h3 className="font-bold text-lg bg-slate-100 p-2 mb-3 border-l-4 border-pink-500">3. ประวัติการให้ความช่วยเหลือ</h3>
           {data.interventions && data.interventions.length > 0 ? (
@@ -203,20 +188,17 @@ export default function PrintPersonPage() {
           )}
         </div>
 
-        {/* 4. ลายเซ็น */}
         <div className="mt-16 flex justify-between px-8">
           <div className="text-center w-64">
             <p className="mb-8 text-sm text-slate-600">ลงชื่อ ....................................................</p>
             <p className="text-sm font-bold text-slate-800">( {osmName || '...................................................'} )</p>
             <p className="text-xs text-slate-500 mt-1">อสม. ผู้ให้ข้อมูล</p>
-            <p className="text-xs text-slate-400 mt-1">วันที่ {new Date().toLocaleDateString('th-TH')}</p>
           </div>
 
           <div className="text-center w-64">
             <p className="mb-8 text-sm text-slate-600">ลงชื่อ ....................................................</p>
             <p className="text-sm font-bold text-slate-800">( ................................................... )</p>
             <p className="text-xs text-slate-500 mt-1">ผู้ใหญ่บ้าน / ผู้รับรองข้อมูล</p>
-            <p className="text-xs text-slate-400 mt-1">วันที่ ......./......./.......</p>
           </div>
         </div>
 
