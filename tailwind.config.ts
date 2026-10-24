@@ -8,6 +8,10 @@ export default {
   ],
   theme: {
     extend: {
+      // 👇 ผูกฟอนต์ให้ Tailwind รู้จัก 👇
+      fontFamily: {
+        sans: ['var(--font-ibm-plex-thai)', 'system-ui', 'sans-serif'],
+      },
       colors: {
         pink: {
           50: '#FDF2F8', 100: '#FCE7F3', 300: '#F9A8D4',
@@ -17,9 +21,6 @@ export default {
           50: '#F0F9FF', 100: '#E0F2FE', 300: '#7DD3FC',
           500: '#0EA5E9', 600: '#0284C7', 700: '#0369A1',
         },
-      },
-      fontFamily: {
-        sans: ['var(--font-ibm-plex-thai)', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-brand': 'linear-gradient(135deg, #EC4899 0%, #0EA5E9 100%)',

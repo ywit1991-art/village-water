@@ -1,35 +1,52 @@
 'use client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { motion } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { VULN, type VulnType } from '@/lib/constants';
 
-export default function HouseholdBarChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) return <div className="h-full flex items-center justify-center text-slate-400">ไม่มีข้อมูล</div>;
+interface Props {
+  barData: any[];
+}
+
+export default function HouseholdBarChart({ barData }: Props) {
+  // ถ้าไม่มีข้อมูล ให้ใช้ข้อมูลจำลอง
+  const displayData = barData && barData.length > 0 ? barData : [
+    { name: 'หมู่ 1', count: 2, ELDERLY: 1, DISABLED: 1, BEDRIDDEN: 0, LOW_INCOME: 0, PREGNANT: 0 },
+    { name: 'หมู่ 2', count: 1, ELDERLY: 0, DISABLED: 1, BEDRIDDEN: 0, LOW_INCOME: 0, PREGNANT: 0 }
+  ];
+
+  const legendItems = Object.keys(VULN) as VulnType[];
 
   return (
-    <motion.div 
-      whileHover={{ y: -5, boxShadow: "0px 10px 30px rgba(0,0,0,0.08)" }}
-      transition={{ duration: 0.3 }}
-      className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 h-full flex flex-col"
-    >
+    <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-slate-100 h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="font-bold text-slate-800 text-lg">จำนวนครัวเรือนเปราะบาง</h3>
+        <h3 className="font-bold text-slate-800 text-sm md:text-lg">จำนวนครัวเรือนเปราะบาง</h3>
+        <p className="text-slate-500 text-xs md:text-sm mb-3">แยกตามหมู่บ้านและประเภท</p>
+        
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {legendItems.map((key) => (
+            <div key={key} className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: VULN[key].color }} />
+              <span className="text-[10px] md:text-xs text-slate-600">{VULN[key].label}</span>
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="flex-1" suppressHydrationWarning>
+
+      <div className="flex-1 min-h-[200px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={displayData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
-            <Tooltip cursor={{ fill: '#f8fafc' }} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-            <Bar dataKey="ELDERLY" name="ผู้สูงอายุ" stackId="a" fill="#A855F7" barSize={20} isAnimationActive={true} animationBegin={0} animationDuration={1000} />
-            <Bar dataKey="DISABLED" name="ผู้พิการ" stackId="a" fill="#F97316" barSize={20} isAnimationActive={true} animationBegin={200} animationDuration={1000} />
-            <Bar dataKey="BEDRIDDEN" name="ผู้ป่วยติดเตียง" stackId="a" fill="#EF4444" barSize={20} isAnimationActive={true} animationBegin={400} animationDuration={1000} />
-            <Bar dataKey="LOW_INCOME" name="รายได้น้อย" stackId="a" fill="#F59E0B" barSize={20} isAnimationActive={true} animationBegin={600} animationDuration={1000} />
-            <Bar dataKey="PREGNANT" name="ตั้งครรภ์" stackId="a" fill="#3B82F6" barSize={20} radius={[4, 4, 0, 0]} isAnimationActive={true} animationBegin={800} animationDuration={1000} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} allowDecimals={false} />
+            <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+            
+            <Bar dataKey="ELDERLY" name={VULN.ELDERLY.label} stackId="a" fill={VULN.ELDERLY.color} isAnimationActive={true} animationDuration={1000} />
+            <Bar dataKey="DISABLED" name={VULN.DISABLED.label} stackId="a" fill={VULN.DISABLED.color} isAnimationActive={true} animationDuration={1000} />
+            <Bar dataKey="BEDRIDDEN" name={VULN.BEDRIDDEN.label} stackId="a" fill={VULN.BEDRIDDEN.color} isAnimationActive={true} animationDuration={1000} />
+            <Bar dataKey="LOW_INCOME" name={VULN.LOW_INCOME.label} stackId="a" fill={VULN.LOW_INCOME.color} isAnimationActive={true} animationDuration={1000} />
+            <Bar dataKey="PREGNANT" name={VULN.PREGNANT.label} stackId="a" fill={VULN.PREGNANT.color} isAnimationActive={true} animationDuration={1000} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </motion.div>
+    </div>
   );
 }

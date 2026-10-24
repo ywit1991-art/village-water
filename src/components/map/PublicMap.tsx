@@ -1,106 +1,77 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Polygon, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { useMap } from 'react-leaflet';
+import ThawangthongBoundary from './ThawangthongBoundary';
 
-// ฟังก์ชันซูมให้พอดีกับขอบเขตตำบล
-function FitBounds({ data }: { data: any }) {
+interface Village {
+  id: number;
+  name: string;
+  count: number;
+  color: string;
+}
+
+function MapController({ data }: { data: any }) {
   const map = useMap();
+  useLayoutEffect(() => {
+    map.invalidateSize();
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    if (map.getContainer()) resizeObserver.observe(map.getContainer());
+    return () => resizeObserver.disconnect();
+  }, [map]);
+
   useEffect(() => {
     if (data) {
-      // ใช้ GeoJSON ในการหาขอบเขต
-      const bounds = L.geoJSON(data).getBounds();
-      map.fitBounds(bounds, { padding: [10, 10] });
-      // ล็อคไม่ให้ลากออกนอกพื้นที่
-      map.setMaxBounds(bounds); 
+      const timer = setTimeout(() => {
+        const bounds = L.geoJSON(data).getBounds();
+        map.fitBounds(bounds, { padding: [10, 10] });
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [data, map]);
   return null;
 }
 
-export default function PublicMap({ villages }: { villages: any[] }) {
-  const [geoData, setGeoData] = useState<any>(null);
-  const [maskPositions, setMaskPositions] = useState<any[]>([]);
+export default function PublicMap({ villages }: { villages: Village[] }) {
+  const [boundaryData, setBoundaryData] = useState<any>(null);
 
   useEffect(() => {
-    // โหลดไฟล์ขอบเขต
     fetch('/thawangthong.geojson')
       .then((res) => res.json())
-      .then((data) => {
-        setGeoData(data);
-        
-        // คำนวณพิกัดเพื่อทำ "หน้ากากสีขาว" (Mask)
-        if (data.features && data.features[0].geometry.type === 'Polygon') {
-          // ดึงพิกัดตำบล แล้วสลับจาก [Lng, Lat] เป็น [Lat, Lng] ให้ Leaflet
-          const coords = data.features[0].geometry.coordinates[0];
-          const innerRing = coords.map((c: any) => [c[1], c[0]]);
-          
-          // สร้างสี่เหลี่ยมผืนผ้าขนาดใหญ่ครอบโลกทั้งใบ
-          const outerRing = [
-            [90, -180], [90, 180], [-90, 180], [-90, -180]
-          ];
-          
-          // ประกาศพิกัดแบบมีรูตรงกลาง (Hole)
-          setMaskPositions([outerRing, innerRing]);
-        }
-      })
-      .catch((err) => console.error('ไม่พบไฟล์ geojson:', err));
+      .then((data) => setBoundaryData(data))
+      .catch((err) => console.error('ไม่พบไฟล์ขอบเขต:', err));
   }, []);
 
-  // ตั้งค่าสีเส้นขอบตำบล (สีฟ้า) และพื้นหลัง (สีชมพู)
-  const getStyle = () => {
-    return {
-      fillColor: '#FCE7F3', // ชมพูอ่อน
-      weight: 3,            // ความหนาเส้นขอบ
-      opacity: 1,
-      color: '#0EA5E9',     // สีฟ้า
-      fillOpacity: 0.8,     // ความทึบของสีชมพู
-    };
-  };
-
   return (
-    <div className="w-full h-full relative z-0 bg-white">
+    <div className="absolute inset-0 bg-white">
       <MapContainer
-        center={[19.1750, 99.9150]}
-        zoom={12}
-        className="w-full h-full"
+        center={[19.168849, 99.915143]}
+        zoom={13}
+        className="w-full h-full z-0"
+        // 👇 ล็อคแผนที่ ไม่ให้ลาก ไม่ให้ซูม 👇
         zoomControl={false}
-        dragging={false}          // ล็อคไม่ให้ลากแผนที่
-        scrollWheelZoom={false}   // ล็อคไม่ให้ซูมด้วยเมาส์
-        doubleClickZoom={false}   // ล็อคไม่ให้ดับเบิ้ลคลิกซูม
-        touchZoom={false}         // ล็อคไม่ให้ซูมด้วยนิ้ว
+        dragging={false}
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        touchZoom={false}
         boxZoom={false}
         keyboard={false}
       >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap'
+        />
         
-        {geoData && (
-          <>
-            <FitBounds data={geoData} />
-            
-            {/* 👇 1. วาดหน้ากากสีขาวทึบคลุมรอบนอก (โดยเว้นรูตรงกลางไว้) 👇 */}
-            {maskPositions.length > 0 && (
-              <Polygon 
-                positions={maskPositions} 
-                pathOptions={{ 
-                  color: 'white', 
-                  fillColor: 'white', 
-                  fillOpacity: 1, // ทึบ 100%
-                  weight: 0, 
-                  interactive: false,
-                  fillRule: 'evenodd' // บังคับให้ตรงกลางเป็นรูโปร่งใส
-                }} 
-              />
-            )}
+        <MapController data={boundaryData} />
 
-            {/* 👇 2. วาดพื้นที่ตำบลท่าวังทอง (สีชมพูขอบฟ้า) ทับลงไป 👇 */}
-            <GeoJSON
-              data={geoData}
-              style={getStyle}
-              interactive={false}
-            />
-          </>
+        {boundaryData && (
+          <ThawangthongBoundary 
+            boundary={boundaryData}
+            spaceColor="#ffffff" // 👈 สีพื้นหลังนอกเขตเป็นสีขาว
+            outlineColor="#EC4899"
+          />
         )}
       </MapContainer>
     </div>
