@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'เทศบาลตำบลท่าวังทอง' }],
   creator: 'เทศบาลตำบลท่าวังทอง',
-  manifest: '/manifest.webmanifest',
+  manifest: '/manifest.json', // ⭐ เปลี่ยนบรรทัดนี้
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
