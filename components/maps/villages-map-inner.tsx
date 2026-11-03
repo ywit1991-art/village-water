@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import Image from 'next/image'
 import {
   X,
   AlertCircle,
@@ -16,6 +17,8 @@ import {
   Activity,
   Droplet,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Layers,
   Map as MapIcon,
   Satellite,
@@ -61,8 +64,6 @@ function AutoFitBounds({
   const hasFittedRef = useRef(false)
 
   useEffect(() => {
-    // ⭐ ใช้ setTimeout รอให้ Leaflet วาด Container เสร็จก่อน 1 วินาที
-    // ถ้าไม่รอ บางที Leaflet จะคำนวณขนาดผิด แล้ว Zoom ไม่เข้า
     const timer = setTimeout(() => {
       map.invalidateSize()
 
@@ -72,7 +73,7 @@ function AutoFitBounds({
           const bounds = layer.getBounds()
           
           if (bounds.isValid()) {
-            // ⭐ ใช้ padding [0,0] เพื่อให้ชิดขอบที่สุด และไม่จำกัด maxZoom
+            // ⭐ ใช้ padding [0,0] เพื่อให้ชิดขอบที่สุด
             map.fitBounds(bounds, { padding: [0, 0] })
             hasFittedRef.current = true
             return
@@ -88,7 +89,7 @@ function AutoFitBounds({
         map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 })
         hasFittedRef.current = true
       }
-    }, 1000) // ⭐ รอ 1 วินาที
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [points, map, boundary])
@@ -434,6 +435,9 @@ function DetailModal({
 }) {
   const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
+  
+  // ⭐ State สำหรับ Lightbox (เก็บ Index)
+  const [zoomIndex, setZoomIndex] = useState<number | null>(null)
 
   const suff = calcSufficiency(
     m.householdCount,
@@ -452,312 +456,412 @@ function DetailModal({
 
   const isNoData = suff.level === 'no-data'
 
+  // ⭐ ฟังก์ชันเลื่อนรูป
+  const nextPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (zoomIndex === null) return
+    setZoomIndex((zoomIndex + 1) % photos.length)
+  }
+
+  const prevPhoto = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (zoomIndex === null) return
+    setZoomIndex((zoomIndex - 1 + photos.length) % photos.length)
+  }
+
+  // ⭐ Keyboard Navigation
+  useEffect(() => {
+    if (zoomIndex === null) return
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomIndex(null)
+      if (e.key === 'ArrowRight') setZoomIndex(prev => (prev! + 1) % photos.length)
+      if (e.key === 'ArrowLeft') setZoomIndex(prev => (prev! - 1 + photos.length) % photos.length)
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [zoomIndex, photos.length])
+
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60"
-      onClick={onClose}
-      role="presentation"
-    >
+    <>
+      {/* ⭐ z-[99999] เพื่อไม่ให้ Header บัง */}
       <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`รายละเอียด ${m.systemName}`}
-        tabIndex={-1}
-        className="relative w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl flex flex-col outline-none"
-        onClick={e => e.stopPropagation()}
+        className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+        role="presentation"
       >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/25 hover:bg-white/40 backdrop-blur-md text-white flex items-center justify-center transition shadow-lg active:scale-95"
-          aria-label="ปิด"
-        >
-          <X size={22} />
-        </button>
-
         <div
-          className="relative px-4 md:px-8 py-5 md:py-6 text-white shrink-0"
-          style={{
-            background: `linear-gradient(135deg, ${c.hex} 0%, ${c.hex}DD 60%, ${c.hex}BB 100%)`,
-          }}
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`รายละเอียด ${m.systemName}`}
+          tabIndex={-1}
+          className="relative w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden bg-white shadow-2xl flex flex-col outline-none"
+          onClick={e => e.stopPropagation()}
         >
-          <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-white/10" />
-          <div className="absolute -bottom-12 -right-4 w-32 h-32 rounded-full bg-white/10" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/25 hover:bg-white/40 backdrop-blur-md text-white flex items-center justify-center transition shadow-lg active:scale-95"
+            aria-label="ปิด"
+          >
+            <X size={22} />
+          </button>
 
-          <div className="relative flex items-center gap-4 md:gap-5">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center font-extrabold text-2xl md:text-3xl text-white shadow-xl shrink-0 ring-2 ring-white/40">
-              {m.systemNo}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xl md:text-3xl font-extrabold leading-tight truncate">
-                {m.systemName}
-              </p>
-              <p className="text-sm md:text-base text-white/95 mt-1 flex items-center gap-2">
-                <span>📍</span>
-                <span className="truncate">
-                  หมู่ {m.villageNo} {m.villageName}
-                </span>
-              </p>
-              {productionTypes.length > 0 && (
-                <p className="text-xs md:text-sm text-white/85 mt-1 truncate">
-                  💧 {productionTypes.join(', ')}
+          {/* HERO */}
+          <div
+            className="relative px-4 md:px-8 py-5 md:py-6 text-white shrink-0"
+            style={{
+              background: `linear-gradient(135deg, ${c.hex} 0%, ${c.hex}DD 60%, ${c.hex}BB 100%)`,
+            }}
+          >
+            <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-white/10" />
+            <div className="absolute -bottom-12 -right-4 w-32 h-32 rounded-full bg-white/10" />
+
+            <div className="relative flex items-center gap-4 md:gap-5">
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center font-extrabold text-2xl md:text-3xl text-white shadow-xl shrink-0 ring-2 ring-white/40">
+                {m.systemNo}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xl md:text-3xl font-extrabold leading-tight truncate">
+                  {m.systemName}
                 </p>
-              )}
-            </div>
-            <div className="text-4xl md:text-5xl shrink-0 drop-shadow-lg hidden sm:block">
-              {STATUS_EMOJI[m.status] ?? ''}
+                <p className="text-sm md:text-base text-white/95 mt-1 flex items-center gap-2">
+                  <span>📍</span>
+                  <span className="truncate">
+                    หมู่ {m.villageNo} {m.villageName}
+                  </span>
+                </p>
+                {productionTypes.length > 0 && (
+                  <p className="text-xs md:text-sm text-white/85 mt-1 truncate">
+                    💧 {productionTypes.join(', ')}
+                  </p>
+                )}
+              </div>
+              <div className="text-4xl md:text-5xl shrink-0 drop-shadow-lg hidden sm:block">
+                {STATUS_EMOJI[m.status] ?? ''}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100">
-            <StatBox
-              value={(m.householdCount ?? 0).toLocaleString()}
-              label="ครัวเรือน"
-              small
-            />
-            <StatBox
-              value={m.tankCapacity != null ? `${m.tankCapacity}` : '–'}
-              label="ความจุ (ลบ.ม.)"
-              small
-            />
-            <StatBox
-              value={m.waterRate != null ? `${m.waterRate}` : '–'}
-              label="บาท/หน่วย"
-              suffix={m.waterRate != null ? '฿' : undefined}
-              small
-            />
-            <StatBox
-              value={
-                m.sufficiency === 'เพียงพอ'
-                  ? 'เพียงพอ'
-                  : m.sufficiency?.includes('ไม่เพียงพอ')
-                    ? 'ไม่พอ'
-                    : '–'
-              }
-              label="น้ำดิบ"
-              small
-            />
-            <StatBox
-              value={isNoData ? '—' : `${suff.ratio}%`}
-              label={suffColor.label}
-              small
-              color={suffColor.hex}
-            />
-            <StatBox
-              value={
-                m.updatedAt
-                  ? new Date(m.updatedAt).toLocaleDateString('th-TH', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: '2-digit',
-                    })
-                  : m.surveyDate
-                    ? new Date(m.surveyDate).toLocaleDateString('th-TH', {
+          {/* CONTENT */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-slate-100 border-b border-slate-100">
+              <StatBox
+                value={(m.householdCount ?? 0).toLocaleString()}
+                label="ครัวเรือน"
+                small
+              />
+              <StatBox
+                value={m.tankCapacity != null ? `${m.tankCapacity}` : '–'}
+                label="ความจุ (ลบ.ม.)"
+                small
+              />
+              <StatBox
+                value={m.waterRate != null ? `${m.waterRate}` : '–'}
+                label="บาท/หน่วย"
+                suffix={m.waterRate != null ? '฿' : undefined}
+                small
+              />
+              <StatBox
+                value={
+                  m.sufficiency === 'เพียงพอ'
+                    ? 'เพียงพอ'
+                    : m.sufficiency?.includes('ไม่เพียงพอ')
+                      ? 'ไม่พอ'
+                      : '–'
+                }
+                label="น้ำดิบ"
+                small
+              />
+              <StatBox
+                value={isNoData ? '—' : `${suff.ratio}%`}
+                label={suffColor.label}
+                small
+                color={suffColor.hex}
+              />
+              <StatBox
+                value={
+                  m.updatedAt
+                    ? new Date(m.updatedAt).toLocaleDateString('th-TH', {
                         day: '2-digit',
                         month: 'short',
                         year: '2-digit',
                       })
-                    : '–'
-              }
-              label="ข้อมูลล่าสุด"
-              small
-            />
-          </div>
-
-          {isNoData && (
-            <div className="px-4 md:px-8 pt-5">
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-xl shrink-0">
-                  ❔
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="font-bold text-slate-700 text-sm md:text-base">
-                    ยังไม่มีข้อมูลสำหรับประเมิน
-                  </p>
-                </div>
-              </div>
+                    : m.surveyDate
+                      ? new Date(m.surveyDate).toLocaleDateString('th-TH', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: '2-digit',
+                        })
+                      : '–'
+                }
+                label="ข้อมูลล่าสุด"
+                small
+              />
             </div>
-          )}
 
-          <div className="px-4 md:px-8 py-5 md:py-6 space-y-5 md:space-y-6">
-            {m.operatorName && (
-              <Section title="ช่างประปา">
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600 shrink-0 text-2xl">
-                      👷
-                    </div>
-                    <p className="text-base md:text-lg font-bold text-brand-900 leading-tight min-w-0 flex-1">
-                      {m.operatorName}
+            {isNoData && (
+              <div className="px-4 md:px-8 pt-5">
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-xl shrink-0">
+                    ❔
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="font-bold text-slate-700 text-sm md:text-base">
+                      ยังไม่มีข้อมูลสำหรับประเมิน
                     </p>
                   </div>
-                  {m.operatorPhone && (
-                    <a
-                      href={`tel:${m.operatorPhone}`}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-2 text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2.5 rounded-lg bg-white border border-brand-100 hover:border-brand-300 active:scale-95 transition"
-                    >
-                      📞 {maskPhone(m.operatorPhone)}
-                    </a>
-                  )}
                 </div>
-              </Section>
+              </div>
             )}
 
-            {committee.length > 0 && (
-              <Section
-                title={`คณะกรรมการ`}
-                collapsible
-                defaultOpen={false}
-                count={committee.length}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {committee.map((person, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition border border-slate-100"
-                    >
-                      <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
-                        {i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                          <p className="text-base font-semibold text-slate-800 truncate">
-                            {person.name}
-                          </p>
-                          {person.phone && (
-                            <a
-                              href={`tel:${person.phone}`}
-                              className="inline-flex items-center gap-1 text-sm font-mono font-semibold text-brand-600 hover:text-brand-800 hover:underline"
-                            >
-                              📞 {maskPhone(person.phone)}
-                            </a>
+            <div className="px-4 md:px-8 py-5 md:py-6 space-y-5 md:space-y-6">
+              {m.operatorName && (
+                <Section title="ช่างประปา">
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-brand-50/30 border border-brand-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600 shrink-0 text-2xl">
+                        👷
+                      </div>
+                      <p className="text-base md:text-lg font-bold text-brand-900 leading-tight min-w-0 flex-1">
+                        {m.operatorName}
+                      </p>
+                    </div>
+                    {m.operatorPhone && (
+                      <a
+                        href={`tel:${m.operatorPhone}`}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-2 text-base font-mono font-semibold text-brand-600 hover:text-brand-800 px-4 py-2.5 rounded-lg bg-white border border-brand-100 hover:border-brand-300 active:scale-95 transition"
+                      >
+                        📞 {maskPhone(m.operatorPhone)}
+                      </a>
+                    )}
+                  </div>
+                </Section>
+              )}
+
+              {committee.length > 0 && (
+                <Section
+                  title={`คณะกรรมการ`}
+                  collapsible
+                  defaultOpen={false}
+                  count={committee.length}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {committee.map((person, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition border border-slate-100"
+                      >
+                        <span className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm font-bold text-slate-600 shrink-0">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                            <p className="text-base font-semibold text-slate-800 truncate">
+                              {person.name}
+                            </p>
+                            {person.phone && (
+                              <a
+                                href={`tel:${person.phone}`}
+                                className="inline-flex items-center gap-1 text-sm font-mono font-semibold text-brand-600 hover:text-brand-800 hover:underline"
+                              >
+                                📞 {maskPhone(person.phone)}
+                              </a>
+                            )}
+                          </div>
+                          {person.position && (
+                            <p className="text-sm text-slate-500 truncate mt-0.5">
+                              {person.position}
+                            </p>
                           )}
                         </div>
-                        {person.position && (
-                          <p className="text-sm text-slate-500 truncate mt-0.5">
-                            {person.position}
-                          </p>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
+                    ))}
+                  </div>
+                </Section>
+              )}
 
-            {problems.length > 0 && (
-              <Section
-                title={`ปัญหาที่พบ (${problems.length})`}
-                accent="orange"
-                icon={<AlertCircle size={16} />}
-              >
-                <ul className="space-y-2">
-                  {problems.map((p, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-base text-slate-700 bg-orange-50 rounded-xl px-4 py-2.5 border border-orange-100"
-                    >
-                      <span className="w-6 h-6 rounded-md bg-orange-200 text-orange-800 flex items-center justify-center text-xs font-bold shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="flex-1">{p}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
-            )}
+              {problems.length > 0 && (
+                <Section
+                  title={`ปัญหาที่พบ (${problems.length})`}
+                  accent="orange"
+                  icon={<AlertCircle size={16} />}
+                >
+                  <ul className="space-y-2">
+                    {problems.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 text-base text-slate-700 bg-orange-50 rounded-xl px-4 py-2.5 border border-orange-100"
+                      >
+                        <span className="w-6 h-6 rounded-md bg-orange-200 text-orange-800 flex items-center justify-center text-xs font-bold shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="flex-1">{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+              )}
 
-            {improvements.length > 0 && (
-              <Section
-                title={`จุดที่ควรแก้ไข/ปรับปรุง (${improvements.length})`}
-                accent="amber"
-                icon={<Wrench size={16} />}
-              >
-                <ul className="space-y-2">
-                  {improvements.map((p, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-base text-slate-700 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-100"
-                    >
-                      <span className="w-6 h-6 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-xs font-bold shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="flex-1">{p}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
-            )}
+              {improvements.length > 0 && (
+                <Section
+                  title={`จุดที่ควรแก้ไข/ปรับปรุง (${improvements.length})`}
+                  accent="amber"
+                  icon={<Wrench size={16} />}
+                >
+                  <ul className="space-y-2">
+                    {improvements.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 text-base text-slate-700 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-100"
+                      >
+                        <span className="w-6 h-6 rounded-md bg-amber-200 text-amber-800 flex items-center justify-center text-xs font-bold shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="flex-1">{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+              )}
 
-            {photos.length > 0 && (
-              <Section title={`ภาพถ่าย (${photos.length})`} accent="emerald">
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-                  {photos.map((url, i) => (
-                    <a
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="aspect-square rounded-xl overflow-hidden border-2 border-white shadow-md hover:scale-105 hover:shadow-xl transition-all ring-1 ring-slate-200"
-                    >
-                      <img
-                        src={url}
-                        alt={`ภาพที่ ${i + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </a>
-                  ))}
-                </div>
-              </Section>
-            )}
-          </div>
-        </div>
-
-        <div className="px-4 md:px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 flex-wrap">
-          <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>ข้อมูลที่ {m.systemNo}</span>
-            <span className="font-mono text-xs hidden sm:inline">
-              {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
-            </span>
+              {photos.length > 0 && (
+                <Section title={`ภาพถ่าย (${photos.length})`} accent="emerald">
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                    {photos.map((url, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setZoomIndex(i)}
+                        className="relative aspect-square rounded-xl overflow-hidden border-2 border-white shadow-md hover:scale-105 hover:shadow-xl transition-all ring-1 ring-slate-200 cursor-pointer"
+                      >
+                        <Image
+                          src={url}
+                          alt={`ภาพที่ ${i + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 33vw, 20vw"
+                          className="object-cover"
+                          loading="lazy"
+                          unoptimized // ⭐ ป้องกัน Error
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </Section>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={e => {
-                e.preventDefault()
-                e.stopPropagation()
-                openDirections(m.lat, m.lng)
-              }}
-              className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
-            >
-              <Navigation size={18} />
-              นำทาง
-            </button>
+          {/* FOOTER */}
+          <div className="px-4 md:px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0 flex-wrap">
+            <div className="flex items-center gap-4 text-sm text-slate-500">
+              <span>ข้อมูลที่ {m.systemNo}</span>
+              <span className="font-mono text-xs hidden sm:inline">
+                {m.lat.toFixed(4)}, {m.lng.toFixed(4)}
+              </span>
+            </div>
 
-            <button
-              type="button"
-              onClick={e => {
-                e.preventDefault()
-                e.stopPropagation()
-                onOpenStreetView(m)
-              }}
-              className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
-            >
-              <MapPin size={18} />
-              Street View
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  openDirections(m.lat, m.lng)
+                }}
+                className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
+              >
+                <Navigation size={18} />
+                นำทาง
+              </button>
+
+              <button
+                type="button"
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onOpenStreetView(m)
+                }}
+                className="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-95"
+              >
+                <MapPin size={18} />
+                Street View
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ⭐⭐⭐ Lightbox Modal (ภาพขยาย + ลูกศร) ⭐⭐⭐ */}
+      {zoomIndex !== null && (
+        <div
+          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md"
+          onClick={(e) => {
+            e.stopPropagation()
+            setZoomIndex(null)
+          }}
+        >
+          {/* ปุ่มปิด */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setZoomIndex(null)
+            }}
+            className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition active:scale-95 z-50"
+          >
+            <X size={28} />
+          </button>
+
+          {/* ปุ่มลูกศรซ้าย */}
+          {photos.length > 1 && (
+            <button
+              type="button"
+              onClick={prevPhoto}
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 md:w-14 md:h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition active:scale-95 z-50"
+            >
+              <ChevronLeft size={32} />
+            </button>
+          )}
+          
+          {/* ตัวรูปภาพ */}
+          <div className="relative w-full max-w-6xl h-[85vh]">
+            <Image
+              src={photos[zoomIndex]}
+              alt={`รูปภาพขยาย ${zoomIndex + 1}`}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              priority
+              unoptimized // ⭐ ป้องกัน Error
+            />
+            {/* ตัวเลขบอกลำดับ */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1.5 rounded-full text-sm backdrop-blur-sm z-50">
+              {zoomIndex + 1} / {photos.length}
+            </div>
+          </div>
+
+          {/* ปุ่มลูกศรขวา */}
+          {photos.length > 1 && (
+            <button
+              type="button"
+              onClick={nextPhoto}
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 md:w-14 md:h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition active:scale-95 z-50"
+            >
+              <ChevronRight size={32} />
+            </button>
+          )}
+        </div>
+      )}
+    </>
   )
 }
 
+/* ============================================================ */
+/* SUB COMPONENTS                                                */
+/* ============================================================ */
 function StatBox({
   value,
   label,
