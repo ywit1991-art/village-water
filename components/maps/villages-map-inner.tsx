@@ -23,8 +23,7 @@ import {
   Map as MapIcon,
   Satellite,
   ZoomIn,
-  ZoomOut,
-} from 'lucide-react' // ⭐ เพิ่ม ZoomIn, ZoomOut
+} from 'lucide-react'
 import LeafletBase, { type MapLayerType } from './LeafletBase'
 import {
   createWaterMarkerIcon,
@@ -54,7 +53,7 @@ interface Props {
 
 const HOVER_DELAY_MS = 800
 
-/** Auto fit bounds (⭐ บังคับซูมให้ชิดแนวเขตที่สุด) */
+/** Auto fit bounds */
 function AutoFitBounds({
   points,
   boundary,
@@ -441,7 +440,11 @@ function DetailModal({
   const [scale, setScale] = useState(1)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
+  
+  // ⭐ Ref สำหรับ Touch และ Mouse
   const dragStartRef = useRef({ x: 0, y: 0 })
+  const initialDistanceRef = useRef<number>(0)
+  const initialScaleRef = useRef<number>(1)
 
   const suff = calcSufficiency(
     m.householdCount,
@@ -460,29 +463,26 @@ function DetailModal({
 
   const isNoData = suff.level === 'no-data'
 
-  // ⭐ รีเซ็ตซูมเมื่อเปลี่ยนรูป
+  // รีเซ็ตซูมเมื่อเปลี่ยนรูป
   useEffect(() => {
     setScale(1)
     setPosition({ x: 0, y: 0 })
   }, [zoomIndex])
 
-  // ⭐ ฟังก์ชันซูมด้วยลูกล้อ
+  // ⭐ ฟังก์ชันซูมด้วยลูกล้อ (Desktop)
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     const zoomSensitivity = 0.0015
     const newScale = scale - e.deltaY * zoomSensitivity
-    setScale(Math.min(Math.max(newScale, 1), 4)) // จำกัดการซูม 1x - 4x
-    if (newScale <= 1) setPosition({ x: 0, y: 0 }) // ถ้าซูมสุดแล้วให้กลับมากลางจอ
+    setScale(Math.min(Math.max(newScale, 1), 4))
+    if (newScale <= 1) setPosition({ x: 0, y: 0 })
   }
 
-  // ⭐ ฟังก์ชันลากภาพ (Panning)
+  // ⭐ ฟังก์ชันลากภาพ (Mouse)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (scale === 1) return
     setIsDragging(true)
-    dragStartRef.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    }
+    dragStartRef.current = { x: e.clientX - position.x, y: e.clientY - position.y }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -493,8 +493,50 @@ function DetailModal({
     })
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUp = () => setIsDragging(false)
+
+  // ⭐⭐⭐ ฟังก์ชัน Touch Events (Mobile) ⭐⭐⭐
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // ถ้าใช้นิ้ว 2 นิ้ว (Pinch) -> เก็บระยะห่างเริ่มต้น
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      )
+      initialDistanceRef.current = dist
+      initialScaleRef.current = scale
+    } else if (e.touches.length === 1 && scale > 1) {
+      // ถ้าใช้นิ้ว 1 นิ้ว (Pan) และซูมอยู่ -> เริ่มลาก
+      setIsDragging(true)
+      dragStartRef.current = {
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y,
+      }
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // คำนวณระยะห่างใหม่ -> อัปเดต Scale
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      )
+      const newScale = (dist / initialDistanceRef.current) * initialScaleRef.current
+      setScale(Math.min(Math.max(newScale, 1), 4))
+      if (newScale <= 1) setPosition({ x: 0, y: 0 })
+    } else if (e.touches.length === 1 && isDragging) {
+      // ลากรูปด้วยนิ้วเดียว
+      setPosition({
+        x: e.touches[0].clientX - dragStartRef.current.x,
+        y: e.touches[0].clientY - dragStartRef.current.y,
+      })
+    }
+  }
+
+  const handleTouchEnd = () => {
     setIsDragging(false)
+    if (scale <= 1) setPosition({ x: 0, y: 0 }) // ถ้าซูมสุดแล้วให้กลับมากลางจอ
   }
 
   const nextPhoto = (e: React.MouseEvent) => {
@@ -509,7 +551,7 @@ function DetailModal({
     setZoomIndex((zoomIndex - 1 + photos.length) % photos.length)
   }
 
-  // ⭐ Keyboard Navigation (และกด Esc เพื่อปิด)
+  // Keyboard Navigation
   useEffect(() => {
     if (zoomIndex === null) return
     
@@ -834,16 +876,18 @@ function DetailModal({
         </div>
       </div>
 
-      {/* ⭐⭐⭐ Lightbox Modal (ภาพขยาย ซูมด้วยลูกล้อ ลากได้) ⭐⭐⭐ */}
+      {/* ⭐⭐⭐ Lightbox Modal (ภาพขยาย ซูมด้วยลูกล้อ/นิ้ว ลากได้) ⭐⭐⭐ */}
       {zoomIndex !== null && (
         <div
-          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center backdrop-blur-md overflow-hidden"
+          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center backdrop-blur-md overflow-hidden touch-none"
           onWheel={handleWheel}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           onClick={(e) => {
-            // ถ้าคลิกพื้นที่ว่าง (ไม่ใช่ตัวรูป) ให้ปิด
             if (e.target === e.currentTarget && scale === 1) {
               setZoomIndex(null)
             }
@@ -866,7 +910,7 @@ function DetailModal({
             <ZoomIn size={16} /> เลื่อนลูกล้อเพื่อซูม · คลิกค้างเพื่อลากภาพ
           </div>
 
-          {/* ⭐ ปุ่มลูกศรซ้าย */}
+          {/* ⭐ ปุ่มลูกศรซ้าย (ซ่อนเมื่อซูม) */}
           {photos.length > 1 && scale === 1 && (
             <button
               type="button"
@@ -895,7 +939,7 @@ function DetailModal({
                 src={photos[zoomIndex]}
                 alt={`รูปภาพขยาย ${zoomIndex + 1}`}
                 fill
-                className="object-contain pointer-events-none select-none" // ⭐ ป้องกันการลากรูปของ Browser
+                className="object-contain pointer-events-none select-none"
                 sizes="100vw"
                 priority
                 unoptimized
@@ -908,7 +952,7 @@ function DetailModal({
             {zoomIndex + 1} / {photos.length}
           </div>
 
-          {/* ⭐ ปุ่มลูกศรขวา */}
+          {/* ⭐ ปุ่มลูกศรขวา (ซ่อนเมื่อซูม) */}
           {photos.length > 1 && scale === 1 && (
             <button
               type="button"
