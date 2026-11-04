@@ -58,7 +58,6 @@ export default function HomeContent({
         animate={{
           x: [0, 60, 0],
           y: [0, 40, 0],
-          scale: [1, 1.15, 1],
         }}
         transition={{
           duration: 18,
