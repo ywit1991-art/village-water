@@ -488,3 +488,48 @@ details.form-section > summary::marker {
 .animate-draw-line {
   animation: draw-line 1.2s ease-out forwards;
 }
+
+/* ============================================================ */
+/* Leaflet Cursor Rules                                          */
+/* ============================================================ */
+
+/* 1. เปลี่ยนพื้นหลังแผนที่ให้เป็นรูปมือจับ (Grab) */
+.leaflet-container {
+  cursor: grab !important;
+}
+
+/* 2. เปลี่ยนเป็นรูปมือกำลังจับ (Grabbing) ขณะลากแผนที่ */
+.leaflet-dragging .leaflet-container,
+.leaflet-container:active {
+  cursor: grabbing !important;
+}
+
+/* 3. บังคับให้หมุด (Marker) และไอคอนด้านใน เป็นรูปมือชี้ */
+.water-marker-icon,
+.water-marker-icon * {
+  cursor: pointer !important;
+}
+
+/* 4. ป้องกันไม่ให้เส้นขอบเขตสีแดง (ที่คลิกไม่ได้) กลายเป็นรูปมือ */
+.leaflet-interactive:not(.water-marker-icon) {
+  cursor: default !important;
+}
+
+/* ============================================================ */
+/* Global Cursor Rules — บังคับปุ่มทุกปุ่มให้เป็นรูปมือ          */
+/* ============================================================ */
+@layer base {
+  /* ปุ่มทุกปุ่ม, ลิงก์ทุกอัน, และสิ่งที่กดได้ ให้เป็นรูปมือ */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a,
+  select {
+    cursor: pointer !important;
+  }
+
+  /* ถ้าปุ่มถูกปิดการใช้งาน ให้เป็นรูปห้าม */
+  button:disabled,
+  [role="button"]:disabled {
+    cursor: not-allowed !important;
+  }
+}

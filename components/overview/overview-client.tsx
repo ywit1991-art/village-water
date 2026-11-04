@@ -305,7 +305,6 @@ export default function OverviewClient({ villages, systems }: Props) {
   )
 
   return (
-    // ⭐ เปลี่ยนเป็น min-h-[100dvh] และลบ overflow-hidden บนมือถือ เพื่อให้ Scroll ดูได้เต็มๆ
     <div className="min-h-[100dvh] flex flex-col bg-gradient-to-b from-brand-50 via-brand-50/30 to-white relative md:h-[100dvh] md:overflow-hidden">
       
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -470,7 +469,8 @@ export default function OverviewClient({ villages, systems }: Props) {
             {cards.map((c, i) => (
               <div 
                 key={i} 
-                className="card p-2 md:p-3 hover:bg-brand-50/60 transition-all group cursor-pointer border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
+                // ⭐ เปลี่ยนจาก cursor-pointer เป็น cursor-default
+                className="card p-2 md:p-3 hover:bg-brand-50/60 transition-all group cursor-default border border-slate-100 bg-white/90 backdrop-blur-sm flex flex-col justify-between shadow-sm hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-1 w-full">
                   <span className="text-[10px] md:text-xs text-slate-500 font-medium pt-0.5 truncate">
@@ -497,7 +497,6 @@ export default function OverviewClient({ villages, systems }: Props) {
           {viewMode === 'map' && (
             <div
               ref={mapRef}
-              // ⭐ เปลี่ยนความสูงบนมือถือเป็น 60vh เพื่อให้เห็นแผนที่เต็มๆ
               className="card overflow-hidden shadow-md w-full h-[60vh] min-h-[400px] md:h-full relative bg-white animate-in fade-in duration-300"
             >
               <div className="absolute inset-0">
