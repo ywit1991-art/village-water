@@ -22,7 +22,9 @@ import {
   Layers,
   Map as MapIcon,
   Satellite,
-} from 'lucide-react'
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react' // ⭐ เพิ่ม ZoomIn, ZoomOut
 import LeafletBase, { type MapLayerType } from './LeafletBase'
 import {
   createWaterMarkerIcon,
@@ -73,7 +75,6 @@ function AutoFitBounds({
           const bounds = layer.getBounds()
           
           if (bounds.isValid()) {
-            // ⭐ ใช้ padding [0,0] เพื่อให้ชิดขอบที่สุด
             map.fitBounds(bounds, { padding: [0, 0] })
             hasFittedRef.current = true
             return
@@ -83,7 +84,6 @@ function AutoFitBounds({
         }
       }
 
-      // Fallback ถ้าไม่มี boundary ให้ดูจาก markers
       if (points.length > 0 && !hasFittedRef.current) {
         const bounds = L.latLngBounds(points)
         map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 })
@@ -436,8 +436,12 @@ function DetailModal({
   const modalRef = useFocusTrap<HTMLDivElement>(true, onClose)
   const c = STATUS_COLORS[m.status] ?? STATUS_COLORS['ไม่มีข้อมูล']
   
-  // ⭐ State สำหรับ Lightbox (เก็บ Index)
+  // ⭐ State สำหรับ Lightbox และการซูม/ลาก
   const [zoomIndex, setZoomIndex] = useState<number | null>(null)
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartRef = useRef({ x: 0, y: 0 })
 
   const suff = calcSufficiency(
     m.householdCount,
@@ -456,7 +460,43 @@ function DetailModal({
 
   const isNoData = suff.level === 'no-data'
 
-  // ⭐ ฟังก์ชันเลื่อนรูป
+  // ⭐ รีเซ็ตซูมเมื่อเปลี่ยนรูป
+  useEffect(() => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }, [zoomIndex])
+
+  // ⭐ ฟังก์ชันซูมด้วยลูกล้อ
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault()
+    const zoomSensitivity = 0.0015
+    const newScale = scale - e.deltaY * zoomSensitivity
+    setScale(Math.min(Math.max(newScale, 1), 4)) // จำกัดการซูม 1x - 4x
+    if (newScale <= 1) setPosition({ x: 0, y: 0 }) // ถ้าซูมสุดแล้วให้กลับมากลางจอ
+  }
+
+  // ⭐ ฟังก์ชันลากภาพ (Panning)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale === 1) return
+    setIsDragging(true)
+    dragStartRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || scale === 1) return
+    setPosition({
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y,
+    })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
   const nextPhoto = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (zoomIndex === null) return
@@ -469,7 +509,7 @@ function DetailModal({
     setZoomIndex((zoomIndex - 1 + photos.length) % photos.length)
   }
 
-  // ⭐ Keyboard Navigation
+  // ⭐ Keyboard Navigation (และกด Esc เพื่อปิด)
   useEffect(() => {
     if (zoomIndex === null) return
     
@@ -744,7 +784,7 @@ function DetailModal({
                           sizes="(max-width: 768px) 33vw, 20vw"
                           className="object-cover"
                           loading="lazy"
-                          unoptimized // ⭐ ป้องกัน Error
+                          unoptimized
                         />
                       </button>
                     ))}
@@ -794,13 +834,19 @@ function DetailModal({
         </div>
       </div>
 
-      {/* ⭐⭐⭐ Lightbox Modal (ภาพขยาย + ลูกศร) ⭐⭐⭐ */}
+      {/* ⭐⭐⭐ Lightbox Modal (ภาพขยาย ซูมด้วยลูกล้อ ลากได้) ⭐⭐⭐ */}
       {zoomIndex !== null && (
         <div
-          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md"
+          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center backdrop-blur-md overflow-hidden"
+          onWheel={handleWheel}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           onClick={(e) => {
-            e.stopPropagation()
-            setZoomIndex(null)
+            // ถ้าคลิกพื้นที่ว่าง (ไม่ใช่ตัวรูป) ให้ปิด
+            if (e.target === e.currentTarget && scale === 1) {
+              setZoomIndex(null)
+            }
           }}
         >
           {/* ปุ่มปิด */}
@@ -810,13 +856,18 @@ function DetailModal({
               e.stopPropagation()
               setZoomIndex(null)
             }}
-            className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition active:scale-95 z-50"
+            className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-md transition active:scale-95 z-50 shadow-lg"
           >
             <X size={28} />
           </button>
 
-          {/* ปุ่มลูกศรซ้าย */}
-          {photos.length > 1 && (
+          {/* คำแนะนำการใช้งาน */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-black/50 text-white/80 px-4 py-2 rounded-full text-xs md:text-sm backdrop-blur-sm z-50 flex items-center gap-2 pointer-events-none opacity-70 hidden md:flex">
+            <ZoomIn size={16} /> เลื่อนลูกล้อเพื่อซูม · คลิกค้างเพื่อลากภาพ
+          </div>
+
+          {/* ⭐ ปุ่มลูกศรซ้าย */}
+          {photos.length > 1 && scale === 1 && (
             <button
               type="button"
               onClick={prevPhoto}
@@ -827,24 +878,38 @@ function DetailModal({
           )}
           
           {/* ตัวรูปภาพ */}
-          <div className="relative w-full max-w-6xl h-[85vh]">
-            <Image
-              src={photos[zoomIndex]}
-              alt={`รูปภาพขยาย ${zoomIndex + 1}`}
-              fill
-              className="object-contain"
-              sizes="100vw"
-              priority
-              unoptimized // ⭐ ป้องกัน Error
-            />
-            {/* ตัวเลขบอกลำดับ */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1.5 rounded-full text-sm backdrop-blur-sm z-50">
-              {zoomIndex + 1} / {photos.length}
+          <div className="relative w-full h-full flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            <div
+              className={`relative transition-transform duration-75 ease-out ${
+                scale > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-zoom-in'
+              }`}
+              style={{
+                width: '100%',
+                height: '100%',
+                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                transformOrigin: 'center center',
+              }}
+              onMouseDown={handleMouseDown}
+            >
+              <Image
+                src={photos[zoomIndex]}
+                alt={`รูปภาพขยาย ${zoomIndex + 1}`}
+                fill
+                className="object-contain pointer-events-none select-none" // ⭐ ป้องกันการลากรูปของ Browser
+                sizes="100vw"
+                priority
+                unoptimized
+              />
             </div>
           </div>
 
-          {/* ปุ่มลูกศรขวา */}
-          {photos.length > 1 && (
+          {/* ตัวเลขบอกลำดับ */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-1.5 rounded-full text-sm backdrop-blur-sm z-50 pointer-events-none">
+            {zoomIndex + 1} / {photos.length}
+          </div>
+
+          {/* ⭐ ปุ่มลูกศรขวา */}
+          {photos.length > 1 && scale === 1 && (
             <button
               type="button"
               onClick={nextPhoto}
