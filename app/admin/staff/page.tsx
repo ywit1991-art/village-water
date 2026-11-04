@@ -34,7 +34,7 @@ export default async function StaffPage() {
             หน้านี้สำหรับผู้ดูแลข้อมูลเท่านั้น
           </p>
           <Link href="/admin/dashboard" className="btn-primary">
-            ← กลับแดชบอร์ด
+            ← กลับหน้าข้อมูล
           </Link>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default async function StaffPage() {
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <Link
               href="/admin/dashboard"
-              aria-label="กลับแดชบอร์ด"
+              aria-label="กลับหน้าข้อมูล"
               className="w-10 h-10 rounded-lg bg-white/15 hover:bg-white/25 active:scale-95 flex items-center justify-center transition shrink-0"
             >
               <ArrowLeft size={18} />

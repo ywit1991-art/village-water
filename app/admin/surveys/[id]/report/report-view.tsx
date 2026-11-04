@@ -144,11 +144,11 @@ export default function ReportView({
         <div className="max-w-[21cm] mx-auto px-3 md:px-4 py-3 flex items-center justify-between gap-2">
           <Link
             href="/admin/dashboard"
-            aria-label="กลับแดชบอร์ด"
+            aria-label="กลับหน้าข้อมูล"
             className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium active:scale-95 transition shrink-0"
           >
             <ArrowLeft size={18} />
-            <span className="hidden sm:inline">กลับแดชบอร์ด</span>
+            <span className="hidden sm:inline">กลับหน้าข้อมูล</span>
           </Link>
           <button
             onClick={() => {
